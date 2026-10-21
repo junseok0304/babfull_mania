@@ -1,15 +1,20 @@
 let clientPromise;
 
 const loadLocalConfig = async () => {
-  try {
-    const response = await fetch("./js/config.local.json", { cache: "no-store" });
-    if (!response.ok) return null;
-    const config = await response.json();
-    if (!config.supabaseUrl || !config.supabaseAnonKey) return null;
-    return config;
-  } catch {
-    return null;
+  const configUrls = ["/js/config.local.json", "/api/config"];
+
+  for (const url of configUrls) {
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) continue;
+      const config = await response.json();
+      if (config.supabaseUrl && config.supabaseAnonKey) return config;
+    } catch {
+      // 로컬 정적 서버에는 /api/config가 없을 수 있으므로 다음 후보를 확인한다.
+    }
   }
+
+  return null;
 };
 
 export const getSupabaseClient = async () => {

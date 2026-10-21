@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+.git
+.cache
+coverage
+scripts
+tests
+supabase
+참고용
+진도.md
+PRD.md
+*.log
