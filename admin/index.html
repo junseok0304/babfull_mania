@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#14532d" />
     <meta name="description" content="밥풀매니아 관리자 대시보드" />
     <title>밥풀매니아 관리자</title>
-    <link rel="stylesheet" href="../css/global.css?v=20261021-4" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261021-4" />
-    <script type="module" src="../js/admin.js?v=20261021-4"></script>
+    <link rel="stylesheet" href="../css/global.css?v=20261021-5" />
+    <link rel="stylesheet" href="../css/admin.css?v=20261021-5" />
+    <script type="module" src="../js/admin.js?v=20261021-5"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -85,7 +85,7 @@
         <section class="admin-view" data-admin-view="scanner">
           <section class="scanner-kiosk">
               <a class="scanner-kiosk__exit" href="#dashboard">운영 화면으로</a>
-              <div class="scanner-kiosk__intro"><span>밥풀 정기권 QR</span><h2>정기권 이용 전<br />반드시 QR을 스캔해주세요!</h2><p>마이페이지의 QR을 아래 카메라 중앙에 보여주세요.</p></div>
+              <div class="scanner-kiosk__intro"><span>밥full QR</span><h2>밥full 정기권 인식 스캐너</h2><p>정기권 이용자는 반드시 QR 스캔 후 식당 이용해주세요.</p></div>
               <div class="qr-reader" id="qr-reader"><div class="scanner-placeholder"><span class="scanner-placeholder__icon">▦</span><strong>스캔 대기 중</strong><p>아래 버튼을 눌러 카메라를 켜주세요.</p></div></div>
               <div class="scanner-controls">
                 <button class="primary-button" id="scanner-start" type="button">카메라 켜고 운영 시작</button>
@@ -107,7 +107,7 @@
                   <form id="manual-token-form"><label>QR 토큰<input name="qr_token" value="00000000-0000-4000-8000-000000000001" required /></label><button type="submit">조회</button></form>
                 </details>
               </details>
-              <div class="scan-success" id="scan-success" hidden><div class="scan-success__check">✓</div><h2>정기권 이용 처리가<br />완료되었습니다.</h2><p id="scan-success-detail"></p><span>감사합니다. 맛있게 드세요!</span></div>
+              <div class="scan-success" id="scan-success" hidden><div class="scan-success__check">✓</div><h2>정기권 이용 처리가<br />완료되었습니다.</h2><p id="scan-success-detail"></p><span>다음 QR 스캔이 자동으로 시작됩니다.</span></div>
           </section>
         </section>
         <section class="admin-view" data-admin-view="users">

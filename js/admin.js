@@ -286,11 +286,11 @@ const startScanner = async () => {
         document.querySelector("#scan-success").hidden = true;
         scanBusy = false;
         if (location.hash === "#scanner") await startScanner();
-      }, succeeded ? 2800 : 2200);
+      }, succeeded ? 1600 : 1400);
     }, () => {});
     document.body.classList.add("scanner-is-active");
     stop.disabled = false;
-    renderScannerStatus("카메라 중앙에 QR을 보여주세요.");
+    renderScannerStatus("QR 인식을 기다리고 있어요.");
   } catch (error) {
     start.disabled = false;
     document.querySelector("#qr-reader").innerHTML = `<div class="scanner-placeholder"><span>!</span><p>${escapeHtml(error.message || "카메라를 시작하지 못했습니다.")}</p></div>`;
@@ -311,7 +311,7 @@ document.querySelector("#manual-token-form").addEventListener("submit", async (e
   if (succeeded) window.setTimeout(() => {
     document.querySelector("#scan-success").hidden = true;
     renderScannerStatus("스캔을 기다리고 있어요.");
-  }, 2800);
+  }, 1600);
 });
 
 const userTypeLabel = (type) => ({ student: "학생", faculty: "교원", staff: "직원", other: "기타" })[type] || "기타";
