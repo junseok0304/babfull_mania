@@ -94,8 +94,8 @@
               </details>
             </section>
             <section class="admin-card scan-result-card">
-              <div class="admin-card__heading"><div><p class="section-kicker">관리자 확인</p><h2>식권 사용 처리</h2></div></div>
-              <div id="scan-result"><div class="scan-empty"><span>QR을 인식해 주세요.</span><p>인식만으로는 이용 기록이 저장되지 않습니다.</p></div></div>
+              <div class="admin-card__heading"><div><p class="section-kicker">자동 기록</p><h2>식권 사용 처리</h2></div></div>
+              <div id="scan-result"><div class="scan-empty"><span>QR을 인식해 주세요.</span><p>인식 즉시 현재 제공시간 기준 조식 또는 중식으로 기록됩니다.</p></div></div>
             </section>
           </div>
         </section>
@@ -103,7 +103,11 @@
           <section class="admin-card empty-admin-feature"><span>♙</span><h2>사용자 관리</h2><p>Supabase 프로필 검색과 계정 상태 관리를 연결할 예정입니다.</p></section>
         </section>
         <section class="admin-view" data-admin-view="usages">
-          <section class="admin-card empty-admin-feature"><span>₩</span><h2>이용 내역</h2><p>식권 처리 내역과 기간별 금액 통계를 연결할 예정입니다.</p></section>
+          <section class="admin-card">
+            <div class="admin-card__heading"><div><p class="section-kicker">운영진 정정</p><h2>이용 내역</h2></div><button class="secondary-button" id="usage-refresh" type="button">새로고침</button></div>
+            <p class="usage-admin-help">QR 인식 기록의 조식·중식 구분 또는 정상·취소 상태를 수정할 수 있습니다.</p>
+            <div class="usage-admin-list" id="usage-admin-list" aria-live="polite"></div>
+          </section>
         </section>
       </main>
     </div>

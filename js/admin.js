@@ -24,6 +24,7 @@ const route = (nextRoute) => {
   document.querySelector("#admin-page-title").textContent = titles[safe];
   document.querySelector(".admin-sidebar").classList.remove("is-open");
   document.querySelector("#admin-menu-button").setAttribute("aria-expanded", "false");
+  if (safe === "usages") renderUsages();
 };
 
 const mealLabel = (type) => type === "breakfast" ? "조식" : "중식";
@@ -116,51 +117,44 @@ const findProfileByToken = async (token) => {
   return data;
 };
 
-const processUsage = async (profile, type) => {
+export const getAutomaticMealType = (now = new Date()) => {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  const minutes = Number(values.hour) * 60 + Number(values.minute);
+  const breakfastWindow = [7 * 60 + 30, 10 * 60];
+  const lunchWindow = [11 * 60, 14 * 60 + 30];
+  if (minutes >= breakfastWindow[0] && minutes <= breakfastWindow[1]) return "breakfast";
+  if (minutes >= lunchWindow[0] && minutes <= lunchWindow[1]) return "lunch";
+  return minutes < lunchWindow[0] ? "breakfast" : "lunch";
+};
+
+const processUsage = async (profile) => {
   const today = formatDateKey(getSeoulDate());
   if (adminMode === "demo") {
+    const type = getAutomaticMealType();
     if (demoUsages.some((usage) => usage.userId === profile.id && usage.date === today && usage.type === type)) {
       throw new Error("이미 사용 처리된 식권입니다.");
     }
-    demoUsages.push({ userId: profile.id, date: today, type, price: type === "breakfast" ? 1000 : 5300 });
-    return;
+    const usage = { id: Date.now(), userId: profile.id, userName: profile.name, affiliation: profile.affiliation, date: today, type, status: "active", price: type === "breakfast" ? 1000 : 5300 };
+    demoUsages.unshift(usage);
+    return usage;
   }
-  const { error } = await client.rpc("process_meal_usage", { target_qr_token: profile.qr_token, target_meal_type: type, target_meal_date: today });
+  const { data, error } = await client.rpc("process_scanned_meal_usage", { target_qr_token: profile.qr_token });
   if (error) throw new Error(error.message || "식권을 처리하지 못했습니다.");
+  return Array.isArray(data) ? data[0] : data;
 };
 
-const renderScannedProfile = (profile) => {
+const renderScannedProfile = (profile, usage) => {
   const target = document.querySelector("#scan-result");
   target.innerHTML = `<div class="scanned-profile"><div class="scanned-profile__avatar">${escapeHtml(profile.name?.[0] || "밥")}</div><div><strong>${escapeHtml(profile.name || "이름 미등록")}</strong><span>${escapeHtml(profile.affiliation || "소속 미등록")}</span></div></div>
-    <form class="usage-confirm-form" id="usage-confirm-form">
-      <label>식사 구분<select name="meal_type"><option value="breakfast">조식</option><option value="lunch">중식</option></select></label>
-      <div class="confirm-price"><span>처리 금액</span><strong id="confirm-price">1,000원</strong></div>
-      <button class="primary-button" type="submit">식권 사용 처리</button>
-      <p class="scan-message" id="scan-message">사용자와 식사 구분을 확인한 뒤 처리해 주세요.</p>
-    </form>`;
-  const form = document.querySelector("#usage-confirm-form");
-  const select = form.elements.meal_type;
-  select.addEventListener("change", () => {
-    document.querySelector("#confirm-price").textContent = select.value === "breakfast" ? "1,000원" : "5,300원";
-  });
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const button = form.querySelector("button[type=submit]");
-    const message = document.querySelector("#scan-message");
-    button.disabled = true;
-    message.classList.remove("is-error");
-    message.textContent = "처리 중…";
-    try {
-      await processUsage(profile, select.value);
-      message.textContent = adminMode === "demo" ? "시연 식권을 사용 처리했습니다." : "식권을 사용 처리했습니다.";
-      renderStats();
-    } catch (error) {
-      message.classList.add("is-error");
-      message.textContent = error.message;
-    } finally {
-      button.disabled = false;
-    }
-  });
+    <div class="usage-auto-result">
+      <span>자동 선택 · 제공시간 ±30분</span>
+      <strong>${mealLabel(usage.meal_type || usage.type)} · ${Number(usage.price).toLocaleString("ko-KR")}원</strong>
+      <p class="scan-message">${adminMode === "demo" ? "시연 이용 기록을 저장했습니다." : "이용 기록을 저장했습니다."}</p>
+      <a href="#usages">잘못 기록되었나요? 이용 내역에서 수정 →</a>
+    </div>`;
 };
 
 const handleDecodedToken = async (token) => {
@@ -168,7 +162,10 @@ const handleDecodedToken = async (token) => {
   target.innerHTML = '<div class="scan-empty"><span>사용자를 확인하고 있어요.</span></div>';
   try {
     const profile = await findProfileByToken(token.trim());
-    renderScannedProfile(profile);
+    target.innerHTML = '<div class="scan-empty"><span>이용 기록을 저장하고 있어요.</span></div>';
+    const usage = await processUsage(profile);
+    renderScannedProfile(profile, usage);
+    renderStats();
   } catch (error) {
     target.innerHTML = `<div class="scan-empty"><span>조회 실패</span><p>${escapeHtml(error.message)}</p></div>`;
   }
@@ -198,6 +195,83 @@ document.querySelector("#manual-token-form").addEventListener("submit", async (e
   event.preventDefault();
   await handleDecodedToken(new FormData(event.currentTarget).get("qr_token"));
 });
+
+const normalizeUsage = (record) => ({
+  id: record.id,
+  userId: record.user_id,
+  userName: record.profiles?.name || record.userName || "이름 미등록",
+  affiliation: record.profiles?.affiliation || record.affiliation || "소속 미등록",
+  date: record.meal_date || record.date,
+  type: record.meal_type || record.type,
+  price: Number(record.price),
+  status: record.status || "active",
+  note: record.correction_note || "",
+});
+
+const updateUsage = async (usageId, type, status, note) => {
+  if (adminMode === "demo") {
+    const usage = demoUsages.find((item) => String(item.id) === String(usageId));
+    if (!usage) throw new Error("이용 기록을 찾을 수 없습니다.");
+    const conflict = status === "active" && demoUsages.some((item) => item !== usage && item.userId === usage.userId && item.date === usage.date && item.type === type && item.status === "active");
+    if (conflict) throw new Error("같은 날짜·식사 이용 기록이 이미 있습니다.");
+    Object.assign(usage, { type, status, note, price: type === "breakfast" ? 1000 : 5300 });
+    return;
+  }
+  const { error } = await client.rpc("admin_update_meal_usage", {
+    target_usage_id: Number(usageId), target_meal_type: type, target_status: status, note: note || null,
+  });
+  if (error) throw new Error(error.message || "이용 기록을 수정하지 못했습니다.");
+};
+
+const renderUsages = async () => {
+  const target = document.querySelector("#usage-admin-list");
+  if (!target) return;
+  target.innerHTML = '<p class="usage-admin-loading">이용 내역을 불러오고 있어요.</p>';
+  let records = demoUsages.map(normalizeUsage);
+  if (adminMode === "supabase") {
+    const { data, error } = await client.from("meal_usages")
+      .select("id, user_id, meal_date, meal_type, price, status, correction_note, created_at, profiles!meal_usages_user_id_fkey(name, affiliation)")
+      .order("created_at", { ascending: false }).limit(100);
+    if (error) {
+      target.innerHTML = `<p class="usage-admin-loading is-error">${escapeHtml(error.message)}</p>`;
+      return;
+    }
+    records = (data ?? []).map(normalizeUsage);
+  }
+  if (!records.length) {
+    target.innerHTML = '<div class="scan-empty"><span>아직 이용 기록이 없습니다.</span><p>QR을 인식하면 바로 이곳에 표시됩니다.</p></div>';
+    return;
+  }
+  target.innerHTML = records.map((usage) => `<form class="usage-admin-item" data-usage-id="${usage.id}">
+    <div class="usage-admin-person"><strong>${escapeHtml(usage.userName)}</strong><span>${escapeHtml(usage.affiliation)} · ${escapeHtml(usage.date)}</span></div>
+    <label><span class="sr-only">식사 구분</span><select name="meal_type"><option value="breakfast"${usage.type === "breakfast" ? " selected" : ""}>조식 · 1,000원</option><option value="lunch"${usage.type === "lunch" ? " selected" : ""}>중식 · 5,300원</option></select></label>
+    <label><span class="sr-only">처리 상태</span><select name="status"><option value="active"${usage.status === "active" ? " selected" : ""}>정상</option><option value="cancelled"${usage.status === "cancelled" ? " selected" : ""}>취소</option></select></label>
+    <label><span class="sr-only">정정 사유</span><input name="note" value="${escapeHtml(usage.note)}" placeholder="정정 사유" /></label>
+    <button class="secondary-button" type="submit">저장</button>
+    <p class="usage-admin-message" role="status"></p>
+  </form>`).join("");
+
+  target.querySelectorAll(".usage-admin-item").forEach((form) => form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const message = form.querySelector(".usage-admin-message");
+    const button = form.querySelector("button");
+    const data = new FormData(form);
+    button.disabled = true;
+    message.textContent = "저장 중…";
+    try {
+      await updateUsage(form.dataset.usageId, data.get("meal_type"), data.get("status"), data.get("note"));
+      message.textContent = "수정됨";
+      renderStats();
+    } catch (error) {
+      message.textContent = error.message;
+      message.classList.add("is-error");
+    } finally {
+      button.disabled = false;
+    }
+  }));
+};
+
+document.querySelector("#usage-refresh").addEventListener("click", renderUsages);
 
 const saveMeal = async (payload) => {
   if (adminMode === "demo") {
