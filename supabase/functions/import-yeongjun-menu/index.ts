@@ -67,13 +67,13 @@ Deno.serve(async (request) => {
       signal: AbortSignal.timeout(20000),
     });
     const contentType = response.headers.get("content-type") || "";
-    if (!response.ok) throw new Error(`영준닷컴 HTTP ${response.status}`);
+    if (!response.ok) throw new Error(`원본 식단 서버 HTTP ${response.status}`);
     if (!contentType.includes("text/html")) throw new Error(`예상하지 못한 콘텐츠 형식입니다: ${contentType}`);
     const html = await response.text();
     if (html.length > 2_000_000) throw new Error("식단 페이지가 허용 크기를 초과했습니다.");
     const parsed = parseYeongjunMenu(html);
     if (parsed.dates[0] !== currentSeoulMonday()) {
-      throw new Error(`영준닷컴 식단이 이번 주 기준으로 갱신되지 않았습니다: ${parsed.dates[0]}`);
+      throw new Error(`원본 식단이 이번 주 기준으로 갱신되지 않았습니다: ${parsed.dates[0]}`);
     }
 
     const { data: result, error: importError } = await db.rpc("import_yeongjun_meals", {

@@ -72,7 +72,7 @@ const parseSection = (tableHtml, className) => {
 const closedPattern = /(휴무|미운영|미제공|연휴)/u;
 
 export const parseYeongjunMenu = (html, now = new Date()) => {
-  if (typeof html !== "string" || html.length < 1000) throw new Error("영준닷컴 HTML 본문이 비어 있거나 너무 짧습니다.");
+  if (typeof html !== "string" || html.length < 1000) throw new Error("원본 식단 HTML 본문이 비어 있거나 너무 짧습니다.");
   const tables = blocks(html, "table");
   const table = tables.find((candidate) => /breakfast-row|lunch-row/.test(candidate.html));
   if (!table) throw new Error("조식·중식 식단 테이블을 찾지 못했습니다.");

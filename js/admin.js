@@ -107,11 +107,11 @@ const rejectAdminAccess = () => {
 };
 
 const renderImportStatus = async () => {
-  const target = document.querySelector("#yeongjun-import-status");
-  const button = document.querySelector("#yeongjun-sync");
+  const target = document.querySelector("#menu-import-status");
+  const button = document.querySelector("#menu-sync");
   if (adminMode !== "supabase") {
     button.disabled = true;
-    target.innerHTML = "<p><strong>운영 데이터 연결 후 사용할 수 있습니다.</strong></p><p>원본 주소와 파서는 실제 영준닷컴 응답으로 검증되었습니다.</p>";
+    target.innerHTML = "<p><strong>운영 데이터 연결 후 사용할 수 있습니다.</strong></p><p>원본 식단 응답으로 수집 형식을 검증했습니다.</p>";
     return;
   }
   const { data, error } = await client.from("meal_import_logs").select("status, started_at, completed_at, inserted_count, updated_count, error_message")
@@ -507,14 +507,14 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
   }
 });
 
-document.querySelector("#yeongjun-sync").addEventListener("click", async (event) => {
+document.querySelector("#menu-sync").addEventListener("click", async (event) => {
   const button = event.currentTarget;
-  const target = document.querySelector("#yeongjun-import-status");
+  const target = document.querySelector("#menu-import-status");
   if (adminMode !== "supabase") return;
   button.disabled = true;
   button.textContent = "가져오는 중…";
   target.classList.remove("is-error");
-  target.innerHTML = "<p>영준닷컴에서 이번 주 식단을 가져오고 있습니다.</p>";
+  target.innerHTML = "<p>이번 주 식단을 가져오고 있습니다.</p>";
   try {
     const { data, error } = await client.functions.invoke("import-yeongjun-menu", { body: { trigger: "manual" } });
     if (error) throw new Error(data?.error || error.message);
