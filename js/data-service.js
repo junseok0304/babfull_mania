@@ -4,6 +4,11 @@ import { getSupabaseClient } from "./supabase-client.js";
 let cachedMeals = sampleMeals;
 let dataMode = "preview";
 
+const withTimeout = (promise, timeoutMs, message) => Promise.race([
+  promise,
+  new Promise((_, reject) => window.setTimeout(() => reject(new Error(message)), timeoutMs)),
+]);
+
 const mapMeal = (record) => ({
   id: record.id,
   date: record.meal_date,
@@ -29,16 +34,29 @@ const mapMeal = (record) => ({
 });
 
 export const initializeData = async () => {
-  const client = await getSupabaseClient();
+  let client;
+  try {
+    client = await withTimeout(getSupabaseClient(), 6000, "데이터 연결 시간을 초과했습니다.");
+  } catch (error) {
+    console.warn("공개 식단 연결이 지연되어 예시 데이터를 사용합니다.");
+    return { mode: dataMode, meals: cachedMeals, error };
+  }
   if (!client) return { mode: dataMode, meals: cachedMeals };
 
-  const [{ data, error }, { data: settings }] = await Promise.all([
+  let queryResults;
+  try {
+    queryResults = await withTimeout(Promise.all([
     client.from("meals")
       .select("id, meal_date, meal_type, is_published, is_operating, admin_note, meal_items(display_order, original_menu_text, serving_grams, estimated_calories, nutrition_matched_name, nutrition_source, nutrition_updated_at, foods(original_name))")
       .eq("is_published", true)
       .order("meal_date", { ascending: true }),
     client.from("app_settings").select("setting_key, setting_value").in("setting_key", ["meal_hours", "meal_prices"]),
-  ]);
+    ]), 7000, "식단 조회 시간을 초과했습니다.");
+  } catch (error) {
+    console.warn("공개 식단 조회가 지연되어 예시 데이터를 사용합니다.");
+    return { mode: dataMode, meals: cachedMeals, error };
+  }
+  const [{ data, error }, { data: settings }] = queryResults;
 
   if (error) {
     console.warn("공개 식단을 불러오지 못해 로컬 예시 데이터를 사용합니다.");

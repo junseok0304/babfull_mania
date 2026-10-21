@@ -9,13 +9,13 @@
       content="성공회대학교 밥full학식당 식단과 QR 식권을 확인하는 밥풀매니아"
     />
     <title>밥풀매니아</title>
-    <link rel="stylesheet" href="css/global.css?v=20261021-2" />
-    <link rel="stylesheet" href="css/components.css?v=20261021-2" />
-    <link rel="stylesheet" href="css/home.css?v=20261021-2" />
-    <link rel="stylesheet" href="css/meal-tray.css?v=20261021-2" />
-    <link rel="stylesheet" href="css/public-views.css?v=20261021-2" />
-    <link rel="stylesheet" href="css/mypage.css?v=20261021-2" />
-    <script type="module" src="js/app.js?v=20261021-2"></script>
+    <link rel="stylesheet" href="css/global.css?v=20261021-5" />
+    <link rel="stylesheet" href="css/components.css?v=20261021-5" />
+    <link rel="stylesheet" href="css/home.css?v=20261021-5" />
+    <link rel="stylesheet" href="css/meal-tray.css?v=20261021-5" />
+    <link rel="stylesheet" href="css/public-views.css?v=20261021-5" />
+    <link rel="stylesheet" href="css/mypage.css?v=20261021-5" />
+    <script type="module" src="js/app.js?v=20261021-5"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문 바로가기</a>
@@ -63,7 +63,12 @@
             </div>
           </div>
 
-          <div class="notice notice--preview" id="preview-notice" role="status">
+          <div class="notice notice--loading" id="meal-load-status" role="status">
+            <span class="loading-spinner" aria-hidden="true"></span>
+            식단을 불러오는 중입니다…
+          </div>
+
+          <div class="notice notice--preview" id="preview-notice" role="status" hidden>
             <span class="notice-dot"></span>
             현재 실제 식단을 불러올 수 없어 예시 식단을 표시합니다.
           </div>

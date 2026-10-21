@@ -467,7 +467,7 @@
 .scanner-kiosk {
   position: relative;
   width: min(100%, 1080px);
-  min-height: calc(100vh - 36px);
+  min-height: calc(100dvh - 28px);
   margin: 0 auto;
   padding: clamp(18px, 3vw, 34px);
   border: 1px solid #d9e7de;
@@ -495,13 +495,13 @@
 }
 
 .is-scanner-mode .admin-main {
-  min-height: 100vh;
-  padding: 18px;
+  min-height: 100dvh;
+  padding: 14px;
   background: radial-gradient(circle at top, #ecfdf5, #f4f7f5 50%);
 }
 
 .scanner-kiosk__intro {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   text-align: center;
 }
 
@@ -516,8 +516,8 @@
 }
 
 .scanner-kiosk__intro h2 {
-  margin: 12px 0 8px;
-  font-size: clamp(27px, 4vw, 46px);
+  margin: 8px 0 5px;
+  font-size: clamp(27px, 3.2vw, 40px);
   line-height: 1.15;
   letter-spacing: -0.04em;
 }
@@ -531,8 +531,8 @@
 .qr-reader {
   position: relative;
   overflow: hidden;
-  min-height: min(54vh, 600px);
-  aspect-ratio: 16 / 9;
+  height: clamp(320px, 44dvh, 460px);
+  min-height: 0;
   border: 4px solid var(--primary);
   border-radius: 22px;
   background: #07130c;
@@ -577,7 +577,7 @@
 }
 
 .scanner-kiosk .scanner-placeholder {
-  min-height: min(54vh, 600px);
+  min-height: 100%;
   color: #d1fae5;
 }
 
@@ -604,7 +604,7 @@
 
 .scanner-controls {
   display: grid;
-  margin-top: 18px;
+  margin-top: 12px;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
 }
@@ -632,7 +632,7 @@
 
 .scan-kiosk-status {
   display: flex;
-  margin: 16px 0 0;
+  margin: 10px 0 0;
   padding: 13px 16px;
   align-items: center;
   justify-content: center;
@@ -662,8 +662,8 @@
 }
 
 .kiosk-admin-options {
-  margin-top: 14px;
-  padding-top: 12px;
+  margin-top: 10px;
+  padding-top: 9px;
   border-top: 1px solid #eef0ee;
 }
 
@@ -1183,6 +1183,93 @@
   line-height: 1.6;
 }
 
+/* Admin typography and control rhythm */
+.admin-nav a,
+.admin-table,
+.import-status,
+.meal-form label,
+.meal-form input,
+.meal-form select,
+.meal-form textarea,
+.usage-admin-item,
+.user-admin-item,
+.settings-form,
+.user-search input,
+.user-search select {
+  font-size: 14px;
+}
+
+.admin-header p,
+.section-kicker,
+.stat-card span,
+.admin-table th,
+.import-status__meta,
+.meal-form small,
+.form-message,
+.meal-admin-item span,
+.usage-admin-message,
+.user-admin-message,
+.settings-price-note {
+  font-size: 13px;
+}
+
+.admin-card__heading h2 {
+  font-size: 20px;
+}
+
+.meal-admin-item strong,
+.usage-admin-person strong,
+.user-admin-person strong {
+  font-size: 15px;
+}
+
+.meal-admin-item p,
+.usage-admin-person span,
+.usage-admin-loading,
+.user-admin-person span,
+.usage-admin-help,
+.scan-options__heading,
+.scan-options__fields > label,
+.settings-form > label,
+.settings-form fieldset label,
+.user-admin-item > label,
+.scan-options fieldset legend,
+#scan-auto-hint,
+.settings-form legend {
+  font-size: 14px;
+}
+
+.usage-segmented span,
+.usage-admin-item input,
+.scan-options input,
+.settings-form input,
+.user-admin-item input,
+.user-admin-item select {
+  font-size: 14px;
+}
+
+.usage-admin-item .secondary-button,
+.user-admin-item .secondary-button {
+  min-height: 40px;
+  font-size: 14px;
+}
+
+.scanner-kiosk__exit,
+.scanner-kiosk__intro > span,
+.kiosk-admin-options > summary,
+.manual-token summary {
+  font-size: 13px;
+}
+
+.scanner-kiosk__intro p,
+.scan-kiosk-status {
+  font-size: 15px;
+}
+
+.settings-card {
+  max-width: none;
+}
+
 @media (min-width: 800px) {
   .admin-shell {
     display: grid;
@@ -1229,7 +1316,24 @@
 
   .qr-reader,
   .scanner-kiosk .scanner-placeholder {
-    min-height: min(58vh, 640px);
+    height: clamp(340px, 44dvh, 460px);
+    min-height: 0;
+  }
+
+  .settings-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .settings-price-note,
+  .settings-form > button,
+  .settings-form > .form-message {
+    grid-column: 1 / -1;
+  }
+
+  .settings-form > button {
+    width: 180px;
+    justify-self: end;
   }
 
   .user-search {

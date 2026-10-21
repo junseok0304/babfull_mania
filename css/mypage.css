@@ -37,7 +37,7 @@
   max-width: 390px;
   margin-bottom: 22px;
   color: var(--secondary);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .kakao-button,
@@ -142,7 +142,7 @@
 
 .profile-summary__info span {
   color: var(--secondary);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .connected-badge {
@@ -150,7 +150,7 @@
   border-radius: 999px;
   background: #fff9c4;
   color: #6b5500;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -177,7 +177,7 @@
 .card-description {
   margin-bottom: 17px;
   color: var(--secondary);
-  font-size: 12px;
+  font-size: 15px;
 }
 
 .qr-frame {
@@ -208,7 +208,7 @@
 .qr-warning {
   margin: 13px auto 0;
   color: var(--secondary);
-  font-size: 10px;
+  font-size: 13px;
   text-align: center;
 }
 
@@ -229,7 +229,7 @@
   display: block;
   margin-bottom: 4px;
   color: var(--secondary);
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .usage-stat strong {
@@ -248,7 +248,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   border-bottom: 1px solid #f1f1f2;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .usage-list li:last-child {

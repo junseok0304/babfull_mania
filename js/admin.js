@@ -131,6 +131,9 @@ const renderImportStatus = async () => {
 };
 
 const initializeAdmin = async () => {
+  const isLocalDemo = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    && new URLSearchParams(window.location.search).get("demo") === "1";
+  if (isLocalDemo) return true;
   client = await getSupabaseClient();
   const notice = document.querySelector("#admin-notice");
   if (!client) {
@@ -569,11 +572,10 @@ document.querySelector("#meal-form").addEventListener("submit", async (event) =>
   try {
     await saveMeal({
       mealDate: data.get("meal_date"), mealType: data.get("meal_type"), menuItems,
-      adminNote: data.get("admin_note"), isOperating: data.get("is_operating") === "on", isPublished: data.get("is_published") === "on",
+      adminNote: null, isOperating: data.get("is_operating") === "on", isPublished: data.get("is_published") === "on",
     });
     message.textContent = adminMode === "demo" ? "시연 목록에 반영했습니다. 실제 DB에는 저장되지 않았습니다." : "식단을 저장했습니다.";
     form.elements.menu_items.value = "";
-    form.elements.admin_note.value = "";
     renderStats();
     renderMeals();
   } catch (error) {

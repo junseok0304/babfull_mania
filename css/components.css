@@ -93,6 +93,28 @@
   color: #9a3412;
 }
 
+.notice--loading {
+  margin-bottom: 18px;
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: var(--primary-dark);
+}
+
+.loading-spinner {
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  flex: 0 0 auto;
+  border: 2px solid #bbf7d0;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: loading-spin 700ms linear infinite;
+}
+
+@keyframes loading-spin {
+  to { transform: rotate(360deg); }
+}
+
 .notice[hidden] {
   display: none;
 }

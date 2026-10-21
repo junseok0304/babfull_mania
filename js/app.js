@@ -49,8 +49,20 @@ document.querySelector("#menu-button").addEventListener("click", () => {
 });
 window.addEventListener("hashchange", () => setRoute(routeFromHash()));
 setRoute(routeFromHash());
+const loadStartedAt = Date.now();
 const dataState = await initializeData();
-document.querySelector("#preview-notice").hidden = dataState.mode === "supabase";
+const loadStatus = document.querySelector("#meal-load-status");
+const previewNotice = document.querySelector("#preview-notice");
+if (dataState.mode === "supabase") {
+  loadStatus.hidden = true;
+  previewNotice.hidden = true;
+} else {
+  const remainingDelay = Math.max(0, 2500 - (Date.now() - loadStartedAt));
+  window.setTimeout(() => {
+    loadStatus.hidden = true;
+    previewNotice.hidden = false;
+  }, remainingDelay);
+}
 renderHomeMeals();
 scheduleMealRefresh();
 initPublicViews();
