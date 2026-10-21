@@ -35,6 +35,10 @@
   transform: scale(1.08);
 }
 
+.tray-slot--small img {
+  object-position: 35% 68%;
+}
+
 .tray-slot span {
   display: -webkit-box;
   overflow: hidden;
