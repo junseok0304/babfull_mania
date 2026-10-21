@@ -469,7 +469,7 @@
   width: min(100%, 1080px);
   min-height: calc(100dvh - 28px);
   margin: 0 auto;
-  padding: clamp(18px, 3vw, 34px);
+  padding: clamp(14px, 2vw, 22px);
   border: 1px solid #d9e7de;
   border-radius: 24px;
   background: white;
