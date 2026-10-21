@@ -56,12 +56,16 @@ export const appSettings = {
   isPreview: true,
 };
 
-export const sampleMeals = menuSets.flatMap((menus, dayIndex) => {
-  const date = formatDateKey(addDays(monday, dayIndex));
-  return [
-    { id: `${date}-breakfast`, date, type: "breakfast", items: menus.breakfast, published: true },
-    { id: `${date}-lunch`, date, type: "lunch", items: menus.lunch, published: true },
-  ];
-});
+export const sampleMeals = Array.from({ length: 6 }, (_, index) => index - 4).flatMap((weekOffset) =>
+  menuSets.flatMap((baseMenus, dayIndex) => {
+    const date = formatDateKey(addDays(monday, weekOffset * 7 + dayIndex));
+    const rotated = menuSets[(dayIndex + weekOffset + menuSets.length) % menuSets.length];
+    const menus = weekOffset === 0 ? baseMenus : rotated;
+    return [
+      { id: `${date}-breakfast`, date, type: "breakfast", items: menus.breakfast, published: true },
+      { id: `${date}-lunch`, date, type: "lunch", items: menus.lunch, published: true },
+    ];
+  })
+);
 
 export { formatDateKey, getSeoulDate };

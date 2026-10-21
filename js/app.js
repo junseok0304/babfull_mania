@@ -1,4 +1,5 @@
 import { renderHomeMeals, scheduleMealRefresh } from "./meal-display.js";
+import { initPublicViews } from "./public-views.js";
 
 const validRoutes = new Set(["home", "weekly", "calendar", "search", "mypage"]);
 
@@ -20,12 +21,22 @@ const setRoute = (route) => {
     if (active) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   });
+  const mobileMenu = document.querySelector("#mobile-menu");
+  mobileMenu.hidden = true;
+  document.querySelector("#menu-button").setAttribute("aria-expanded", "false");
 };
 
 const routeFromHash = () => window.location.hash.replace("#", "") || "home";
 
 document.querySelector("#today-label").textContent = `오늘은 ${formatToday()}`;
+document.querySelector("#menu-button").addEventListener("click", () => {
+  const menu = document.querySelector("#mobile-menu");
+  const willOpen = menu.hidden;
+  menu.hidden = !willOpen;
+  document.querySelector("#menu-button").setAttribute("aria-expanded", String(willOpen));
+});
 window.addEventListener("hashchange", () => setRoute(routeFromHash()));
 setRoute(routeFromHash());
 renderHomeMeals();
 scheduleMealRefresh();
+initPublicViews();

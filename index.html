@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="css/components.css" />
     <link rel="stylesheet" href="css/home.css" />
     <link rel="stylesheet" href="css/meal-tray.css" />
+    <link rel="stylesheet" href="css/public-views.css" />
     <script type="module" src="js/app.js"></script>
   </head>
   <body>
@@ -35,6 +36,14 @@
 
       <nav class="desktop-nav" aria-label="주요 메뉴">
         <a href="#home" data-route="home" class="is-active">오늘의 식단</a>
+        <a href="#weekly" data-route="weekly">주간 식단</a>
+        <a href="#calendar" data-route="calendar">월간 메뉴</a>
+        <a href="#search" data-route="search">메뉴 검색</a>
+        <a href="#mypage" data-route="mypage">마이페이지</a>
+      </nav>
+
+      <nav class="mobile-menu" id="mobile-menu" aria-label="전체 메뉴" hidden>
+        <a href="#home" data-route="home">오늘의 식단</a>
         <a href="#weekly" data-route="weekly">주간 식단</a>
         <a href="#calendar" data-route="calendar">월간 메뉴</a>
         <a href="#search" data-route="search">메뉴 검색</a>
@@ -68,22 +77,59 @@
           </div>
         </section>
 
-        <section class="page-view placeholder-view" id="weekly-view" data-view="weekly" aria-labelledby="weekly-title">
-          <p class="eyebrow">한 주를 미리 확인해요</p>
-          <h1 id="weekly-title">주간 식단</h1>
-          <p>다음 개발 단계에서 실제 주간 탐색 화면이 연결됩니다.</p>
+        <section class="page-view" id="weekly-view" data-view="weekly" aria-labelledby="weekly-title">
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">한 주를 미리 확인해요</p>
+              <h1 id="weekly-title">주간 식단</h1>
+            </div>
+            <div class="period-controls" aria-label="주 이동">
+              <button type="button" id="week-prev" aria-label="지난주">‹</button>
+              <button type="button" id="week-today">이번 주</button>
+              <button type="button" id="week-next" aria-label="다음 주">›</button>
+            </div>
+          </div>
+          <p class="period-label" id="week-label"></p>
+          <div class="weekly-grid" id="weekly-grid"></div>
         </section>
 
-        <section class="page-view placeholder-view" id="calendar-view" data-view="calendar" aria-labelledby="calendar-title">
-          <p class="eyebrow">날짜별 식단 기록</p>
-          <h1 id="calendar-title">월간 메뉴</h1>
-          <p>다음 개발 단계에서 월간 달력 화면이 연결됩니다.</p>
+        <section class="page-view" id="calendar-view" data-view="calendar" aria-labelledby="calendar-title">
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">날짜별 식단 기록</p>
+              <h1 id="calendar-title">월간 메뉴</h1>
+            </div>
+            <div class="period-controls" aria-label="월 이동">
+              <button type="button" id="month-prev" aria-label="이전 달">‹</button>
+              <button type="button" id="month-today">이번 달</button>
+              <button type="button" id="month-next" aria-label="다음 달">›</button>
+            </div>
+          </div>
+          <p class="period-label" id="month-label"></p>
+          <div class="calendar-card">
+            <div class="calendar-weekdays" aria-hidden="true">
+              <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+          </div>
+          <section class="selected-day" id="selected-day" aria-live="polite"></section>
         </section>
 
-        <section class="page-view placeholder-view" id="search-view" data-view="search" aria-labelledby="search-title">
-          <p class="eyebrow">먹고 싶은 메뉴를 찾아요</p>
-          <h1 id="search-title">메뉴 검색</h1>
-          <p>다음 개발 단계에서 과거 메뉴 검색 화면이 연결됩니다.</p>
+        <section class="page-view" id="search-view" data-view="search" aria-labelledby="search-title">
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">먹고 싶은 메뉴를 찾아요</p>
+              <h1 id="search-title">메뉴 검색</h1>
+            </div>
+          </div>
+          <form class="search-form" id="menu-search-form" role="search">
+            <label class="sr-only" for="menu-search">음식 이름</label>
+            <span aria-hidden="true">⌕</span>
+            <input id="menu-search" type="search" placeholder="제육볶음, 돈가스처럼 검색해 보세요" autocomplete="off" />
+            <button type="reset" id="search-clear">지우기</button>
+          </form>
+          <div class="search-summary" id="search-summary">메뉴명을 입력하면 제공된 날짜를 찾아드려요.</div>
+          <div class="search-results" id="search-results"></div>
         </section>
 
         <section class="page-view placeholder-view" id="mypage-view" data-view="mypage" aria-labelledby="mypage-title">
