@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#14532d" />
+    <meta name="description" content="밥풀매니아 관리자 대시보드" />
+    <title>밥풀매니아 관리자</title>
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/admin.css" />
+    <script type="module" src="../js/admin.js"></script>
+  </head>
+  <body class="admin-body">
+    <div class="admin-shell">
+      <aside class="admin-sidebar">
+        <a class="admin-brand" href="../index.html">
+          <img src="../asset/밥풀매니아_로고_긴버전.png" alt="밥풀매니아" />
+          <span>관리자</span>
+        </a>
+        <nav class="admin-nav" aria-label="관리자 메뉴">
+          <a href="#dashboard" class="is-active" data-admin-route="dashboard">대시보드</a>
+          <a href="#meals" data-admin-route="meals">식단 관리</a>
+          <a href="#scanner" data-admin-route="scanner">QR 스캐너</a>
+          <a href="#users" data-admin-route="users">사용자 관리</a>
+          <a href="#usages" data-admin-route="usages">이용 내역</a>
+        </nav>
+        <a class="back-link" href="../index.html">← 사용자 화면</a>
+      </aside>
+
+      <header class="admin-header">
+        <div>
+          <p>밥풀매니아 운영</p>
+          <h1 id="admin-page-title">대시보드</h1>
+        </div>
+        <div class="admin-header__actions">
+          <span class="admin-mode" id="admin-mode">상태 확인 중</span>
+          <button id="admin-menu-button" type="button" aria-label="관리자 메뉴 열기" aria-expanded="false">☰</button>
+        </div>
+      </header>
+
+      <main class="admin-main">
+        <div class="admin-notice" id="admin-notice" hidden></div>
+
+        <section class="admin-view is-active" data-admin-view="dashboard">
+          <div class="stat-grid" id="admin-stats"></div>
+          <section class="admin-card">
+            <div class="admin-card__heading">
+              <div><p class="section-kicker">최근 등록</p><h2>다가오는 식단</h2></div>
+              <a href="#meals" data-admin-route="meals">식단 관리 →</a>
+            </div>
+            <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>날짜</th><th>구분</th><th>메뉴</th><th>공개</th></tr></thead><tbody id="dashboard-meals"></tbody></table></div>
+          </section>
+        </section>
+
+        <section class="admin-view" data-admin-view="meals">
+          <div class="admin-two-column">
+            <section class="admin-card">
+              <div class="admin-card__heading"><div><p class="section-kicker">수동 운영</p><h2>식단 등록</h2></div></div>
+              <form class="meal-form" id="meal-form">
+                <div class="form-row">
+                  <label>날짜<input name="meal_date" type="date" required /></label>
+                  <label>식사 구분<select name="meal_type" required><option value="breakfast">조식 · 1,000원</option><option value="lunch">중식 · 5,300원</option></select></label>
+                </div>
+                <label>메뉴명 목록<textarea name="menu_items" rows="9" placeholder="메뉴명을 한 줄에 하나씩 입력하세요." required></textarea><small>여러 메뉴를 그대로 붙여넣을 수 있습니다.</small></label>
+                <label>관리자 메모<textarea name="admin_note" rows="3" placeholder="선택 사항"></textarea></label>
+                <div class="check-row">
+                  <label><input name="is_operating" type="checkbox" checked /> 운영함</label>
+                  <label><input name="is_published" type="checkbox" checked /> 사용자에게 공개</label>
+                </div>
+                <button class="primary-button" type="submit">식단 저장</button>
+                <p class="form-message" id="meal-form-message" role="status"></p>
+              </form>
+            </section>
+            <section class="admin-card">
+              <div class="admin-card__heading"><div><p class="section-kicker">등록 현황</p><h2>식단 목록</h2></div></div>
+              <div class="meal-admin-list" id="meal-admin-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="admin-view" data-admin-view="scanner">
+          <section class="admin-card empty-admin-feature"><span>▦</span><h2>QR 스캐너</h2><p>다음 기능 커밋에서 카메라 스캔과 관리자 확인 처리를 연결합니다.</p></section>
+        </section>
+        <section class="admin-view" data-admin-view="users">
+          <section class="admin-card empty-admin-feature"><span>♙</span><h2>사용자 관리</h2><p>Supabase 프로필 검색과 계정 상태 관리를 연결할 예정입니다.</p></section>
+        </section>
+        <section class="admin-view" data-admin-view="usages">
+          <section class="admin-card empty-admin-feature"><span>₩</span><h2>이용 내역</h2><p>식권 처리 내역과 기간별 금액 통계를 연결할 예정입니다.</p></section>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
