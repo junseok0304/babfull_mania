@@ -22,3 +22,4 @@ js/config.local.json
 .cache/
 coverage/
 supabase/.temp/
+.vercel
