@@ -1,0 +1,72 @@
+.meal-tray {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border-radius: 16px;
+  background: #e5e7eb url("../asset/식판_배경.png") center / 100% 100% no-repeat;
+  isolation: isolate;
+}
+
+.tray-slot {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  padding: 3px;
+  border: 1px solid rgb(255 255 255 / 0.34);
+  background:
+    linear-gradient(145deg, rgb(22 163 74 / 0.80), rgb(21 128 61 / 0.93));
+  color: white;
+  text-align: center;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.22);
+}
+
+.tray-slot.has-image {
+  padding: 0;
+  background: #d4d4d8;
+}
+
+.tray-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tray-slot span {
+  display: -webkit-box;
+  overflow: hidden;
+  padding: 2px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: clamp(7px, 2.4vw, 12px);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.tray-slot--side-1 { left: 8.1%; top: 8.5%; width: 15.8%; height: 33.3%; border-radius: 13% / 10%; }
+.tray-slot--side-2 { left: 28.4%; top: 8.5%; width: 14.8%; height: 33.3%; border-radius: 13% / 10%; }
+.tray-slot--side-3 { left: 44.2%; top: 8.5%; width: 14.8%; height: 33.3%; border-radius: 13% / 10%; }
+.tray-slot--side-4 { left: 61.7%; top: 8.5%; width: 15.8%; height: 33.3%; border-radius: 13% / 10%; }
+.tray-slot--small { left: 80.1%; top: 8.5%; width: 12.5%; height: 22.5%; border-radius: 15% / 13%; }
+.tray-slot--rice { left: 8.9%; top: 49%; width: 35.4%; height: 40.1%; border-radius: 7% / 8%; }
+.tray-slot--soup { left: 49.1%; top: 49.5%; width: 28.6%; height: 40.8%; border-radius: 50%; }
+
+.tray-caption {
+  display: flex;
+  margin-top: 7px;
+  align-items: center;
+  gap: 6px;
+  color: var(--secondary);
+  font-size: 10px;
+}
+
+.tray-caption::before {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--primary);
+  content: "";
+}

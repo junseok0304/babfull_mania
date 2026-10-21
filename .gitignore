@@ -1,0 +1,22 @@
+# Product documents and local progress notes
+*.md
+
+# Secrets and environment-specific configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Local/reference material and operating-system files
+참고용/
+.DS_Store
+**/.DS_Store
+
+# Local runtime output
+*.log
+.cache/
+coverage/

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#16a34a" />
+    <meta
+      name="description"
+      content="성공회대학교 밥full학식당 식단과 QR 식권을 확인하는 밥풀매니아"
+    />
+    <title>밥풀매니아</title>
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/home.css" />
+    <link rel="stylesheet" href="css/meal-tray.css" />
+    <script type="module" src="js/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문 바로가기</a>
+    <div class="app-shell">
+      <header class="app-header">
+        <a class="brand" href="#home" aria-label="밥풀매니아 홈">
+          <img
+            src="asset/밥풀매니아_로고_긴버전.png"
+            alt="밥풀매니아"
+          />
+        </a>
+        <div class="header-actions">
+          <span class="data-mode" id="data-mode">로컬 미리보기</span>
+          <button class="icon-button" id="menu-button" type="button" aria-label="메뉴 열기" aria-expanded="false">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </header>
+
+      <nav class="desktop-nav" aria-label="주요 메뉴">
+        <a href="#home" data-route="home" class="is-active">오늘의 식단</a>
+        <a href="#weekly" data-route="weekly">주간 식단</a>
+        <a href="#calendar" data-route="calendar">월간 메뉴</a>
+        <a href="#search" data-route="search">메뉴 검색</a>
+        <a href="#mypage" data-route="mypage">마이페이지</a>
+      </nav>
+
+      <main id="main-content" tabindex="-1">
+        <section class="page-view is-active" id="home-view" data-view="home" aria-labelledby="home-title">
+          <div class="page-intro">
+            <p class="eyebrow" id="today-label"></p>
+            <div class="intro-row">
+              <div>
+                <h1 id="home-title">오늘, 뭐 먹지?</h1>
+                <p class="page-description" id="meal-guidance">현재 시간에 맞는 식단을 불러오고 있어요.</p>
+              </div>
+              <button class="date-button" id="today-button" type="button">오늘</button>
+            </div>
+          </div>
+
+          <div class="notice notice--preview" role="status">
+            <span class="notice-dot"></span>
+            Supabase 연결 전 로컬 예시 식단입니다. 운영시간은 개발 설정값으로 표시됩니다.
+          </div>
+
+          <div class="meal-list" id="meal-list" aria-live="polite"></div>
+
+          <div class="empty-state" id="meal-empty" hidden>
+            <div class="empty-state__icon" aria-hidden="true">🍚</div>
+            <h2>등록된 다음 식단이 없어요</h2>
+            <p>새로운 식단이 등록되면 이곳에 바로 표시됩니다.</p>
+          </div>
+        </section>
+
+        <section class="page-view placeholder-view" id="weekly-view" data-view="weekly" aria-labelledby="weekly-title">
+          <p class="eyebrow">한 주를 미리 확인해요</p>
+          <h1 id="weekly-title">주간 식단</h1>
+          <p>다음 개발 단계에서 실제 주간 탐색 화면이 연결됩니다.</p>
+        </section>
+
+        <section class="page-view placeholder-view" id="calendar-view" data-view="calendar" aria-labelledby="calendar-title">
+          <p class="eyebrow">날짜별 식단 기록</p>
+          <h1 id="calendar-title">월간 메뉴</h1>
+          <p>다음 개발 단계에서 월간 달력 화면이 연결됩니다.</p>
+        </section>
+
+        <section class="page-view placeholder-view" id="search-view" data-view="search" aria-labelledby="search-title">
+          <p class="eyebrow">먹고 싶은 메뉴를 찾아요</p>
+          <h1 id="search-title">메뉴 검색</h1>
+          <p>다음 개발 단계에서 과거 메뉴 검색 화면이 연결됩니다.</p>
+        </section>
+
+        <section class="page-view placeholder-view" id="mypage-view" data-view="mypage" aria-labelledby="mypage-title">
+          <p class="eyebrow">내 식권과 이용 기록</p>
+          <h1 id="mypage-title">마이페이지</h1>
+          <p>Supabase Auth 연결 후 카카오 로그인과 개인 QR 식권이 표시됩니다.</p>
+        </section>
+      </main>
+
+      <nav class="mobile-nav" aria-label="하단 주요 메뉴">
+        <a href="#home" data-route="home" class="is-active">
+          <img src="asset/btn_홈.png" alt="" />
+          <span>홈</span>
+        </a>
+        <a href="#weekly" data-route="weekly">
+          <img src="asset/btn_월간메뉴.png" alt="" />
+          <span>주간식단</span>
+        </a>
+        <a href="#mypage" data-route="mypage">
+          <img src="asset/btn_마이페이지.png" alt="" />
+          <span>마이페이지</span>
+        </a>
+      </nav>
+    </div>
+    <noscript>밥풀매니아를 이용하려면 JavaScript를 활성화해 주세요.</noscript>
+  </body>
+</html>
