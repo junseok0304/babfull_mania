@@ -1,11 +1,14 @@
 import { formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
 import { getSupabaseClient } from "./supabase-client.js";
+import { defaultOperationalSettings, getAutomaticMealType } from "./admin-utils.js";
 
-const titles = { dashboard: "대시보드", meals: "식단 관리", scanner: "QR 스캐너", users: "사용자 관리", usages: "이용 내역" };
+const titles = { dashboard: "대시보드", meals: "식단 관리", scanner: "QR 스캐너", users: "사용자 관리", usages: "이용 내역", settings: "운영 설정" };
 let adminMode = "demo";
 let meals = [...sampleMeals];
 let client = null;
 let qrScanner = null;
+let currentUserId = null;
+let operationalSettings = { ...defaultOperationalSettings };
 const demoUsages = [];
 const demoQrToken = "00000000-0000-4000-8000-000000000001";
 
@@ -25,6 +28,8 @@ const route = (nextRoute) => {
   document.querySelector(".admin-sidebar").classList.remove("is-open");
   document.querySelector("#admin-menu-button").setAttribute("aria-expanded", "false");
   if (safe === "usages") renderUsages();
+  if (safe === "users") renderUsers();
+  if (safe === "settings") renderSettings();
 };
 
 const mealLabel = (type) => type === "breakfast" ? "조식" : "중식";
@@ -70,6 +75,29 @@ const loadDatabaseMeals = async () => {
   meals = (data ?? []).map(mapDatabaseMeal);
 };
 
+const loadOperationalSettings = async () => {
+  if (!client) return;
+  const { data, error } = await client.from("app_settings").select("setting_value").eq("setting_key", "meal_hours").single();
+  if (error || !data?.setting_value) return;
+  const value = data.setting_value;
+  operationalSettings = {
+    breakfastStart: value.breakfast_start || defaultOperationalSettings.breakfastStart,
+    breakfastEnd: value.breakfast_end || defaultOperationalSettings.breakfastEnd,
+    lunchStart: value.lunch_start || defaultOperationalSettings.lunchStart,
+    lunchEnd: value.lunch_end || defaultOperationalSettings.lunchEnd,
+    scanBufferMinutes: Number(value.scan_buffer_minutes ?? defaultOperationalSettings.scanBufferMinutes),
+  };
+};
+
+const rejectAdminAccess = () => {
+  if (!["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    window.location.replace("/api/admin-denied");
+    return;
+  }
+  document.title = "400 · 관리자 접근 거부";
+  document.body.innerHTML = '<main class="admin-error"><span>400</span><h1>잘못된 요청입니다</h1><p>활성 관리자 계정으로 로그인해야 접근할 수 있습니다.</p><a href="../index.html#home">사용자 화면으로 돌아가기</a></main>';
+};
+
 const renderImportStatus = async () => {
   const target = document.querySelector("#yeongjun-import-status");
   const button = document.querySelector("#yeongjun-sync");
@@ -101,7 +129,7 @@ const initializeAdmin = async () => {
     document.querySelector("#admin-mode").textContent = "시연 모드";
     notice.hidden = false;
     notice.textContent = "Supabase 미연결 상태입니다. 아래 등록은 현재 화면의 시연 데이터에만 반영되며 실제 저장되지 않습니다.";
-    return;
+    return true;
   }
 
   const { data: sessionData } = await client.auth.getSession();
@@ -110,16 +138,16 @@ const initializeAdmin = async () => {
     ? await client.from("profiles").select("role, is_active").eq("id", userId).single()
     : { data: null };
   if (!profile || profile.role !== "admin" || !profile.is_active) {
-    document.querySelector("#admin-mode").textContent = "권한 없음";
-    notice.hidden = false;
-    notice.textContent = "활성 관리자 계정으로 로그인해야 실제 관리자 기능을 사용할 수 있습니다.";
-    document.querySelector("#meal-form").querySelector("button[type=submit]").disabled = true;
-    return;
+    rejectAdminAccess();
+    return false;
   }
 
+  currentUserId = userId;
+  await loadOperationalSettings();
   await loadDatabaseMeals();
   adminMode = "supabase";
   document.querySelector("#admin-mode").textContent = "관리자 연결됨";
+  return true;
 };
 
 const loadScannerLibrary = () => new Promise((resolve, reject) => {
@@ -148,31 +176,33 @@ const findProfileByToken = async (token) => {
   return data;
 };
 
-export const getAutomaticMealType = (now = new Date()) => {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
-  }).formatToParts(now);
-  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-  const minutes = Number(values.hour) * 60 + Number(values.minute);
-  const breakfastWindow = [7 * 60 + 30, 10 * 60];
-  const lunchWindow = [11 * 60, 14 * 60 + 30];
-  if (minutes >= breakfastWindow[0] && minutes <= breakfastWindow[1]) return "breakfast";
-  if (minutes >= lunchWindow[0] && minutes <= lunchWindow[1]) return "lunch";
-  return minutes < lunchWindow[0] ? "breakfast" : "lunch";
+const setScanDefaults = () => {
+  const date = formatDateKey(getSeoulDate());
+  const type = getAutomaticMealType(new Date(), operationalSettings);
+  document.querySelector("#scan-meal-date").value = date;
+  const input = document.querySelector(`input[name="scan_meal_type"][value="${type}"]`);
+  if (input) input.checked = true;
+  document.querySelector("#scan-auto-hint").textContent = `${date} · ${mealLabel(type)}으로 자동 선택했습니다. 인식 전에 변경할 수 있습니다.`;
+};
+
+const getScanSelection = () => {
+  const date = document.querySelector("#scan-meal-date").value;
+  const type = document.querySelector('input[name="scan_meal_type"]:checked')?.value;
+  if (!date || !type) throw new Error("이용 날짜와 식사 구분을 선택해 주세요.");
+  return { date, type };
 };
 
 const processUsage = async (profile) => {
-  const today = formatDateKey(getSeoulDate());
+  const { date, type } = getScanSelection();
   if (adminMode === "demo") {
-    const type = getAutomaticMealType();
-    if (demoUsages.some((usage) => usage.userId === profile.id && usage.date === today && usage.type === type)) {
+    if (demoUsages.some((usage) => usage.userId === profile.id && usage.date === date && usage.type === type)) {
       throw new Error("이미 사용 처리된 식권입니다.");
     }
-    const usage = { id: Date.now(), userId: profile.id, userName: profile.name, affiliation: profile.affiliation, date: today, type, status: "active", price: type === "breakfast" ? 1000 : 5300 };
+    const usage = { id: Date.now(), userId: profile.id, userName: profile.name, affiliation: profile.affiliation, date, type, status: "active", price: type === "breakfast" ? 1000 : 5300 };
     demoUsages.unshift(usage);
     return usage;
   }
-  const { data, error } = await client.rpc("process_scanned_meal_usage", { target_qr_token: profile.qr_token });
+  const { data, error } = await client.rpc("process_meal_usage", { target_qr_token: profile.qr_token, target_meal_type: type, target_meal_date: date });
   if (error) throw new Error(error.message || "식권을 처리하지 못했습니다.");
   return Array.isArray(data) ? data[0] : data;
 };
@@ -181,7 +211,7 @@ const renderScannedProfile = (profile, usage) => {
   const target = document.querySelector("#scan-result");
   target.innerHTML = `<div class="scanned-profile"><div class="scanned-profile__avatar">${escapeHtml(profile.name?.[0] || "밥")}</div><div><strong>${escapeHtml(profile.name || "이름 미등록")}</strong><span>${escapeHtml(profile.affiliation || "소속 미등록")}</span></div></div>
     <div class="usage-auto-result">
-      <span>${escapeHtml(usage.meal_date || usage.date)} · 자동 선택 · 제공시간 ±30분</span>
+      <span>${escapeHtml(usage.meal_date || usage.date)} · 관리자 확인 기준</span>
       <strong>${mealLabel(usage.meal_type || usage.type)} · ${Number(usage.price).toLocaleString("ko-KR")}원</strong>
       <p class="scan-message">${adminMode === "demo" ? "시연 이용 기록을 저장했습니다." : "이용 기록을 저장했습니다."}</p>
       <a href="#usages">날짜나 식사가 다른가요? 이용 내역에서 수정 →</a>
@@ -222,10 +252,87 @@ document.querySelector("#scanner-start").addEventListener("click", async () => {
 });
 
 document.querySelector("#scanner-stop").addEventListener("click", stopScanner);
+document.querySelector("#scan-use-current").addEventListener("click", setScanDefaults);
 document.querySelector("#manual-token-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   await handleDecodedToken(new FormData(event.currentTarget).get("qr_token"));
 });
+
+const userTypeLabel = (type) => ({ student: "학생", faculty: "교원", staff: "직원", other: "기타" })[type] || "기타";
+
+const renderUsers = async () => {
+  const target = document.querySelector("#user-admin-list");
+  if (!target) return;
+  if (adminMode !== "supabase") {
+    target.innerHTML = '<div class="scan-empty"><span>Supabase 관리자 연결이 필요합니다.</span></div>';
+    return;
+  }
+  target.innerHTML = '<p class="usage-admin-loading">사용자를 불러오고 있어요.</p>';
+  const formData = new FormData(document.querySelector("#user-search-form"));
+  const status = formData.get("status");
+  const { data, error } = await client.rpc("admin_search_profiles", {
+    search_query: String(formData.get("query") || "").trim() || null,
+    active_filter: status === "all" ? null : status === "active",
+  });
+  if (error) {
+    target.innerHTML = `<p class="usage-admin-loading is-error">${escapeHtml(error.message)}</p>`;
+    return;
+  }
+  if (!data?.length) {
+    target.innerHTML = '<div class="scan-empty"><span>조건에 맞는 사용자가 없습니다.</span></div>';
+    return;
+  }
+  target.innerHTML = data.map((profile) => {
+    const isSelf = profile.id === currentUserId;
+    return `<form class="user-admin-item" data-user-id="${escapeHtml(profile.id)}">
+      <div class="user-admin-person"><div class="scanned-profile__avatar">${escapeHtml(profile.name?.[0] || "밥")}</div><div><strong>${escapeHtml(profile.name || "이름 미등록")}</strong><span>${escapeHtml(profile.affiliation || "소속 미등록")} · ${userTypeLabel(profile.user_type)}</span></div></div>
+      <label>소속<input name="affiliation" value="${escapeHtml(profile.affiliation || "")}" placeholder="소속 미등록" /></label>
+      <label>사용자 유형<select name="user_type"><option value="student"${profile.user_type === "student" ? " selected" : ""}>학생</option><option value="faculty"${profile.user_type === "faculty" ? " selected" : ""}>교원</option><option value="staff"${profile.user_type === "staff" ? " selected" : ""}>직원</option><option value="other"${profile.user_type === "other" ? " selected" : ""}>기타</option></select></label>
+      <label>권한<select name="role"${isSelf ? " disabled" : ""}><option value="user"${profile.role === "user" ? " selected" : ""}>일반 사용자</option><option value="admin"${profile.role === "admin" ? " selected" : ""}>관리자</option></select>${isSelf ? '<input type="hidden" name="role" value="admin" />' : ""}</label>
+      <label class="user-active"><input name="is_active" type="checkbox"${profile.is_active ? " checked" : ""}${isSelf ? " disabled" : ""} /><span>${profile.is_active ? "활성" : "비활성"}</span>${isSelf ? '<input type="hidden" name="self_active" value="true" />' : ""}</label>
+      <button class="secondary-button" type="submit">저장</button>
+      <p class="user-admin-message" role="status">${isSelf ? "현재 로그인한 관리자 계정" : ""}</p>
+    </form>`;
+  }).join("");
+
+  target.querySelectorAll(".user-admin-item").forEach((form) => form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const message = form.querySelector(".user-admin-message");
+    const button = form.querySelector("button");
+    const values = new FormData(form);
+    button.disabled = true;
+    message.textContent = "저장 중…";
+    try {
+      const { error: updateError } = await client.rpc("admin_update_profile", {
+        target_user_id: form.dataset.userId,
+        target_role: values.get("role"),
+        target_user_type: values.get("user_type"),
+        target_affiliation: String(values.get("affiliation") || "").trim() || null,
+        target_is_active: values.has("is_active") || values.has("self_active"),
+      });
+      if (updateError) throw updateError;
+      message.classList.remove("is-error");
+      message.textContent = "저장됨";
+      await renderUsers();
+    } catch (updateError) {
+      message.classList.add("is-error");
+      message.textContent = updateError.message || "사용자 정보를 저장하지 못했습니다.";
+    } finally {
+      button.disabled = false;
+    }
+  }));
+};
+
+const renderSettings = () => {
+  const form = document.querySelector("#settings-form");
+  if (!form) return;
+  form.elements.breakfast_start.value = operationalSettings.breakfastStart;
+  form.elements.breakfast_end.value = operationalSettings.breakfastEnd;
+  form.elements.lunch_start.value = operationalSettings.lunchStart;
+  form.elements.lunch_end.value = operationalSettings.lunchEnd;
+  form.elements.scan_buffer_minutes.value = operationalSettings.scanBufferMinutes;
+  form.querySelector("button[type=submit]").disabled = adminMode !== "supabase";
+};
 
 const normalizeUsage = (record) => ({
   id: record.id,
@@ -304,6 +411,38 @@ const renderUsages = async () => {
 };
 
 document.querySelector("#usage-refresh").addEventListener("click", renderUsages);
+document.querySelector("#user-refresh").addEventListener("click", renderUsers);
+document.querySelector("#user-search-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  renderUsers();
+});
+document.querySelector("#user-search-form").elements.status.addEventListener("change", renderUsers);
+document.querySelector("#settings-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (adminMode !== "supabase") return;
+  const form = event.currentTarget;
+  const values = new FormData(form);
+  const message = document.querySelector("#settings-message");
+  const button = form.querySelector("button[type=submit]");
+  button.disabled = true;
+  message.textContent = "저장 중…";
+  try {
+    const payload = {
+      breakfast_start: values.get("breakfast_start"), breakfast_end: values.get("breakfast_end"),
+      lunch_start: values.get("lunch_start"), lunch_end: values.get("lunch_end"),
+      scan_buffer_minutes: Number(values.get("scan_buffer_minutes")),
+    };
+    const { error } = await client.rpc("admin_update_operating_settings", payload);
+    if (error) throw error;
+    await loadOperationalSettings();
+    setScanDefaults();
+    message.textContent = "운영 설정을 저장했습니다.";
+  } catch (error) {
+    message.textContent = error.message || "설정을 저장하지 못했습니다.";
+  } finally {
+    button.disabled = false;
+  }
+});
 
 document.querySelector("#yeongjun-sync").addEventListener("click", async (event) => {
   const button = event.currentTarget;
@@ -385,8 +524,11 @@ document.querySelector("#meal-form").addEventListener("submit", async (event) =>
 });
 
 document.querySelector("#meal-form").elements.meal_date.value = formatDateKey(getSeoulDate());
-await initializeAdmin();
-route(location.hash.slice(1));
-renderStats();
-renderMeals();
-await renderImportStatus();
+const accessAllowed = await initializeAdmin();
+if (accessAllowed !== false) {
+  setScanDefaults();
+  route(location.hash.slice(1));
+  renderStats();
+  renderMeals();
+  await renderImportStatus();
+}

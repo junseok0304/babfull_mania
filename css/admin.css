@@ -2,6 +2,38 @@
   background: #f4f7f5;
 }
 
+.admin-error {
+  display: grid;
+  min-height: 100vh;
+  padding: 24px;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.admin-error > span {
+  color: var(--primary-dark);
+  font-size: 72px;
+  font-weight: 900;
+}
+
+.admin-error h1 {
+  margin: 4px 0 8px;
+}
+
+.admin-error p {
+  margin: 0 0 22px;
+  color: var(--secondary);
+}
+
+.admin-error a {
+  padding: 12px 18px;
+  border-radius: 10px;
+  background: var(--primary-dark);
+  color: white;
+  font-weight: 800;
+}
+
 .admin-shell {
   min-height: 100vh;
 }
@@ -770,6 +802,181 @@
   color: var(--danger);
 }
 
+.scan-options {
+  display: grid;
+  margin-bottom: 14px;
+  padding: 14px;
+  gap: 10px;
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  background: #f0fdf4;
+}
+
+.scan-options__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--primary-dark);
+  font-size: 12px;
+}
+
+.scan-options__heading button {
+  border: 0;
+  background: transparent;
+  color: var(--primary-dark);
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.scan-options__fields {
+  display: grid;
+  gap: 9px;
+}
+
+.scan-options__fields > label,
+.settings-form > label,
+.settings-form fieldset label,
+.user-admin-item > label {
+  display: grid;
+  gap: 5px;
+  color: #3f3f46;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.scan-options input[type="date"],
+.settings-form input,
+.user-search input,
+.user-search select,
+.user-admin-item input,
+.user-admin-item select {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: white;
+  font: inherit;
+}
+
+.scan-options fieldset legend {
+  margin-bottom: 6px;
+  color: #3f3f46;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+#scan-auto-hint {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 10px;
+}
+
+.user-search {
+  display: grid;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.user-admin-list {
+  display: grid;
+  gap: 9px;
+}
+
+.user-admin-item {
+  display: grid;
+  padding: 13px;
+  gap: 9px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fafafa;
+}
+
+.user-admin-person {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.user-admin-person strong,
+.user-admin-person span {
+  display: block;
+}
+
+.user-admin-person span {
+  color: var(--secondary);
+  font-size: 10px;
+}
+
+.user-active {
+  display: flex !important;
+  align-items: center;
+  grid-template-columns: auto 1fr;
+}
+
+.user-active input {
+  width: auto;
+  height: auto;
+}
+
+.user-admin-message {
+  min-height: 14px;
+  margin: 0;
+  color: var(--primary-dark);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.user-admin-message.is-error {
+  color: var(--danger);
+}
+
+.settings-card {
+  max-width: 720px;
+}
+
+.settings-form {
+  display: grid;
+  gap: 15px;
+}
+
+.settings-form fieldset {
+  display: grid;
+  margin: 0;
+  padding: 13px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.settings-form legend {
+  padding: 0 5px;
+  color: var(--primary-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.settings-form small {
+  color: var(--secondary);
+  font-weight: 400;
+}
+
+.settings-price {
+  display: flex;
+  padding: 13px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-radius: 11px;
+  background: #f4f4f5;
+  font-size: 11px;
+}
+
 @media (min-width: 800px) {
   .admin-shell {
     display: grid;
@@ -805,6 +1012,25 @@
   }
 
   .usage-admin-message {
+    grid-column: 2 / -1;
+    text-align: right;
+  }
+
+  .scan-options__fields {
+    grid-template-columns: minmax(150px, 0.7fr) minmax(280px, 1.3fr);
+    align-items: end;
+  }
+
+  .user-search {
+    grid-template-columns: minmax(220px, 1fr) 150px auto;
+  }
+
+  .user-admin-item {
+    grid-template-columns: minmax(170px, 1.3fr) minmax(140px, 1fr) 110px 120px 80px auto;
+    align-items: end;
+  }
+
+  .user-admin-message {
     grid-column: 2 / -1;
     text-align: right;
   }

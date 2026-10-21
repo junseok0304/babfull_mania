@@ -23,6 +23,7 @@
           <a href="#scanner" data-admin-route="scanner">QR 스캐너</a>
           <a href="#users" data-admin-route="users">사용자 관리</a>
           <a href="#usages" data-admin-route="usages">이용 내역</a>
+          <a href="#settings" data-admin-route="settings">운영 설정</a>
         </nav>
         <a class="back-link" href="../index.html">← 사용자 화면</a>
       </aside>
@@ -89,6 +90,14 @@
           <div class="scanner-layout">
             <section class="admin-card scanner-card">
               <div class="admin-card__heading"><div><p class="section-kicker">카메라 인식</p><h2>QR 스캐너</h2></div></div>
+              <div class="scan-options" id="scan-options">
+                <div class="scan-options__heading"><strong>이번 인식의 기록 기준</strong><button id="scan-use-current" type="button">현재 기준으로 재설정</button></div>
+                <div class="scan-options__fields">
+                  <label>이용 날짜<input id="scan-meal-date" type="date" required /></label>
+                  <fieldset class="usage-segmented"><legend>식사 구분</legend><label><input type="radio" name="scan_meal_type" value="breakfast" /><span>조식 · 1,000원</span></label><label><input type="radio" name="scan_meal_type" value="lunch" /><span>중식 · 5,300원</span></label></fieldset>
+                </div>
+                <p id="scan-auto-hint">현재 제공시간을 기준으로 자동 선택됩니다. 인식 전에 관리자가 변경할 수 있습니다.</p>
+              </div>
               <div class="qr-reader" id="qr-reader"><div class="scanner-placeholder"><span>▦</span><p>카메라를 시작하면 QR 인식 화면이 표시됩니다.</p></div></div>
               <div class="scanner-controls">
                 <button class="primary-button" id="scanner-start" type="button">카메라 시작</button>
@@ -107,13 +116,35 @@
           </div>
         </section>
         <section class="admin-view" data-admin-view="users">
-          <section class="admin-card empty-admin-feature"><span>♙</span><h2>사용자 관리</h2><p>Supabase 프로필 검색과 계정 상태 관리를 연결할 예정입니다.</p></section>
+          <section class="admin-card">
+            <div class="admin-card__heading"><div><p class="section-kicker">Supabase 프로필</p><h2>사용자 관리</h2></div><button class="secondary-button" id="user-refresh" type="button">새로고침</button></div>
+            <form class="user-search" id="user-search-form">
+              <label><span class="sr-only">사용자 검색</span><input name="query" type="search" placeholder="이름 또는 소속 검색" /></label>
+              <label><span class="sr-only">계정 상태</span><select name="status"><option value="all">전체 상태</option><option value="active">활성</option><option value="inactive">비활성</option></select></label>
+              <button class="primary-button" type="submit">검색</button>
+            </form>
+            <p class="usage-admin-help">역할, 사용자 유형, 소속과 계정 활성 상태를 관리합니다. 비활성 계정은 QR 식권을 사용할 수 없습니다.</p>
+            <div class="user-admin-list" id="user-admin-list" aria-live="polite"></div>
+          </section>
         </section>
         <section class="admin-view" data-admin-view="usages">
           <section class="admin-card">
             <div class="admin-card__heading"><div><p class="section-kicker">운영진 정정</p><h2>이용 내역</h2></div><button class="secondary-button" id="usage-refresh" type="button">새로고침</button></div>
             <p class="usage-admin-help">QR 인식 기록의 이용 날짜, 조식·중식 구분 또는 정상·취소 상태를 수정할 수 있습니다.</p>
             <div class="usage-admin-list" id="usage-admin-list" aria-live="polite"></div>
+          </section>
+        </section>
+        <section class="admin-view" data-admin-view="settings">
+          <section class="admin-card settings-card">
+            <div class="admin-card__heading"><div><p class="section-kicker">운영 기준</p><h2>관리자 설정</h2></div></div>
+            <form class="settings-form" id="settings-form">
+              <fieldset><legend>조식 제공시간</legend><label>시작<input name="breakfast_start" type="time" required /></label><label>종료<input name="breakfast_end" type="time" required /></label></fieldset>
+              <fieldset><legend>중식 제공시간</legend><label>시작<input name="lunch_start" type="time" required /></label><label>종료<input name="lunch_end" type="time" required /></label></fieldset>
+              <label>QR 자동 선택 허용 범위<input name="scan_buffer_minutes" type="number" min="0" max="120" step="5" required /><small>제공시간 전후에 적용되는 분 단위 범위입니다.</small></label>
+              <div class="settings-price"><span>고정 식권 가격</span><strong>조식 1,000원 · 중식 5,300원</strong></div>
+              <button class="primary-button" type="submit">설정 저장</button>
+              <p class="form-message" id="settings-message" role="status"></p>
+            </form>
           </section>
         </section>
       </main>
