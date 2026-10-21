@@ -53,6 +53,8 @@ export const appSettings = {
   breakfastEnd: "09:30",
   lunchStart: "11:30",
   lunchEnd: "14:00",
+  breakfastPrice: 1000,
+  lunchPrice: 5300,
   isPreview: true,
 };
 

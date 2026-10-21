@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#14532d" />
     <meta name="description" content="밥풀매니아 관리자 대시보드" />
     <title>밥풀매니아 관리자</title>
-    <link rel="stylesheet" href="../css/global.css" />
-    <link rel="stylesheet" href="../css/admin.css" />
-    <script type="module" src="../js/admin.js"></script>
+    <link rel="stylesheet" href="../css/global.css?v=20261021-2" />
+    <link rel="stylesheet" href="../css/admin.css?v=20261021-2" />
+    <script type="module" src="../js/admin.js?v=20261021-2"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -33,10 +33,7 @@
           <p>밥풀매니아 운영</p>
           <h1 id="admin-page-title">대시보드</h1>
         </div>
-        <div class="admin-header__actions">
-          <span class="admin-mode" id="admin-mode">상태 확인 중</span>
-          <button id="admin-menu-button" type="button" aria-label="관리자 메뉴 열기" aria-expanded="false">☰</button>
-        </div>
+        <button id="admin-menu-button" type="button" aria-label="관리자 메뉴 열기" aria-expanded="false">☰</button>
       </header>
 
       <main class="admin-main">
@@ -67,7 +64,7 @@
               <form class="meal-form" id="meal-form">
                 <div class="form-row">
                   <label>날짜<input name="meal_date" type="date" required /></label>
-                  <label>식사 구분<select name="meal_type" required><option value="breakfast">조식 · 1,000원</option><option value="lunch">중식 · 5,300원</option></select></label>
+                  <label>식사 구분<select name="meal_type" required><option value="breakfast">조식</option><option value="lunch">중식</option></select></label>
                 </div>
                 <label>메뉴명 목록<textarea name="menu_items" rows="9" placeholder="메뉴명을 한 줄에 하나씩 입력하세요." required></textarea><small>여러 메뉴를 그대로 붙여넣을 수 있습니다.</small></label>
                 <label>관리자 메모<textarea name="admin_note" rows="3" placeholder="선택 사항"></textarea></label>
@@ -87,33 +84,32 @@
         </section>
 
         <section class="admin-view" data-admin-view="scanner">
-          <div class="scanner-layout">
-            <section class="admin-card scanner-card">
-              <div class="admin-card__heading"><div><p class="section-kicker">카메라 인식</p><h2>QR 스캐너</h2></div></div>
-              <div class="scan-options" id="scan-options">
-                <div class="scan-options__heading"><strong>이번 인식의 기록 기준</strong><button id="scan-use-current" type="button">현재 기준으로 재설정</button></div>
-                <div class="scan-options__fields">
-                  <label>이용 날짜<input id="scan-meal-date" type="date" required /></label>
-                  <fieldset class="usage-segmented"><legend>식사 구분</legend><label><input type="radio" name="scan_meal_type" value="breakfast" /><span>조식 · 1,000원</span></label><label><input type="radio" name="scan_meal_type" value="lunch" /><span>중식 · 5,300원</span></label></fieldset>
-                </div>
-                <p id="scan-auto-hint">현재 제공시간을 기준으로 자동 선택됩니다. 인식 전에 관리자가 변경할 수 있습니다.</p>
-              </div>
-              <div class="qr-reader" id="qr-reader"><div class="scanner-placeholder"><span>▦</span><p>카메라를 시작하면 QR 인식 화면이 표시됩니다.</p></div></div>
+          <section class="scanner-kiosk">
+              <a class="scanner-kiosk__exit" href="#dashboard">운영 화면으로</a>
+              <div class="scanner-kiosk__intro"><span>밥풀 정기권 QR</span><h2>정기권 이용 전<br />반드시 QR을 스캔해주세요!</h2><p>마이페이지의 QR을 아래 카메라 중앙에 보여주세요.</p></div>
+              <div class="qr-reader" id="qr-reader"><div class="scanner-placeholder"><span class="scanner-placeholder__icon">▦</span><strong>스캔 대기 중</strong><p>아래 버튼을 눌러 카메라를 켜주세요.</p></div></div>
               <div class="scanner-controls">
-                <button class="primary-button" id="scanner-start" type="button">카메라 시작</button>
+                <button class="primary-button" id="scanner-start" type="button">카메라 켜고 운영 시작</button>
                 <button class="secondary-button" id="scanner-stop" type="button" disabled>카메라 종료</button>
               </div>
-              <p class="scanner-help">카메라는 HTTPS 또는 localhost에서만 동작합니다. 권한을 허용한 뒤 QR을 사각형 안에 맞춰주세요.</p>
-              <details class="manual-token">
-                <summary>개발용 토큰 직접 입력</summary>
-                <form id="manual-token-form"><label>QR 토큰<input name="qr_token" value="00000000-0000-4000-8000-000000000001" required /></label><button type="submit">조회</button></form>
+              <div id="scan-result" aria-live="polite"><div class="scan-kiosk-status"><span class="scan-kiosk-status__dot"></span><strong>스캔을 기다리고 있어요</strong></div></div>
+              <details class="kiosk-admin-options">
+                <summary>운영진 설정</summary>
+                <div class="scan-options" id="scan-options">
+                  <div class="scan-options__heading"><strong>이번 인식의 기록 기준</strong><button id="scan-use-current" type="button">현재 기준으로 재설정</button></div>
+                  <div class="scan-options__fields">
+                    <label>이용 날짜<input id="scan-meal-date" type="date" required /></label>
+                    <fieldset class="usage-segmented"><legend>식사 구분</legend><label><input type="radio" name="scan_meal_type" value="breakfast" /><span id="scan-breakfast-label">조식 · 1,000원</span></label><label><input type="radio" name="scan_meal_type" value="lunch" /><span id="scan-lunch-label">중식 · 5,300원</span></label></fieldset>
+                  </div>
+                  <p id="scan-auto-hint">현재 제공시간을 기준으로 자동 선택됩니다. 인식 전에 관리자가 변경할 수 있습니다.</p>
+                </div>
+                <details class="manual-token">
+                  <summary>개발용 토큰 직접 입력</summary>
+                  <form id="manual-token-form"><label>QR 토큰<input name="qr_token" value="00000000-0000-4000-8000-000000000001" required /></label><button type="submit">조회</button></form>
+                </details>
               </details>
-            </section>
-            <section class="admin-card scan-result-card">
-              <div class="admin-card__heading"><div><p class="section-kicker">자동 기록</p><h2>식권 사용 처리</h2></div></div>
-              <div id="scan-result"><div class="scan-empty"><span>QR을 인식해 주세요.</span><p>현재 제공시간 기준으로 자동 선택되며, 인식 전에 관리자가 확인한 날짜와 식사로 기록됩니다.</p></div></div>
-            </section>
-          </div>
+              <div class="scan-success" id="scan-success" hidden><div class="scan-success__check">✓</div><h2>정기권 이용 처리가<br />완료되었습니다.</h2><p id="scan-success-detail"></p><span>감사합니다. 맛있게 드세요!</span></div>
+          </section>
         </section>
         <section class="admin-view" data-admin-view="users">
           <section class="admin-card">
@@ -141,7 +137,8 @@
               <fieldset><legend>조식 제공시간</legend><label>시작<input name="breakfast_start" type="time" required /></label><label>종료<input name="breakfast_end" type="time" required /></label></fieldset>
               <fieldset><legend>중식 제공시간</legend><label>시작<input name="lunch_start" type="time" required /></label><label>종료<input name="lunch_end" type="time" required /></label></fieldset>
               <label>QR 자동 선택 허용 범위<input name="scan_buffer_minutes" type="number" min="0" max="120" step="5" required /><small>제공시간 전후에 적용되는 분 단위 범위입니다.</small></label>
-              <div class="settings-price"><span>고정 식권 가격</span><strong>조식 1,000원 · 중식 5,300원</strong></div>
+              <fieldset><legend>식권 가격</legend><label>조식 가격<input name="breakfast_price" type="number" min="0" max="100000" step="100" required /></label><label>중식 가격<input name="lunch_price" type="number" min="0" max="100000" step="100" required /></label></fieldset>
+              <p class="settings-price-note">가격 변경 전 이용 기록은 기존 금액을 유지하고, 저장 이후 생성되는 이용 기록부터 새 가격이 적용됩니다.</p>
               <button class="primary-button" type="submit">설정 저장</button>
               <p class="form-message" id="settings-message" role="status"></p>
             </form>

@@ -9,6 +9,8 @@ let client = null;
 let qrScanner = null;
 let currentUserId = null;
 let operationalSettings = { ...defaultOperationalSettings };
+let scannerAudioContext = null;
+let scanBusy = false;
 const demoUsages = [];
 const demoQrToken = "00000000-0000-4000-8000-000000000001";
 
@@ -21,6 +23,7 @@ const escapeHtml = (value) => String(value ?? "")
 
 const route = (nextRoute) => {
   const safe = titles[nextRoute] ? nextRoute : "dashboard";
+  document.body.classList.toggle("is-scanner-mode", safe === "scanner");
   if (safe !== "scanner" && qrScanner?.isScanning) stopScanner();
   document.querySelectorAll("[data-admin-view]").forEach((view) => view.classList.toggle("is-active", view.dataset.adminView === safe));
   document.querySelectorAll("[data-admin-route]").forEach((link) => link.classList.toggle("is-active", link.dataset.adminRoute === safe));
@@ -77,15 +80,20 @@ const loadDatabaseMeals = async () => {
 
 const loadOperationalSettings = async () => {
   if (!client) return;
-  const { data, error } = await client.from("app_settings").select("setting_value").eq("setting_key", "meal_hours").single();
-  if (error || !data?.setting_value) return;
-  const value = data.setting_value;
+  const [{ data: hours }, { data: prices }] = await Promise.all([
+    client.from("app_settings").select("setting_value").eq("setting_key", "meal_hours").single(),
+    client.from("app_settings").select("setting_value").eq("setting_key", "meal_prices").single(),
+  ]);
+  const value = hours?.setting_value ?? {};
+  const priceValue = prices?.setting_value ?? {};
   operationalSettings = {
     breakfastStart: value.breakfast_start || defaultOperationalSettings.breakfastStart,
     breakfastEnd: value.breakfast_end || defaultOperationalSettings.breakfastEnd,
     lunchStart: value.lunch_start || defaultOperationalSettings.lunchStart,
     lunchEnd: value.lunch_end || defaultOperationalSettings.lunchEnd,
     scanBufferMinutes: Number(value.scan_buffer_minutes ?? defaultOperationalSettings.scanBufferMinutes),
+    breakfastPrice: Number(priceValue.breakfast ?? defaultOperationalSettings.breakfastPrice),
+    lunchPrice: Number(priceValue.lunch ?? defaultOperationalSettings.lunchPrice),
   };
 };
 
@@ -103,7 +111,7 @@ const renderImportStatus = async () => {
   const button = document.querySelector("#yeongjun-sync");
   if (adminMode !== "supabase") {
     button.disabled = true;
-    target.innerHTML = "<p><strong>Supabase 연결 후 사용할 수 있습니다.</strong></p><p>원본 주소와 파서는 실제 영준닷컴 응답으로 검증되었습니다.</p>";
+    target.innerHTML = "<p><strong>운영 데이터 연결 후 사용할 수 있습니다.</strong></p><p>원본 주소와 파서는 실제 영준닷컴 응답으로 검증되었습니다.</p>";
     return;
   }
   const { data, error } = await client.from("meal_import_logs").select("status, started_at, completed_at, inserted_count, updated_count, error_message")
@@ -126,9 +134,8 @@ const initializeAdmin = async () => {
   client = await getSupabaseClient();
   const notice = document.querySelector("#admin-notice");
   if (!client) {
-    document.querySelector("#admin-mode").textContent = "시연 모드";
     notice.hidden = false;
-    notice.textContent = "Supabase 미연결 상태입니다. 아래 등록은 현재 화면의 시연 데이터에만 반영되며 실제 저장되지 않습니다.";
+    notice.textContent = "운영 데이터를 불러오지 못했습니다. 아래 등록은 현재 화면의 시연 데이터에만 반영되며 실제 저장되지 않습니다.";
     return true;
   }
 
@@ -146,7 +153,6 @@ const initializeAdmin = async () => {
   await loadOperationalSettings();
   await loadDatabaseMeals();
   adminMode = "supabase";
-  document.querySelector("#admin-mode").textContent = "관리자 연결됨";
   return true;
 };
 
@@ -162,8 +168,35 @@ const loadScannerLibrary = () => new Promise((resolve, reject) => {
 const stopScanner = async () => {
   if (qrScanner?.isScanning) await qrScanner.stop();
   qrScanner = null;
+  document.body.classList.remove("scanner-is-active");
   document.querySelector("#scanner-start").disabled = false;
   document.querySelector("#scanner-stop").disabled = true;
+};
+
+const prepareScannerAudio = async () => {
+  scannerAudioContext ??= new (window.AudioContext || window.webkitAudioContext)();
+  if (scannerAudioContext.state === "suspended") await scannerAudioContext.resume();
+};
+
+const playSuccessChime = () => {
+  if (!scannerAudioContext) return;
+  const now = scannerAudioContext.currentTime;
+  [659.25, 783.99, 1046.5].forEach((frequency, index) => {
+    const oscillator = scannerAudioContext.createOscillator();
+    const gain = scannerAudioContext.createGain();
+    oscillator.frequency.value = frequency;
+    oscillator.type = "sine";
+    gain.gain.setValueAtTime(0.0001, now + index * 0.11);
+    gain.gain.exponentialRampToValueAtTime(0.18, now + index * 0.11 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.11 + 0.24);
+    oscillator.connect(gain).connect(scannerAudioContext.destination);
+    oscillator.start(now + index * 0.11);
+    oscillator.stop(now + index * 0.11 + 0.26);
+  });
+};
+
+const renderScannerStatus = (message, isError = false) => {
+  document.querySelector("#scan-result").innerHTML = `<div class="scan-kiosk-status${isError ? " is-error" : ""}"><span class="scan-kiosk-status__dot"></span><strong>${escapeHtml(message)}</strong></div>`;
 };
 
 const findProfileByToken = async (token) => {
@@ -183,6 +216,8 @@ const setScanDefaults = () => {
   const input = document.querySelector(`input[name="scan_meal_type"][value="${type}"]`);
   if (input) input.checked = true;
   document.querySelector("#scan-auto-hint").textContent = `${date} · ${mealLabel(type)}으로 자동 선택했습니다. 인식 전에 변경할 수 있습니다.`;
+  document.querySelector("#scan-breakfast-label").textContent = `조식 · ${operationalSettings.breakfastPrice.toLocaleString("ko-KR")}원`;
+  document.querySelector("#scan-lunch-label").textContent = `중식 · ${operationalSettings.lunchPrice.toLocaleString("ko-KR")}원`;
 };
 
 const getScanSelection = () => {
@@ -198,7 +233,7 @@ const processUsage = async (profile) => {
     if (demoUsages.some((usage) => usage.userId === profile.id && usage.date === date && usage.type === type)) {
       throw new Error("이미 사용 처리된 식권입니다.");
     }
-    const usage = { id: Date.now(), userId: profile.id, userName: profile.name, affiliation: profile.affiliation, date, type, status: "active", price: type === "breakfast" ? 1000 : 5300 };
+    const usage = { id: Date.now(), userId: profile.id, userName: profile.name, affiliation: profile.affiliation, date, type, status: "active", price: type === "breakfast" ? operationalSettings.breakfastPrice : operationalSettings.lunchPrice };
     demoUsages.unshift(usage);
     return usage;
   }
@@ -208,31 +243,29 @@ const processUsage = async (profile) => {
 };
 
 const renderScannedProfile = (profile, usage) => {
-  const target = document.querySelector("#scan-result");
-  target.innerHTML = `<div class="scanned-profile"><div class="scanned-profile__avatar">${escapeHtml(profile.name?.[0] || "밥")}</div><div><strong>${escapeHtml(profile.name || "이름 미등록")}</strong><span>${escapeHtml(profile.affiliation || "소속 미등록")}</span></div></div>
-    <div class="usage-auto-result">
-      <span>${escapeHtml(usage.meal_date || usage.date)} · 관리자 확인 기준</span>
-      <strong>${mealLabel(usage.meal_type || usage.type)} · ${Number(usage.price).toLocaleString("ko-KR")}원</strong>
-      <p class="scan-message">${adminMode === "demo" ? "시연 이용 기록을 저장했습니다." : "이용 기록을 저장했습니다."}</p>
-      <a href="#usages">날짜나 식사가 다른가요? 이용 내역에서 수정 →</a>
-    </div>`;
+  const overlay = document.querySelector("#scan-success");
+  document.querySelector("#scan-success-detail").textContent = `${mealLabel(usage.meal_type || usage.type)} · ${Number(usage.price).toLocaleString("ko-KR")}원`;
+  overlay.hidden = false;
+  playSuccessChime();
+  renderScannerStatus("처리가 완료되었습니다. 다음 QR을 기다립니다.");
 };
 
 const handleDecodedToken = async (token) => {
-  const target = document.querySelector("#scan-result");
-  target.innerHTML = '<div class="scan-empty"><span>사용자를 확인하고 있어요.</span></div>';
+  renderScannerStatus("QR을 확인하고 있어요.");
   try {
     const profile = await findProfileByToken(token.trim());
-    target.innerHTML = '<div class="scan-empty"><span>이용 기록을 저장하고 있어요.</span></div>';
+    renderScannerStatus("정기권 이용 기록을 저장하고 있어요.");
     const usage = await processUsage(profile);
     renderScannedProfile(profile, usage);
     renderStats();
+    return true;
   } catch (error) {
-    target.innerHTML = `<div class="scan-empty"><span>조회 실패</span><p>${escapeHtml(error.message)}</p></div>`;
+    renderScannerStatus(error.message || "QR을 처리하지 못했습니다.", true);
+    return false;
   }
 };
 
-document.querySelector("#scanner-start").addEventListener("click", async () => {
+const startScanner = async () => {
   const start = document.querySelector("#scanner-start");
   const stop = document.querySelector("#scanner-stop");
   start.disabled = true;
@@ -240,22 +273,42 @@ document.querySelector("#scanner-start").addEventListener("click", async () => {
     const Html5Qrcode = await loadScannerLibrary();
     document.querySelector("#qr-reader").innerHTML = "";
     qrScanner = new Html5Qrcode("qr-reader");
-    await qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 230, height: 230 } }, async (text) => {
+    const boxSize = Math.max(240, Math.min(420, window.innerWidth - 90));
+    await qrScanner.start({ facingMode: "environment" }, { fps: 12, qrbox: { width: boxSize, height: boxSize } }, async (text) => {
+      if (scanBusy) return;
+      scanBusy = true;
       await stopScanner();
-      await handleDecodedToken(text);
+      const succeeded = await handleDecodedToken(text);
+      window.setTimeout(async () => {
+        document.querySelector("#scan-success").hidden = true;
+        scanBusy = false;
+        if (location.hash === "#scanner") await startScanner();
+      }, succeeded ? 2800 : 2200);
     }, () => {});
+    document.body.classList.add("scanner-is-active");
     stop.disabled = false;
+    renderScannerStatus("카메라 중앙에 QR을 보여주세요.");
   } catch (error) {
     start.disabled = false;
     document.querySelector("#qr-reader").innerHTML = `<div class="scanner-placeholder"><span>!</span><p>${escapeHtml(error.message || "카메라를 시작하지 못했습니다.")}</p></div>`;
   }
+};
+
+document.querySelector("#scanner-start").addEventListener("click", async () => {
+  await prepareScannerAudio();
+  await startScanner();
 });
 
 document.querySelector("#scanner-stop").addEventListener("click", stopScanner);
 document.querySelector("#scan-use-current").addEventListener("click", setScanDefaults);
 document.querySelector("#manual-token-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  await handleDecodedToken(new FormData(event.currentTarget).get("qr_token"));
+  await prepareScannerAudio();
+  const succeeded = await handleDecodedToken(new FormData(event.currentTarget).get("qr_token"));
+  if (succeeded) window.setTimeout(() => {
+    document.querySelector("#scan-success").hidden = true;
+    renderScannerStatus("스캔을 기다리고 있어요.");
+  }, 2800);
 });
 
 const userTypeLabel = (type) => ({ student: "학생", faculty: "교원", staff: "직원", other: "기타" })[type] || "기타";
@@ -264,7 +317,7 @@ const renderUsers = async () => {
   const target = document.querySelector("#user-admin-list");
   if (!target) return;
   if (adminMode !== "supabase") {
-    target.innerHTML = '<div class="scan-empty"><span>Supabase 관리자 연결이 필요합니다.</span></div>';
+    target.innerHTML = '<div class="scan-empty"><span>운영 데이터 연결이 필요합니다.</span></div>';
     return;
   }
   target.innerHTML = '<p class="usage-admin-loading">사용자를 불러오고 있어요.</p>';
@@ -331,6 +384,8 @@ const renderSettings = () => {
   form.elements.lunch_start.value = operationalSettings.lunchStart;
   form.elements.lunch_end.value = operationalSettings.lunchEnd;
   form.elements.scan_buffer_minutes.value = operationalSettings.scanBufferMinutes;
+  form.elements.breakfast_price.value = operationalSettings.breakfastPrice;
+  form.elements.lunch_price.value = operationalSettings.lunchPrice;
   form.querySelector("button[type=submit]").disabled = adminMode !== "supabase";
 };
 
@@ -352,7 +407,7 @@ const updateUsage = async (usageId, date, type, status, note) => {
     if (!usage) throw new Error("이용 기록을 찾을 수 없습니다.");
     const conflict = status === "active" && demoUsages.some((item) => item !== usage && item.userId === usage.userId && item.date === date && item.type === type && item.status === "active");
     if (conflict) throw new Error("같은 날짜·식사 이용 기록이 이미 있습니다.");
-    Object.assign(usage, { date, type, status, note, price: type === "breakfast" ? 1000 : 5300 });
+    Object.assign(usage, { date, type, status, note, price: type === "breakfast" ? operationalSettings.breakfastPrice : operationalSettings.lunchPrice });
     return;
   }
   const { error } = await client.rpc("admin_update_meal_usage", {
@@ -434,6 +489,11 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
     };
     const { error } = await client.rpc("admin_update_operating_settings", payload);
     if (error) throw error;
+    const { error: priceError } = await client.rpc("admin_update_pricing_settings", {
+      breakfast_price: Number(values.get("breakfast_price")),
+      lunch_price: Number(values.get("lunch_price")),
+    });
+    if (priceError) throw priceError;
     await loadOperationalSettings();
     setScanDefaults();
     message.textContent = "운영 설정을 저장했습니다.";

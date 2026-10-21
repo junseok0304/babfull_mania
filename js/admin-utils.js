@@ -4,6 +4,8 @@ export const defaultOperationalSettings = Object.freeze({
   lunchStart: "11:30",
   lunchEnd: "14:00",
   scanBufferMinutes: 30,
+  breakfastPrice: 1000,
+  lunchPrice: 5300,
 });
 
 const toMinutes = (value) => {
