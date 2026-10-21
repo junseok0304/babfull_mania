@@ -6,28 +6,27 @@ const corsHeaders = {
 };
 
 type NutritionRow = Record<string, string | null>;
+type MealItem = { id: number; original_menu_text: string; serving_grams: number | null; foods?: { original_name?: string } | Array<{ original_name?: string }> | null };
 
-const normalize = (value: string) => value
-  .normalize("NFKC")
-  .toLocaleLowerCase("ko-KR")
-  .replace(/\([^)]*\)|\[[^\]]*\]|\*+/g, "")
-  .replace(/\s+/g, "")
-  .trim();
+const normalize = (value: string) => value.normalize("NFKC").toLocaleLowerCase("ko-KR")
+  .replace(/\([^)]*\)|\[[^\]]*\]|\*+/g, "").replace(/\s+/g, "")
+  .replaceAll("까스", "가스").replaceAll("육계장", "육개장").replaceAll("집곡밥", "잡곡밥").trim();
 
-const queryName = (value: string) => value
-  .replace(/\([^)]*\)|\[[^\]]*\]|\*+/g, "")
-  .replace(/^(수제|직접만든|오늘의)\s*/u, "")
-  .trim();
+const queryName = (value: string) => value.replace(/\([^)]*\)|\[[^\]]*\]|\*+/g, "")
+  .replace(/^(수제|직접만든|오늘의)\s*/u, "").replaceAll("육계장", "육개장").replaceAll("집곡밥", "잡곡밥").trim();
+
+const splitMenuNames = (value: string) => value
+  .replace(/\s+(?=(?:도시락김|유부초밥|깍두기|배추김치|석박지|무생채|계란후라이|삶은계란)$)/u, "/")
+  .split(/\s*(?:\/|&)\s*/u)
+  .map((name) => name.trim())
+  .filter(Boolean);
 
 const numberFrom = (value: unknown) => {
   const match = String(value ?? "").replaceAll(",", "").match(/-?\d+(?:\.\d+)?/);
   return match ? Number(match[0]) : null;
 };
 
-const relatedFoodName = (foods: unknown) => {
-  if (Array.isArray(foods)) return foods[0]?.original_name;
-  return (foods as { original_name?: string } | null)?.original_name;
-};
+const relatedFoodName = (foods: MealItem["foods"]) => Array.isArray(foods) ? foods[0]?.original_name : foods?.original_name;
 
 const getRows = (payload: Record<string, unknown>): NutritionRow[] => {
   const response = payload?.response as Record<string, unknown> | undefined;
@@ -35,67 +34,92 @@ const getRows = (payload: Record<string, unknown>): NutritionRow[] => {
   const items = body?.items as { item?: NutritionRow | NutritionRow[] } | NutritionRow[] | undefined;
   if (Array.isArray(items)) return items;
   const item = items?.item;
-  if (Array.isArray(item)) return item;
-  return item ? [item] : [];
+  return Array.isArray(item) ? item : item ? [item] : [];
 };
 
 const pickBest = (menuName: string, rows: NutritionRow[]) => {
   const wanted = normalize(menuName);
-  return rows
-    .map((row) => {
-      const candidate = normalize(row.FOOD_NM_KR || "");
-      const score = candidate === wanted ? 100 : candidate.includes(wanted) || wanted.includes(candidate) ? 60 : 0;
-      return { row, score };
-    })
-    .filter(({ row, score }) => score && numberFrom(row.AMT_NUM1) !== null)
+  return rows.map((row) => {
+    const candidate = normalize(row.FOOD_NM_KR || "");
+    const score = candidate === wanted ? 100 : candidate.startsWith(wanted) || candidate.endsWith(wanted) ? 75
+      : candidate.includes(wanted) || wanted.includes(candidate) ? 55 : 0;
+    return { row, score: score + (row.DB_GRP_NM === "음식" || row.DB_GRP_CM === "D" ? 5 : 0) };
+  }).filter(({ row, score }) => score > 0 && numberFrom(row.AMT_NUM1) !== null)
     .sort((a, b) => b.score - a.score || String(b.row.UPDATE_DATE || "").localeCompare(String(a.row.UPDATE_DATE || "")))[0]?.row;
 };
 
-const fetchDataGoNutrition = async (serviceKey: string, menuName: string) => {
+const defaultServingGrams = (name: string) => {
+  const value = normalize(name);
+  if (/밥$|볶음밥|비빔밥|덮밥|카레라이스|짜장/.test(value)) return 200;
+  if (/국$|탕$|찌개$|장국|냉국|국수|우동|묵사발/.test(value)) return 250;
+  if (/김치|깍두기|석박지|단무지|장아찌|절임/.test(value)) return 40;
+  if (/샐러드|무침|나물|볶음|조림/.test(value)) return 70;
+  if (/우유|주스|쥬스|음료|냉차|식혜|야쿠르트|요거트/.test(value)) return 200;
+  if (/과일|사과|바나나|오렌지|옥수수/.test(value)) return 100;
+  if (/가스|불고기|갈비|찜닭|닭볶음탕|생선|두부|계란|달걀|떡볶이|튀김/.test(value)) return 120;
+  return 80;
+};
+
+const fallbackCalories = (name: string, servingGrams: number) => {
+  const value = normalize(name);
+  const per100g = /밥$|볶음밥|비빔밥|덮밥|카레라이스|짜장/.test(value) ? 150
+    : /국$|탕$|찌개$|장국|냉국|국수|우동|묵사발/.test(value) ? 55
+    : /김치|깍두기|석박지|단무지|장아찌|절임/.test(value) ? 35
+    : /샐러드|무침|나물/.test(value) ? 90
+    : /볶음|조림|잡채/.test(value) ? 180
+    : /가스|튀김|강정/.test(value) ? 280
+    : /불고기|갈비|찜닭|닭볶음탕|생선|두부|계란|달걀|떡볶이/.test(value) ? 230
+    : /우유|주스|쥬스|음료|냉차|식혜|야쿠르트|요거트/.test(value) ? 50
+    : /과일|사과|바나나|오렌지|옥수수/.test(value) ? 60 : 140;
+  return Math.round(per100g * servingGrams / 100);
+};
+
+const mapConcurrent = async <T, R>(values: T[], concurrency: number, work: (value: T) => Promise<R>) => {
+  const results = new Array<R>(values.length);
+  let cursor = 0;
+  await Promise.all(Array.from({ length: Math.min(concurrency, values.length) }, async () => {
+    while (cursor < values.length) { const index = cursor++; results[index] = await work(values[index]); }
+  }));
+  return results;
+};
+
+const fetchDataGo = async (serviceKey: string, menuName: string) => {
   const url = new URL("https://apis.data.go.kr/1471000/FoodNtrCpntDbInfo03/getFoodNtrCpntDbInq03");
   url.searchParams.set("serviceKey", serviceKey);
   url.searchParams.set("pageNo", "1");
-  url.searchParams.set("numOfRows", "20");
+  url.searchParams.set("numOfRows", "50");
   url.searchParams.set("type", "json");
   url.searchParams.set("FOOD_NM_KR", queryName(menuName));
-
-  const response = await fetch(url, { signal: AbortSignal.timeout(7000) });
+  const response = await fetch(url, { signal: AbortSignal.timeout(9000) });
   if (!response.ok) throw new Error(`MFDS HTTP ${response.status}`);
   const payload = await response.json();
-  const resultCode = String(payload?.header?.resultCode ?? payload?.body?.header?.resultCode ?? payload?.response?.header?.resultCode ?? "00");
-  if (resultCode !== "00" && resultCode !== "0") throw new Error(`MFDS ${resultCode}`);
+  const code = String(payload?.header?.resultCode ?? payload?.response?.header?.resultCode ?? "00");
+  if (code !== "00" && code !== "0") throw new Error(`MFDS ${code}`);
   return pickBest(menuName, getRows(payload));
 };
 
-const fetchFoodSafetyNutrition = async (serviceKey: string, menuName: string) => {
+const fetchFoodSafety = async (serviceKey: string, menuName: string) => {
   const filter = `FOOD_NM_KR=${encodeURIComponent(queryName(menuName))}`;
-  const url = `https://openapi.foodsafetykorea.go.kr/api/${serviceKey}/I2791/json/1/20/${filter}`;
-  const response = await fetch(url, { signal: AbortSignal.timeout(7000) });
+  const response = await fetch(`https://openapi.foodsafetykorea.go.kr/api/${serviceKey}/I2791/json/1/50/${filter}`, { signal: AbortSignal.timeout(7000) });
   if (!response.ok) throw new Error(`FoodSafetyKorea HTTP ${response.status}`);
-  const payload = await response.json();
-  const service = payload?.I2791;
-  const resultCode = String(service?.RESULT?.CODE ?? "");
-  if (!resultCode.startsWith("INFO")) throw new Error(`FoodSafetyKorea ${resultCode || "INVALID_RESPONSE"}`);
+  const service = (await response.json())?.I2791;
+  const code = String(service?.RESULT?.CODE ?? "");
+  if (!code.startsWith("INFO")) throw new Error(`FoodSafetyKorea ${code || "INVALID_RESPONSE"}`);
   return pickBest(menuName, Array.isArray(service?.row) ? service.row : []);
 };
 
 const fetchNutrition = async (foodSafetyKey: string | undefined, dataGoKey: string | undefined, menuName: string) => {
-  if (foodSafetyKey) {
-    try {
-      const row = await fetchFoodSafetyNutrition(foodSafetyKey, menuName);
-      if (row) return row;
-    } catch (error) {
-      console.warn("식품안전나라 I2791 조회 실패, 대체 API를 확인합니다.", error);
-    }
+  if (dataGoKey) {
+    try { const row = await fetchDataGo(dataGoKey, menuName); if (row) return { row, source: "mfds-data-go-kr" }; }
+    catch (error) { console.warn("공공데이터포털 영양정보 조회 실패", error); }
   }
-  if (dataGoKey) return fetchDataGoNutrition(dataGoKey, menuName);
-  throw new Error("사용 가능한 식약처 영양정보 API가 없습니다.");
+  if (foodSafetyKey) { const row = await fetchFoodSafety(foodSafetyKey, menuName); if (row) return { row, source: "mfds-foodsafetykorea" }; }
+  return null;
 };
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (request.method !== "POST") return new Response("Method not allowed", { status: 405, headers: corsHeaders });
-
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -104,52 +128,39 @@ Deno.serve(async (request) => {
     if (!supabaseUrl || !serviceRoleKey || (!foodSafetyKey && !dataGoKey)) throw new Error("서버 환경변수가 설정되지 않았습니다.");
 
     const body = await request.json();
-    const mealIds = [...new Set((body?.mealIds ?? []).map(Number).filter(Number.isSafeInteger))].slice(0, 10);
+    const mealIds = [...new Set((body?.mealIds ?? []).map(Number).filter(Number.isSafeInteger))].slice(0, 50);
     if (!mealIds.length) return Response.json({ estimates: [] }, { headers: corsHeaders });
-
     const db = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-    const { data: meals, error: mealsError } = await db
-      .from("meals")
-      .select("id, meal_items(original_menu_text, serving_grams, foods(original_name))")
-      .in("id", mealIds)
-      .eq("is_published", true)
-      .eq("is_operating", true);
+    const { data: meals, error: mealsError } = await db.from("meals")
+      .select("id, meal_items(id, original_menu_text, serving_grams, foods(original_name))")
+      .in("id", mealIds).eq("is_published", true).eq("is_operating", true);
     if (mealsError) throw mealsError;
 
-    const menuNames = [...new Set((meals ?? []).flatMap((meal) => meal.meal_items ?? [])
-      .map((item) => item.original_menu_text || relatedFoodName(item.foods))
-      .filter(Boolean))];
-    const normalizedQueries = menuNames.map(normalize);
-    const { data: cachedRows, error: cacheError } = await db
-      .from("food_nutrition_cache")
-      .select("*")
-      .in("normalized_query", normalizedQueries);
-    if (cacheError) throw cacheError;
+    const namesByKey = new Map<string, string>();
+    (meals ?? []).flatMap((meal) => meal.meal_items ?? []).forEach((item: MealItem) => {
+      const name = item.original_menu_text || relatedFoodName(item.foods);
+      if (name && !/^\[?천원의\s*아침밥/u.test(name)) {
+        splitMenuNames(name).forEach((component) => namesByKey.set(normalize(component), component));
+      }
+    });
+    const keys = [...namesByKey.keys()];
+    const cachedResult = keys.length ? await db.from("food_nutrition_cache").select("*").in("normalized_query", keys) : { data: [], error: null };
+    if (cachedResult.error) throw cachedResult.error;
+    const nutritionByQuery = new Map((cachedResult.data ?? []).map((row) => [row.normalized_query, row]));
 
-    const nutritionByQuery = new Map((cachedRows ?? []).map((row) => [row.normalized_query, row]));
-    for (const name of menuNames) {
-      const key = normalize(name);
+    await mapConcurrent([...namesByKey.entries()], 6, async ([key, name]) => {
       const cached = nutritionByQuery.get(key);
-      const cacheLifetime = cached?.match_status === "matched" ? 1000 * 60 * 60 * 24 * 30 : 1000 * 60 * 60;
-      if (cached && new Date(cached.fetched_at).getTime() > Date.now() - cacheLifetime) continue;
-
+      const lifetime = cached?.match_status === "matched" ? 30 * 86400000 : cached?.match_status === "no_match" ? 86400000 : 300000;
+      if (cached && new Date(cached.fetched_at).getTime() > Date.now() - lifetime) return;
       try {
-        const row = await fetchNutrition(foodSafetyKey, dataGoKey, name);
+        const result = await fetchNutrition(foodSafetyKey, dataGoKey, name);
+        const row = result?.row;
         const cacheRow = row ? {
-          normalized_query: key,
-          mfds_food_code: row.FOOD_CD,
-          matched_name: row.FOOD_NM_KR,
-          serving_amount: numberFrom(row.SERVING_SIZE),
-          serving_unit: String(row.SERVING_SIZE || ""),
-          calories_per_serving: numberFrom(row.AMT_NUM1),
-          match_status: "matched",
-          raw_data: row,
-          fetched_at: new Date().toISOString(),
-        } : {
-          normalized_query: key,
-          match_status: "no_match",
-          fetched_at: new Date().toISOString(),
-        };
+          normalized_query: key, mfds_food_code: row.FOOD_CD, matched_name: row.FOOD_NM_KR,
+          serving_amount: numberFrom(row.SERVING_SIZE) || numberFrom(row.Z10500) || 100,
+          serving_unit: String(row.SERVING_SIZE || row.Z10500 || "100g"), calories_per_serving: numberFrom(row.AMT_NUM1),
+          match_status: "matched", raw_data: { ...row, _babfull_source: result.source }, fetched_at: new Date().toISOString(),
+        } : { normalized_query: key, match_status: "no_match", fetched_at: new Date().toISOString() };
         await db.from("food_nutrition_cache").upsert(cacheRow as any);
         nutritionByQuery.set(key, cacheRow);
       } catch (error) {
@@ -158,33 +169,49 @@ Deno.serve(async (request) => {
         await db.from("food_nutrition_cache").upsert(cacheRow);
         nutritionByQuery.set(key, cacheRow);
       }
-    }
-
-    const estimates = (meals ?? []).map((meal) => {
-      const items = (meal.meal_items ?? []).map((item) => {
-        const name = item.original_menu_text || relatedFoodName(item.foods);
-        const nutrition = nutritionByQuery.get(normalize(name || ""));
-        if (!nutrition || nutrition.match_status !== "matched") return { name, matched: false };
-        const standardCalories = Number(nutrition.calories_per_serving);
-        const standardAmount = Number(nutrition.serving_amount);
-        const servingGrams = Number(item.serving_grams);
-        const calories = servingGrams > 0 && standardAmount > 0
-          ? standardCalories * servingGrams / standardAmount
-          : standardCalories;
-        return { name, matched: true, calories: Math.round(calories), servingGrams: servingGrams || standardAmount || null };
-      });
-      const matched = items.filter((item) => item.matched);
-      return {
-        mealId: meal.id,
-        totalCalories: matched.reduce((sum, item) => sum + (item.calories || 0), 0),
-        matchedItems: matched.length,
-        totalItems: items.length,
-        source: "mfds",
-        items,
-      };
     });
 
-    return Response.json({ estimates }, { headers: { ...corsHeaders, "Cache-Control": "public, max-age=300" } });
+    const updates: Array<{ id: number; values: Record<string, unknown> }> = [];
+    const estimates = (meals ?? []).map((meal) => {
+      const items = (meal.meal_items ?? []).map((item: MealItem) => {
+        const name = item.original_menu_text || relatedFoodName(item.foods) || "";
+        if (/^\[?천원의\s*아침밥/u.test(name) || /운영시간/.test(name)) {
+          updates.push({ id: item.id, values: { estimated_calories: null, nutrition_matched_name: null, nutrition_source: null, nutrition_updated_at: new Date().toISOString() } });
+          return { name, matched: false };
+        }
+        const components = splitMenuNames(name);
+        const componentResults = components.map((component) => {
+          const nutrition = nutritionByQuery.get(normalize(component));
+          const servingGrams = components.length === 1 && Number(item.serving_grams)
+            ? Number(item.serving_grams) : defaultServingGrams(component);
+          if (!nutrition || nutrition.match_status !== "matched") {
+            return { name: component, calories: fallbackCalories(component, servingGrams), servingGrams,
+              matchedName: "메뉴 유형별 표준치", source: "category-estimate" };
+          }
+          return { name: component,
+            calories: Math.round(Number(nutrition.calories_per_serving) * servingGrams / (Number(nutrition.serving_amount) || 100)),
+            servingGrams, matchedName: nutrition.matched_name,
+            source: nutrition.raw_data?._babfull_source || "mfds-data-go-kr" };
+        });
+        const servingGrams = componentResults.reduce((sum, component) => sum + component.servingGrams, 0);
+        const calories = componentResults.reduce((sum, component) => sum + component.calories, 0);
+        const apiComponents = componentResults.filter((component) => component.source !== "category-estimate").length;
+        const source = apiComponents === componentResults.length ? "mfds-data-go-kr"
+          : apiComponents ? "mfds-mixed" : "category-estimate";
+        const matchedName = componentResults.map((component) => component.matchedName).join(" + ");
+        updates.push({ id: item.id, values: { serving_grams: servingGrams, estimated_calories: calories,
+          nutrition_matched_name: matchedName, nutrition_source: source, nutrition_updated_at: new Date().toISOString() } });
+        return { name, matched: true, calories, servingGrams, matchedName, source,
+          components: componentResults, apiMatched: apiComponents === componentResults.length };
+      });
+      const matched = items.filter((item) => item.matched);
+      const apiMatchedItems = matched.filter((item) => item.apiMatched ?? item.source !== "category-estimate").length;
+      return { mealId: meal.id, totalCalories: matched.reduce((sum, item) => sum + (item.calories || 0), 0),
+        matchedItems: matched.length, apiMatchedItems, totalItems: items.length,
+        source: apiMatchedItems === matched.length ? "mfds" : "mfds-mixed", items };
+    });
+    await mapConcurrent(updates, 12, async ({ id, values }) => { const { error } = await db.from("meal_items").update(values).eq("id", id); if (error) throw error; });
+    return Response.json({ estimates, persistedItems: updates.length }, { headers: { ...corsHeaders, "Cache-Control": "public, max-age=300" } });
   } catch (error) {
     console.error(error);
     return Response.json({ error: error instanceof Error ? error.message : "영양정보를 계산하지 못했습니다." }, { status: 500, headers: corsHeaders });

@@ -1,10 +1,11 @@
 import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
+import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 
-const prices = { breakfast: 1000, lunch: 5300 };
 const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "🌙", lunch: "☀️" };
 const manualOpenState = new Map();
+let homeRenderId = 0;
 
 const minutesFromTime = (value) => {
   const [hour, minute] = value.split(":").map(Number);
@@ -117,7 +118,12 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
   const time = meal.type === "breakfast"
     ? `${appSettings.breakfastStart}–${appSettings.breakfastEnd}`
     : `${appSettings.lunchStart}–${appSettings.lunchEnd}`;
+  const price = meal.type === "breakfast" ? appSettings.breakfastPrice : appSettings.lunchPrice;
   const menuItems = meal.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  const nutrition = getMealNutrition(meal);
+  const calorie = nutrition.totalCalories
+    ? `<span class="calorie-badge" title="식약처 식품영양성분 DB와 메뉴 유형별 표준 배식량을 기준으로 계산한 예상치">약 ${Math.round(nutrition.totalCalories).toLocaleString("ko-KR")} kcal</span>`
+    : "";
 
   return `<article class="meal-card meal-card--${meal.type}${isOpen ? " is-open" : ""}${isCurrent ? " is-current" : ""}" data-meal-id="${meal.id}">
     <button class="meal-card__toggle" type="button" aria-expanded="${isOpen}" aria-controls="body-${meal.id}">
@@ -127,7 +133,7 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
           <strong class="meal-card__title">${labels[meal.type]} 식단</strong>
           ${isCurrent ? '<span class="current-badge">지금</span>' : ""}
         </span>
-        <span class="meal-card__meta">${time} · ${prices[meal.type].toLocaleString("ko-KR")}원</span>
+        <span class="meal-card__meta">${time} · ${price.toLocaleString("ko-KR")}원</span>
       </span>
       <span class="meal-card__chevron" aria-hidden="true"></span>
     </button>
@@ -135,7 +141,7 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
       <div class="meal-card__body-inner">
         <div>${trayTemplate(meal)}</div>
         <div class="meal-card__details">
-          <div class="meal-card__info"><span>${meal.date}</span><span class="meal-card__price">${prices[meal.type].toLocaleString("ko-KR")}원</span></div>
+          <div class="meal-card__info"><span>${meal.date}</span>${calorie}</div>
           <h3 class="menu-heading">메뉴</h3>
           <ul class="menu-list">${menuItems}</ul>
         </div>
@@ -165,7 +171,8 @@ const bindCardToggles = () => {
   });
 };
 
-export const renderHomeMeals = () => {
+export const renderHomeMeals = async () => {
+  const renderId = ++homeRenderId;
   const list = document.querySelector("#meal-list");
   const empty = document.querySelector("#meal-empty");
   const guidance = document.querySelector("#meal-guidance");
@@ -189,6 +196,9 @@ export const renderHomeMeals = () => {
   } else {
     guidance.textContent = "오늘 첫 식사를 미리 확인하세요.";
   }
+
+  await hydrateMealNutrition(visibleMeals);
+  if (renderId !== homeRenderId) return;
 
   empty.hidden = visibleMeals.length > 0;
   list.hidden = visibleMeals.length === 0;

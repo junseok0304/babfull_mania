@@ -28,7 +28,7 @@
 .page-description {
   margin-bottom: 0;
   color: var(--secondary);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .date-button {
@@ -107,7 +107,7 @@
 .meal-card__meta {
   margin: 3px 0 0;
   color: var(--secondary);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .current-badge {
@@ -150,20 +150,32 @@
 .meal-card__info {
   display: flex;
   margin: 14px 1px 12px;
-  justify-content: space-between;
+  align-items: baseline;
+  justify-content: flex-start;
   gap: 12px;
   color: var(--secondary);
-  font-size: 12px;
+  font-size: 14px;
 }
 
-.meal-card__price {
+.meal-card__info .calorie-badge {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--text);
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.meal-card__info .calorie-badge::before {
+  margin-right: 12px;
+  color: #d4d4d8;
+  content: "·";
 }
 
 .menu-heading {
   margin-bottom: 9px;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .menu-list {
@@ -179,7 +191,8 @@
   position: relative;
   padding-left: 12px;
   color: #3f3f46;
-  font-size: 13px;
+  font-size: 15px;
+  line-height: 1.45;
 }
 
 .menu-list li::before {

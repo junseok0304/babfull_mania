@@ -121,17 +121,6 @@ p {
   gap: 12px;
 }
 
-.data-mode {
-  display: none;
-  padding: 7px 11px;
-  border: 1px solid #bbf7d0;
-  border-radius: 999px;
-  background: #f0fdf4;
-  color: var(--primary-dark);
-  font-size: 12px;
-  font-weight: 700;
-}
-
 main {
   padding: 26px 18px 110px;
 }
@@ -186,10 +175,6 @@ main {
   .brand img {
     width: 190px;
     height: 54px;
-  }
-
-  .data-mode {
-    display: inline-flex;
   }
 
   .icon-button {

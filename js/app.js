@@ -50,7 +50,6 @@ document.querySelector("#menu-button").addEventListener("click", () => {
 window.addEventListener("hashchange", () => setRoute(routeFromHash()));
 setRoute(routeFromHash());
 const dataState = await initializeData();
-document.querySelector("#data-mode").textContent = dataState.mode === "supabase" ? "Supabase 연결됨" : "로컬 미리보기";
 document.querySelector("#preview-notice").hidden = dataState.mode === "supabase";
 renderHomeMeals();
 scheduleMealRefresh();

@@ -9,13 +9,13 @@
       content="성공회대학교 밥full학식당 식단과 QR 식권을 확인하는 밥풀매니아"
     />
     <title>밥풀매니아</title>
-    <link rel="stylesheet" href="css/global.css" />
-    <link rel="stylesheet" href="css/components.css" />
-    <link rel="stylesheet" href="css/home.css" />
-    <link rel="stylesheet" href="css/meal-tray.css" />
-    <link rel="stylesheet" href="css/public-views.css" />
-    <link rel="stylesheet" href="css/mypage.css" />
-    <script type="module" src="js/app.js"></script>
+    <link rel="stylesheet" href="css/global.css?v=20261021-2" />
+    <link rel="stylesheet" href="css/components.css?v=20261021-2" />
+    <link rel="stylesheet" href="css/home.css?v=20261021-2" />
+    <link rel="stylesheet" href="css/meal-tray.css?v=20261021-2" />
+    <link rel="stylesheet" href="css/public-views.css?v=20261021-2" />
+    <link rel="stylesheet" href="css/mypage.css?v=20261021-2" />
+    <script type="module" src="js/app.js?v=20261021-2"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문 바로가기</a>
@@ -28,7 +28,6 @@
           />
         </a>
         <div class="header-actions">
-          <span class="data-mode" id="data-mode">로컬 미리보기</span>
           <button class="icon-button" id="menu-button" type="button" aria-label="메뉴 열기" aria-expanded="false">
             <span></span><span></span><span></span>
           </button>
@@ -66,7 +65,7 @@
 
           <div class="notice notice--preview" id="preview-notice" role="status">
             <span class="notice-dot"></span>
-            Supabase 연결 전 로컬 예시 식단입니다. 운영시간은 개발 설정값으로 표시됩니다.
+            현재 실제 식단을 불러올 수 없어 예시 식단을 표시합니다.
           </div>
 
           <div class="meal-list" id="meal-list" aria-live="polite"></div>
@@ -81,7 +80,6 @@
         <section class="page-view" id="weekly-view" data-view="weekly" aria-labelledby="weekly-title">
           <div class="view-heading">
             <div>
-              <p class="eyebrow">한 주를 미리 확인해요</p>
               <h1 id="weekly-title">주간 식단</h1>
             </div>
             <div class="period-controls" aria-label="주 이동">
@@ -98,7 +96,6 @@
         <section class="page-view" id="calendar-view" data-view="calendar" aria-labelledby="calendar-title">
           <div class="view-heading">
             <div>
-              <p class="eyebrow">날짜별 식단 기록</p>
               <h1 id="calendar-title">월간 메뉴</h1>
             </div>
             <div class="period-controls" aria-label="월 이동">
@@ -120,7 +117,6 @@
         <section class="page-view" id="search-view" data-view="search" aria-labelledby="search-title">
           <div class="view-heading">
             <div>
-              <p class="eyebrow">먹고 싶은 메뉴를 찾아요</p>
               <h1 id="search-title">메뉴 검색</h1>
             </div>
           </div>

@@ -24,6 +24,7 @@ const escapeHtml = (value) => String(value)
 
 const mealsForDate = (dateKey) => getCachedMeals().filter((meal) => meal.date === dateKey && meal.published);
 let weeklyRenderId = 0;
+let selectedDayRenderId = 0;
 
 const getDayStatus = (date, meals = mealsForDate(formatDateKey(date))) => {
   const operatingMeals = meals.filter((meal) => meal.operating !== false);
@@ -44,7 +45,8 @@ const dateLabel = (date) => new Intl.DateTimeFormat("ko-KR", {
 const renderCalorie = (meal) => {
   const estimate = getMealNutrition(meal);
   if (!estimate.totalCalories) return "";
-  const source = estimate.source === "mfds" ? "식약처 식품영양성분 DB" : "로컬 시연 데이터";
+  const source = estimate.source === "mfds" ? "식약처 식품영양성분 DB"
+    : estimate.source === "mfds-mixed" ? "식약처 DB 및 메뉴 유형별 표준치" : "로컬 시연 데이터";
   const detail = `${source} 1회 제공량 기준 · ${estimate.matchedItems}/${estimate.totalItems}개 메뉴 반영`;
   return `<span class="calorie-badge" title="${escapeHtml(detail)}" aria-label="${escapeHtml(detail)}">약 ${Math.round(estimate.totalCalories).toLocaleString("ko-KR")} kcal</span>`;
 };
@@ -80,7 +82,8 @@ const renderWeekly = async () => {
   }).join("");
 };
 
-const renderSelectedDay = () => {
+const renderSelectedDay = async () => {
+  const renderId = ++selectedDayRenderId;
   const allMeals = mealsForDate(selectedDate);
   const meals = allMeals.filter((meal) => meal.operating !== false);
   const target = document.querySelector("#selected-day");
@@ -90,8 +93,10 @@ const renderSelectedDay = () => {
     target.innerHTML = `<h2>${selectedDate}</h2><p class="selected-day__status selected-day__status--${status?.kind || "empty"}">${escapeHtml(status?.label || "미제공")}</p><p class="selected-day__empty">${status?.kind === "closed" ? "식당을 운영하지 않는 날입니다." : "등록된 식단이 없습니다."}</p>`;
     return;
   }
+  await hydrateMealNutrition(meals);
+  if (renderId !== selectedDayRenderId) return;
   target.innerHTML = `<h2>${selectedDate} 식단</h2>${status ? `<p class="selected-day__status selected-day__status--${status.kind}">${escapeHtml(status.label)}</p>` : ""}${meals.map((meal) =>
-    `<div class="selected-day__meal selected-day__meal--${meal.type}"><strong>${mealLabels[meal.type]}</strong><span>${meal.items.map(escapeHtml).join(" · ")}</span></div>`
+    `<div class="selected-day__meal selected-day__meal--${meal.type}"><strong>${mealLabels[meal.type]} ${renderCalorie(meal)}</strong><span>${meal.items.map(escapeHtml).join(" · ")}</span></div>`
   ).join("")}`;
 };
 
@@ -132,6 +137,25 @@ const renderCalendar = () => {
 
 const normalizeSearch = (value) => value.toLocaleLowerCase("ko-KR").replaceAll(/\s+/g, "").replaceAll("까스", "가스");
 
+const highlightSearchMatch = (value, query) => {
+  const source = String(value);
+  const normalizedQuery = normalizeSearch(query.trim());
+  if (!normalizedQuery) return escapeHtml(source);
+  let normalizedSource = "";
+  const sourceIndexes = [];
+  [...source].forEach((character, index) => {
+    if (/\s/u.test(character)) return;
+    const normalizedCharacter = character.toLocaleLowerCase("ko-KR");
+    normalizedSource += normalizedCharacter;
+    sourceIndexes.push(index);
+  });
+  normalizedSource = normalizedSource.replaceAll("까스", "가스");
+  const start = normalizedSource.indexOf(normalizedQuery);
+  if (start < 0) return escapeHtml(source);
+  const end = sourceIndexes[Math.min(start + normalizedQuery.length - 1, sourceIndexes.length - 1)] + 1;
+  return `${escapeHtml(source.slice(0, sourceIndexes[start]))}<mark class="search-highlight">${escapeHtml(source.slice(sourceIndexes[start], end))}</mark>${escapeHtml(source.slice(end))}`;
+};
+
 const renderSearch = (query) => {
   const normalized = normalizeSearch(query.trim());
   const summary = document.querySelector("#search-summary");
@@ -147,7 +171,7 @@ const renderSearch = (query) => {
     .sort((a, b) => b.date.localeCompare(a.date));
   summary.textContent = matched.length ? `총 ${matched.length}개의 식단을 찾았어요.` : "검색 결과가 없습니다.";
   results.innerHTML = matched.map((meal) => `<a class="search-result" href="#calendar" data-result-date="${meal.date}">
-    <div><strong>${meal.date} · ${mealLabels[meal.type]}</strong><p>${meal.items.map(escapeHtml).join(" · ")}</p></div>
+    <div><strong>${meal.date} · ${mealLabels[meal.type]}</strong><p>${meal.items.map((item) => highlightSearchMatch(item, query)).join(" · ")}</p></div>
     <span>${mealLabels[meal.type]}</span>
   </a>`).join("");
 

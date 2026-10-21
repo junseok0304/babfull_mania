@@ -20,6 +20,22 @@ const localCalories = {
 
 const itemName = (item) => typeof item === "string" ? item : item.name;
 
+const persistedEstimate = (meal) => {
+  const items = meal.menuItems ?? [];
+  const matched = items.filter((item) => Number.isFinite(item.estimatedCalories));
+  if (!matched.length) return null;
+  const apiMatchedItems = matched.filter((item) => item.nutritionSource !== "category-estimate").length;
+  return {
+    mealId: meal.id,
+    totalCalories: matched.reduce((sum, item) => sum + item.estimatedCalories, 0),
+    matchedItems: matched.length,
+    apiMatchedItems,
+    totalItems: items.length,
+    source: apiMatchedItems === matched.length ? "mfds" : "mfds-mixed",
+    items: items.map((item) => ({ name: item.name, matched: Number.isFinite(item.estimatedCalories), calories: item.estimatedCalories })),
+  };
+};
+
 const localEstimate = (meal) => {
   const items = meal.menuItems?.length ? meal.menuItems : meal.items;
   const values = items.map(itemName).map((name) => localCalories[name]).filter(Number.isFinite);
@@ -32,9 +48,13 @@ const localEstimate = (meal) => {
   };
 };
 
-export const getMealNutrition = (meal) => mealCache.get(String(meal.id)) || localEstimate(meal);
+export const getMealNutrition = (meal) => mealCache.get(String(meal.id)) || persistedEstimate(meal) || localEstimate(meal);
 
 export const hydrateMealNutrition = async (meals) => {
+  meals.forEach((meal) => {
+    const persisted = persistedEstimate(meal);
+    if (persisted && persisted.matchedItems === persisted.totalItems) mealCache.set(String(meal.id), persisted);
+  });
   const pending = meals.filter((meal) => !mealCache.has(String(meal.id)));
   if (!pending.length) return;
 
