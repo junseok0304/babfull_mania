@@ -469,7 +469,7 @@
   width: min(100%, 1080px);
   min-height: calc(100dvh - 28px);
   margin: 0 auto;
-  padding: clamp(14px, 2vw, 22px);
+  padding: clamp(14px, 1.5vw, 16px);
   border: 1px solid #d9e7de;
   border-radius: 24px;
   background: white;
@@ -501,7 +501,7 @@
 }
 
 .scanner-kiosk__intro {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   text-align: center;
 }
 
@@ -516,8 +516,8 @@
 }
 
 .scanner-kiosk__intro h2 {
-  margin: 8px 0 5px;
-  font-size: clamp(27px, 3.2vw, 40px);
+  margin: 6px 0 4px;
+  font-size: clamp(27px, 3vw, 36px);
   line-height: 1.15;
   letter-spacing: -0.04em;
 }
@@ -607,13 +607,13 @@
 
 .scanner-controls {
   display: grid;
-  margin-top: 12px;
+  margin-top: 8px;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
 }
 
 .scanner-controls #scanner-start {
-  min-height: 64px;
+  min-height: 56px;
   font-size: 19px;
 }
 
@@ -635,8 +635,8 @@
 
 .scan-kiosk-status {
   display: flex;
-  margin: 10px 0 0;
-  padding: 13px 16px;
+  margin: 6px 0 0;
+  padding: 10px 16px;
   align-items: center;
   justify-content: center;
   gap: 9px;
@@ -665,8 +665,8 @@
 }
 
 .kiosk-admin-options {
-  margin-top: 10px;
-  padding-top: 9px;
+  margin-top: 7px;
+  padding-top: 6px;
   border-top: 1px solid #eef0ee;
 }
 
@@ -1319,8 +1319,8 @@
 
   .qr-reader,
   .scanner-kiosk .scanner-placeholder {
-    width: min(100%, 600px);
-    height: clamp(400px, 52dvh, 460px);
+    width: min(100%, 680px);
+    height: clamp(440px, 56dvh, 480px);
     min-height: 0;
     aspect-ratio: auto;
   }
