@@ -1,6 +1,7 @@
 import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
 import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
+import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
 
 const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "🌙", lunch: "☀️" };
@@ -104,10 +105,17 @@ const escapeHtml = (value) => String(value)
 
 const trayTemplate = (meal) => {
   const slots = arrangeTray(meal.items)
-    .map(({ name, slot }) => `<div class="tray-slot tray-slot--${slot}"><span>${escapeHtml(name)}</span></div>`)
+    .map(({ name, slot }) => {
+      const image = getFoodImage(name);
+      const imageMarkup = image ? `<img src="${escapeHtml(image.imageUrl || image.fallbackUrl)}"
+        data-fallback-src="${escapeHtml(image.fallbackUrl || "")}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" />` : "";
+      return `<div class="tray-slot tray-slot--${slot}${image ? " has-image" : ""}" data-food-name="${escapeHtml(name)}">
+        ${imageMarkup}<span>${escapeHtml(name)}</span>
+      </div>`;
+    })
     .join("");
   return `<div class="meal-tray" aria-label="${labels[meal.type]} 메뉴 참고 식판">${slots}</div>
-    <p class="tray-caption">음식별 참고 이미지 영역으로 구성한 식판</p>`;
+    <p class="tray-caption">메뉴별 음식 사진은 실제 제공 모습과 다를 수 있어요.</p>`;
 };
 
 const mealCardTemplate = (meal, state, forceOpen = null) => {
@@ -169,6 +177,19 @@ const bindCardToggles = () => {
       manualOpenState.set(card.dataset.mealId, nextOpen);
     });
   });
+  document.querySelectorAll(".tray-slot img").forEach((image) => {
+    image.addEventListener("error", () => {
+      const fallback = image.dataset.fallbackSrc;
+      if (fallback && image.src !== fallback) {
+        image.src = fallback;
+        return;
+      }
+      const slot = image.closest(".tray-slot");
+      markFoodImageFailed(slot?.dataset.foodName);
+      slot?.classList.remove("has-image");
+      image.remove();
+    });
+  });
 };
 
 export const renderHomeMeals = async () => {
@@ -197,7 +218,7 @@ export const renderHomeMeals = async () => {
     guidance.textContent = "오늘 첫 식사를 미리 확인하세요.";
   }
 
-  await hydrateMealNutrition(visibleMeals);
+  await Promise.all([hydrateMealNutrition(visibleMeals), hydrateMealImages(visibleMeals)]);
   if (renderId !== homeRenderId) return;
 
   empty.hidden = visibleMeals.length > 0;
