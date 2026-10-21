@@ -33,8 +33,10 @@
 }
 
 .admin-brand img {
-  width: 150px;
+  width: 135px;
+  min-width: 0;
   height: 48px;
+  flex: 0 1 135px;
   padding: 5px 8px;
   border-radius: 10px;
   background: white;
@@ -42,10 +44,12 @@
 }
 
 .admin-brand span {
+  flex: 0 0 auto;
   padding: 4px 7px;
   border-radius: 7px;
   background: rgb(255 255 255 / 0.13);
   font-size: 11px;
+  white-space: nowrap;
 }
 
 .admin-nav {
@@ -649,7 +653,6 @@
   font-size: 11px;
 }
 
-.usage-admin-item select,
 .usage-admin-item input {
   width: 100%;
   min-width: 0;
@@ -660,6 +663,58 @@
   background: white;
   font: inherit;
   font-size: 11px;
+}
+
+.usage-segmented {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 3px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f4f4f5;
+}
+
+.usage-segmented label {
+  min-width: 0;
+  cursor: pointer;
+}
+
+.usage-segmented input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.usage-segmented span {
+  display: grid;
+  min-height: 30px;
+  padding: 0 7px;
+  place-items: center;
+  border-radius: 7px;
+  color: var(--secondary);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.usage-segmented input:checked + span {
+  background: white;
+  color: var(--primary-dark);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.09);
+}
+
+.usage-segmented input:focus-visible + span {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.usage-segmented--status input[value="cancelled"]:checked + span {
+  color: var(--danger);
 }
 
 .usage-admin-message {
@@ -706,7 +761,7 @@
   }
 
   .usage-admin-item {
-    grid-template-columns: minmax(160px, 1fr) 140px 100px minmax(150px, 1fr) auto;
+    grid-template-columns: minmax(145px, 1fr) 132px 144px 120px minmax(135px, 1fr) auto;
   }
 
   .usage-admin-message {

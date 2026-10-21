@@ -150,10 +150,10 @@ const renderScannedProfile = (profile, usage) => {
   const target = document.querySelector("#scan-result");
   target.innerHTML = `<div class="scanned-profile"><div class="scanned-profile__avatar">${escapeHtml(profile.name?.[0] || "밥")}</div><div><strong>${escapeHtml(profile.name || "이름 미등록")}</strong><span>${escapeHtml(profile.affiliation || "소속 미등록")}</span></div></div>
     <div class="usage-auto-result">
-      <span>자동 선택 · 제공시간 ±30분</span>
+      <span>${escapeHtml(usage.meal_date || usage.date)} · 자동 선택 · 제공시간 ±30분</span>
       <strong>${mealLabel(usage.meal_type || usage.type)} · ${Number(usage.price).toLocaleString("ko-KR")}원</strong>
       <p class="scan-message">${adminMode === "demo" ? "시연 이용 기록을 저장했습니다." : "이용 기록을 저장했습니다."}</p>
-      <a href="#usages">잘못 기록되었나요? 이용 내역에서 수정 →</a>
+      <a href="#usages">날짜나 식사가 다른가요? 이용 내역에서 수정 →</a>
     </div>`;
 };
 
@@ -208,17 +208,17 @@ const normalizeUsage = (record) => ({
   note: record.correction_note || "",
 });
 
-const updateUsage = async (usageId, type, status, note) => {
+const updateUsage = async (usageId, date, type, status, note) => {
   if (adminMode === "demo") {
     const usage = demoUsages.find((item) => String(item.id) === String(usageId));
     if (!usage) throw new Error("이용 기록을 찾을 수 없습니다.");
-    const conflict = status === "active" && demoUsages.some((item) => item !== usage && item.userId === usage.userId && item.date === usage.date && item.type === type && item.status === "active");
+    const conflict = status === "active" && demoUsages.some((item) => item !== usage && item.userId === usage.userId && item.date === date && item.type === type && item.status === "active");
     if (conflict) throw new Error("같은 날짜·식사 이용 기록이 이미 있습니다.");
-    Object.assign(usage, { type, status, note, price: type === "breakfast" ? 1000 : 5300 });
+    Object.assign(usage, { date, type, status, note, price: type === "breakfast" ? 1000 : 5300 });
     return;
   }
   const { error } = await client.rpc("admin_update_meal_usage", {
-    target_usage_id: Number(usageId), target_meal_type: type, target_status: status, note: note || null,
+    target_usage_id: Number(usageId), target_meal_date: date, target_meal_type: type, target_status: status, note: note || null,
   });
   if (error) throw new Error(error.message || "이용 기록을 수정하지 못했습니다.");
 };
@@ -244,8 +244,9 @@ const renderUsages = async () => {
   }
   target.innerHTML = records.map((usage) => `<form class="usage-admin-item" data-usage-id="${usage.id}">
     <div class="usage-admin-person"><strong>${escapeHtml(usage.userName)}</strong><span>${escapeHtml(usage.affiliation)} · ${escapeHtml(usage.date)}</span></div>
-    <label><span class="sr-only">식사 구분</span><select name="meal_type"><option value="breakfast"${usage.type === "breakfast" ? " selected" : ""}>조식 · 1,000원</option><option value="lunch"${usage.type === "lunch" ? " selected" : ""}>중식 · 5,300원</option></select></label>
-    <label><span class="sr-only">처리 상태</span><select name="status"><option value="active"${usage.status === "active" ? " selected" : ""}>정상</option><option value="cancelled"${usage.status === "cancelled" ? " selected" : ""}>취소</option></select></label>
+    <label><span class="sr-only">이용 날짜</span><input name="meal_date" type="date" value="${escapeHtml(usage.date)}" required /></label>
+    <fieldset class="usage-segmented"><legend class="sr-only">식사 구분</legend><label><input type="radio" name="meal_type" value="breakfast"${usage.type === "breakfast" ? " checked" : ""} /><span>조식</span></label><label><input type="radio" name="meal_type" value="lunch"${usage.type === "lunch" ? " checked" : ""} /><span>중식</span></label></fieldset>
+    <fieldset class="usage-segmented usage-segmented--status"><legend class="sr-only">처리 상태</legend><label><input type="radio" name="status" value="active"${usage.status === "active" ? " checked" : ""} /><span>정상</span></label><label><input type="radio" name="status" value="cancelled"${usage.status === "cancelled" ? " checked" : ""} /><span>취소</span></label></fieldset>
     <label><span class="sr-only">정정 사유</span><input name="note" value="${escapeHtml(usage.note)}" placeholder="정정 사유" /></label>
     <button class="secondary-button" type="submit">저장</button>
     <p class="usage-admin-message" role="status"></p>
@@ -259,7 +260,7 @@ const renderUsages = async () => {
     button.disabled = true;
     message.textContent = "저장 중…";
     try {
-      await updateUsage(form.dataset.usageId, data.get("meal_type"), data.get("status"), data.get("note"));
+      await updateUsage(form.dataset.usageId, data.get("meal_date"), data.get("meal_type"), data.get("status"), data.get("note"));
       message.textContent = "수정됨";
       renderStats();
     } catch (error) {
