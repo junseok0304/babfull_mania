@@ -1,5 +1,6 @@
 import { renderHomeMeals, scheduleMealRefresh } from "./meal-display.js";
 import { initPublicViews } from "./public-views.js";
+import { initializeData } from "./data-service.js";
 
 const validRoutes = new Set(["home", "weekly", "calendar", "search", "mypage"]);
 
@@ -37,6 +38,8 @@ document.querySelector("#menu-button").addEventListener("click", () => {
 });
 window.addEventListener("hashchange", () => setRoute(routeFromHash()));
 setRoute(routeFromHash());
+const dataState = await initializeData();
+document.querySelector("#data-mode").textContent = dataState.mode === "supabase" ? "Supabase 연결됨" : "로컬 미리보기";
 renderHomeMeals();
 scheduleMealRefresh();
 initPublicViews();

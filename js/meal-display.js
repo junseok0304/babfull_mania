@@ -1,4 +1,5 @@
-import { appSettings, formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
+import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
+import { getCachedMeals } from "./data-service.js";
 
 const prices = { breakfast: 1000, lunch: 5300 };
 const labels = { breakfast: "조식", lunch: "중식" };
@@ -136,7 +137,7 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
 };
 
 const findNextMeals = (todayKey) => {
-  const future = sampleMeals.filter((meal) => meal.date > todayKey).sort((a, b) => a.date.localeCompare(b.date));
+  const future = getCachedMeals().filter((meal) => meal.date > todayKey).sort((a, b) => a.date.localeCompare(b.date));
   if (!future.length) return [];
   const nextDate = future[0].date;
   return future.filter((meal) => meal.date === nextDate);
@@ -160,7 +161,7 @@ export const renderHomeMeals = () => {
   const guidance = document.querySelector("#meal-guidance");
   const todayKey = formatDateKey(getSeoulDate());
   const nowMinutes = getSeoulMinutes();
-  const todayMeals = sampleMeals.filter((meal) => meal.date === todayKey && meal.published);
+  const todayMeals = getCachedMeals().filter((meal) => meal.date === todayKey && meal.published);
   const todayState = getDefaultState(todayMeals, nowMinutes);
 
   let visibleMeals = todayMeals;

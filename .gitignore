@@ -10,6 +10,7 @@
 *.p12
 *.pfx
 secrets/
+js/config.local.json
 
 # Local/reference material and operating-system files
 참고용/

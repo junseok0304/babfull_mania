@@ -1,4 +1,5 @@
-import { formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
+import { formatDateKey, getSeoulDate } from "./sample-data.js";
+import { getCachedMeals } from "./data-service.js";
 
 const mealLabels = { breakfast: "조식", lunch: "중식" };
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
@@ -20,7 +21,7 @@ const escapeHtml = (value) => String(value)
   .replaceAll('"', "&quot;")
   .replaceAll("'", "&#039;");
 
-const mealsForDate = (dateKey) => sampleMeals.filter((meal) => meal.date === dateKey && meal.published);
+const mealsForDate = (dateKey) => getCachedMeals().filter((meal) => meal.date === dateKey && meal.published);
 
 const dateLabel = (date) => new Intl.DateTimeFormat("ko-KR", {
   month: "long",
@@ -104,7 +105,7 @@ const renderSearch = (query) => {
     return;
   }
 
-  const matched = sampleMeals
+  const matched = getCachedMeals()
     .filter((meal) => meal.items.some((item) => normalizeSearch(item).includes(normalized)))
     .sort((a, b) => b.date.localeCompare(a.date));
   summary.textContent = matched.length ? `총 ${matched.length}개의 식단을 찾았어요.` : "검색 결과가 없습니다.";
