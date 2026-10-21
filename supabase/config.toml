@@ -8,6 +8,7 @@ additional_redirect_urls = ["http://127.0.0.1:4173/**", "http://localhost:4173/*
 enabled = true
 client_id = "env(KAKAO_REST_API_KEY)"
 secret = "env(KAKAO_LOGIN_CLIENT_SECRET)"
+email_optional = false
 
 [functions.import-yeongjun-menu]
 verify_jwt = false

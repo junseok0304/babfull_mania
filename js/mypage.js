@@ -113,7 +113,7 @@ export const renderMyPage = async () => {
   const auth = await getAuthState();
   if (!auth.available || !auth.session) {
     renderLogin(auth.available);
-    return;
+    return false;
   }
   try {
     const data = await loadMyPageData(auth.session.user.id);
@@ -121,4 +121,5 @@ export const renderMyPage = async () => {
   } catch {
     document.querySelector("#mypage-content").innerHTML = '<div class="empty-state"><h2>내 정보를 불러오지 못했어요</h2><p>잠시 후 다시 시도하거나 관리자에게 문의해 주세요.</p></div>';
   }
+  return true;
 };

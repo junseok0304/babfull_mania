@@ -10,11 +10,15 @@ export const getAuthState = async () => {
 export const signInWithKakao = async () => {
   const client = await getSupabaseClient();
   if (!client) throw new Error("Supabase 설정이 필요합니다.");
+  sessionStorage.setItem("babfull:post-auth-route", "mypage");
   const { error } = await client.auth.signInWithOAuth({
     provider: "kakao",
-    options: { redirectTo: `${window.location.origin}${window.location.pathname}#mypage` },
+    options: { redirectTo: `${window.location.origin}${window.location.pathname}` },
   });
-  if (error) throw error;
+  if (error) {
+    sessionStorage.removeItem("babfull:post-auth-route");
+    throw error;
+  }
 };
 
 export const signOut = async () => {

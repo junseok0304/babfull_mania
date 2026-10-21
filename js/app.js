@@ -4,6 +4,16 @@ import { initializeData } from "./data-service.js";
 import { renderMyPage } from "./mypage.js";
 
 const validRoutes = new Set(["home", "weekly", "calendar", "search", "mypage"]);
+const malformedOAuthPrefix = "#mypage#access_token=";
+
+if (window.location.hash.startsWith(malformedOAuthPrefix)) {
+  sessionStorage.setItem("babfull:post-auth-route", "mypage");
+  window.history.replaceState(
+    null,
+    "",
+    `${window.location.pathname}${window.location.search}${window.location.hash.replace("#mypage#", "#")}`,
+  );
+}
 
 const formatToday = () => new Intl.DateTimeFormat("ko-KR", {
   timeZone: "Asia/Seoul",
@@ -45,4 +55,9 @@ document.querySelector("#preview-notice").hidden = dataState.mode === "supabase"
 renderHomeMeals();
 scheduleMealRefresh();
 initPublicViews();
-renderMyPage();
+const hasSession = await renderMyPage();
+if (hasSession && sessionStorage.getItem("babfull:post-auth-route") === "mypage") {
+  sessionStorage.removeItem("babfull:post-auth-route");
+  window.history.replaceState(null, "", "#mypage");
+  setRoute("mypage");
+}
