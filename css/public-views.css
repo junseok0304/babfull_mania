@@ -92,6 +92,13 @@
   gap: 11px;
 }
 
+.nutrition-note {
+  margin: -7px 0 14px;
+  color: var(--secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .day-card {
   padding: 17px;
   border: 1px solid var(--border);
@@ -144,10 +151,25 @@
 }
 
 .day-card__meal dt {
+  display: flex;
   margin-bottom: 4px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
   color: var(--primary-dark);
   font-size: 12px;
   font-weight: 800;
+}
+
+.calorie-badge {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.72);
+  color: #52525b;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .day-card__meal--breakfast dt {

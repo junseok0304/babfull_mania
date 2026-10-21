@@ -15,6 +15,13 @@ const mapMeal = (record) => ({
     .sort((a, b) => a.display_order - b.display_order)
     .map((item) => item.original_menu_text || item.foods?.original_name)
     .filter(Boolean),
+  menuItems: [...(record.meal_items ?? [])]
+    .sort((a, b) => a.display_order - b.display_order)
+    .map((item) => ({
+      name: item.original_menu_text || item.foods?.original_name,
+      servingGrams: item.serving_grams ? Number(item.serving_grams) : null,
+    }))
+    .filter((item) => item.name),
 });
 
 export const initializeData = async () => {
@@ -23,7 +30,7 @@ export const initializeData = async () => {
 
   const { data, error } = await client
     .from("meals")
-    .select("id, meal_date, meal_type, is_published, is_operating, admin_note, meal_items(display_order, original_menu_text, foods(original_name))")
+    .select("id, meal_date, meal_type, is_published, is_operating, admin_note, meal_items(display_order, original_menu_text, serving_grams, foods(original_name))")
     .eq("is_published", true)
     .order("meal_date", { ascending: true });
 

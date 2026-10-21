@@ -1,5 +1,6 @@
 import { formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
+import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 
 const mealLabels = { breakfast: "조식", lunch: "중식" };
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
@@ -22,7 +23,7 @@ const escapeHtml = (value) => String(value)
   .replaceAll("'", "&#039;");
 
 const mealsForDate = (dateKey) => getCachedMeals().filter((meal) => meal.date === dateKey && meal.published);
-const operatingMealsForDate = (dateKey) => mealsForDate(dateKey).filter((meal) => meal.operating !== false);
+let weeklyRenderId = 0;
 
 const getDayStatus = (date, meals = mealsForDate(formatDateKey(date))) => {
   const operatingMeals = meals.filter((meal) => meal.operating !== false);
@@ -40,12 +41,27 @@ const dateLabel = (date) => new Intl.DateTimeFormat("ko-KR", {
   day: "numeric",
 }).format(date);
 
-const renderWeekly = () => {
+const renderCalorie = (meal) => {
+  const estimate = getMealNutrition(meal);
+  if (!estimate.totalCalories) return "";
+  const source = estimate.source === "mfds" ? "식약처 식품영양성분 DB" : "로컬 시연 데이터";
+  const detail = `${source} 1회 제공량 기준 · ${estimate.matchedItems}/${estimate.totalItems}개 메뉴 반영`;
+  return `<span class="calorie-badge" title="${escapeHtml(detail)}" aria-label="${escapeHtml(detail)}">약 ${Math.round(estimate.totalCalories).toLocaleString("ko-KR")} kcal</span>`;
+};
+
+const renderWeekly = async () => {
+  const renderId = ++weeklyRenderId;
   const today = getSeoulDate();
   const monday = addDays(getMonday(today), weekOffset * 7);
   const friday = addDays(monday, 4);
   const todayKey = formatDateKey(today);
   document.querySelector("#week-label").textContent = `${dateLabel(monday)} – ${dateLabel(friday)} · 월–금`;
+
+  const weekMeals = Array.from({ length: 5 }, (_, index) => mealsForDate(formatDateKey(addDays(monday, index))))
+    .flat()
+    .filter((meal) => meal.operating !== false);
+  await hydrateMealNutrition(weekMeals);
+  if (renderId !== weeklyRenderId) return;
 
   document.querySelector("#weekly-grid").innerHTML = Array.from({ length: 5 }, (_, index) => {
     const date = addDays(monday, index);
@@ -55,7 +71,7 @@ const renderWeekly = () => {
     const status = getDayStatus(date, allMeals);
     const statusContent = status ? `<p class="day-card__status day-card__status--${status.kind}">${escapeHtml(status.label)}</p>` : "";
     const mealContent = meals.length
-      ? meals.map((meal) => `<dl class="day-card__meal day-card__meal--${meal.type}"><dt>${mealLabels[meal.type]}</dt><dd>${meal.items.map(escapeHtml).join(" · ")}</dd></dl>`).join("")
+      ? meals.map((meal) => `<dl class="day-card__meal day-card__meal--${meal.type}"><dt><span>${mealLabels[meal.type]}</span>${renderCalorie(meal)}</dt><dd>${meal.items.map(escapeHtml).join(" · ")}</dd></dl>`).join("")
       : `<p class="day-card__empty">${status?.kind === "closed" ? "식당을 운영하지 않아요." : "등록된 식단이 없어요."}</p>`;
     return `<article class="day-card${key === todayKey ? " is-today" : ""}">
       <header class="day-card__header"><div class="day-card__date"><strong>${date.getDate()}</strong><span>${weekdays[date.getDay()]}요일</span></div>${key === todayKey ? '<span class="current-badge">오늘</span>' : ""}</header>
