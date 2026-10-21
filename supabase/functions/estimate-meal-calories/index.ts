@@ -24,6 +24,11 @@ const numberFrom = (value: unknown) => {
   return match ? Number(match[0]) : null;
 };
 
+const relatedFoodName = (foods: unknown) => {
+  if (Array.isArray(foods)) return foods[0]?.original_name;
+  return (foods as { original_name?: string } | null)?.original_name;
+};
+
 const getRows = (payload: Record<string, unknown>): NutritionRow[] => {
   const response = payload?.response as Record<string, unknown> | undefined;
   const body = (payload?.body || response?.body) as Record<string, unknown> | undefined;
@@ -112,7 +117,7 @@ Deno.serve(async (request) => {
     if (mealsError) throw mealsError;
 
     const menuNames = [...new Set((meals ?? []).flatMap((meal) => meal.meal_items ?? [])
-      .map((item) => item.original_menu_text || item.foods?.original_name)
+      .map((item) => item.original_menu_text || relatedFoodName(item.foods))
       .filter(Boolean))];
     const normalizedQueries = menuNames.map(normalize);
     const { data: cachedRows, error: cacheError } = await db
@@ -145,7 +150,7 @@ Deno.serve(async (request) => {
           match_status: "no_match",
           fetched_at: new Date().toISOString(),
         };
-        await db.from("food_nutrition_cache").upsert(cacheRow);
+        await db.from("food_nutrition_cache").upsert(cacheRow as any);
         nutritionByQuery.set(key, cacheRow);
       } catch (error) {
         console.warn(`영양정보 조회 실패: ${name}`, error);
@@ -157,7 +162,7 @@ Deno.serve(async (request) => {
 
     const estimates = (meals ?? []).map((meal) => {
       const items = (meal.meal_items ?? []).map((item) => {
-        const name = item.original_menu_text || item.foods?.original_name;
+        const name = item.original_menu_text || relatedFoodName(item.foods);
         const nutrition = nutritionByQuery.get(normalize(name || ""));
         if (!nutrition || nutrition.match_status !== "matched") return { name, matched: false };
         const standardCalories = Number(nutrition.calories_per_serving);

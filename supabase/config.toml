@@ -1,0 +1,7 @@
+project_id = "babfull-mania"
+
+[functions.import-yeongjun-menu]
+verify_jwt = false
+
+[functions.estimate-meal-calories]
+verify_jwt = true

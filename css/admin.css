@@ -236,6 +236,46 @@
   gap: 14px;
 }
 
+.import-card {
+  margin-bottom: 14px;
+}
+
+.import-card .primary-button {
+  width: auto;
+  min-width: 116px;
+}
+
+.import-status {
+  display: grid;
+  padding: 13px 14px;
+  gap: 5px;
+  border-radius: 12px;
+  background: #f7faf8;
+  color: #3f3f46;
+  font-size: 12px;
+}
+
+.import-status p {
+  margin: 0;
+}
+
+.import-status strong {
+  color: var(--primary-dark);
+}
+
+.import-status.is-error {
+  background: #fff1f2;
+  color: var(--danger);
+}
+
+.import-status__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  color: var(--secondary);
+  font-size: 11px;
+}
+
 .meal-form,
 .meal-form label {
   display: grid;

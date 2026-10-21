@@ -62,6 +62,38 @@ const mapDatabaseMeal = (record) => ({
   items: [...(record.meal_items ?? [])].sort((a, b) => a.display_order - b.display_order).map((item) => item.original_menu_text),
 });
 
+const loadDatabaseMeals = async () => {
+  const { data, error } = await client.from("meals")
+    .select("id, meal_date, meal_type, is_published, meal_items(display_order, original_menu_text)")
+    .order("meal_date", { ascending: false }).limit(80);
+  if (error) throw error;
+  meals = (data ?? []).map(mapDatabaseMeal);
+};
+
+const renderImportStatus = async () => {
+  const target = document.querySelector("#yeongjun-import-status");
+  const button = document.querySelector("#yeongjun-sync");
+  if (adminMode !== "supabase") {
+    button.disabled = true;
+    target.innerHTML = "<p><strong>Supabase 연결 후 사용할 수 있습니다.</strong></p><p>원본 주소와 파서는 실제 영준닷컴 응답으로 검증되었습니다.</p>";
+    return;
+  }
+  const { data, error } = await client.from("meal_import_logs").select("status, started_at, completed_at, inserted_count, updated_count, error_message")
+    .order("started_at", { ascending: false }).limit(1).maybeSingle();
+  target.classList.toggle("is-error", Boolean(error || data?.status === "failed"));
+  if (error) {
+    target.innerHTML = `<p>수집 로그를 불러오지 못했습니다: ${escapeHtml(error.message)}</p>`;
+    return;
+  }
+  if (!data) {
+    target.innerHTML = '<p><strong>아직 수집 기록이 없습니다.</strong></p><p>지금 가져오기를 누르면 이번 주 조식·중식을 저장합니다.</p>';
+    return;
+  }
+  const statusLabel = data.status === "success" ? "성공" : data.status === "running" ? "진행 중" : "실패";
+  const time = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" }).format(new Date(data.completed_at || data.started_at));
+  target.innerHTML = `<p><strong>최근 수집 ${statusLabel}</strong>${data.error_message ? ` · ${escapeHtml(data.error_message)}` : ""}</p><div class="import-status__meta"><span>${escapeHtml(time)}</span><span>신규 ${data.inserted_count}건</span><span>변경 ${data.updated_count}건</span></div>`;
+};
+
 const initializeAdmin = async () => {
   client = await getSupabaseClient();
   const notice = document.querySelector("#admin-notice");
@@ -85,8 +117,7 @@ const initializeAdmin = async () => {
     return;
   }
 
-  const { data, error } = await client.from("meals").select("id, meal_date, meal_type, is_published, meal_items(display_order, original_menu_text)").order("meal_date", { ascending: false }).limit(80);
-  if (!error) meals = (data ?? []).map(mapDatabaseMeal);
+  await loadDatabaseMeals();
   adminMode = "supabase";
   document.querySelector("#admin-mode").textContent = "관리자 연결됨";
 };
@@ -274,6 +305,30 @@ const renderUsages = async () => {
 
 document.querySelector("#usage-refresh").addEventListener("click", renderUsages);
 
+document.querySelector("#yeongjun-sync").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  const target = document.querySelector("#yeongjun-import-status");
+  if (adminMode !== "supabase") return;
+  button.disabled = true;
+  button.textContent = "가져오는 중…";
+  target.classList.remove("is-error");
+  target.innerHTML = "<p>영준닷컴에서 이번 주 식단을 가져오고 있습니다.</p>";
+  try {
+    const { data, error } = await client.functions.invoke("import-yeongjun-menu", { body: { trigger: "manual" } });
+    if (error) throw new Error(data?.error || error.message);
+    await loadDatabaseMeals();
+    renderStats();
+    renderMeals();
+    target.innerHTML = `<p><strong>${escapeHtml(data.period.from)} ~ ${escapeHtml(data.period.to)} 최신화 완료</strong></p><div class="import-status__meta"><span>신규 ${data.insertedCount}건</span><span>변경 ${data.updatedCount}건</span><span>동일 ${data.unchangedCount}건</span><span>수동 보호 ${data.protectedCount}건</span></div>`;
+  } catch (error) {
+    target.classList.add("is-error");
+    target.innerHTML = `<p><strong>최신화 실패</strong> · ${escapeHtml(error.message)}</p>`;
+  } finally {
+    button.disabled = false;
+    button.textContent = "지금 가져오기";
+  }
+});
+
 const saveMeal = async (payload) => {
   if (adminMode === "demo") {
     const id = `${payload.mealDate}-${payload.mealType}`;
@@ -334,3 +389,4 @@ await initializeAdmin();
 route(location.hash.slice(1));
 renderStats();
 renderMeals();
+await renderImportStatus();

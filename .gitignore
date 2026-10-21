@@ -21,3 +21,4 @@ js/config.local.json
 *.log
 .cache/
 coverage/
+supabase/.temp/
