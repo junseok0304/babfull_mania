@@ -93,6 +93,10 @@
   color: #9a3412;
 }
 
+.notice[hidden] {
+  display: none;
+}
+
 .notice-dot {
   width: 8px;
   height: 8px;
