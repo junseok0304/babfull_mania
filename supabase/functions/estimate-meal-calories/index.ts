@@ -7,6 +7,7 @@ const corsHeaders = {
 
 type NutritionRow = Record<string, string | null>;
 type MealItem = { id: number; original_menu_text: string; serving_grams: number | null; foods?: { original_name?: string } | Array<{ original_name?: string }> | null };
+const MATCH_VERSION = 3;
 
 const normalize = (value: string) => value.normalize("NFKC").toLocaleLowerCase("ko-KR")
   .replace(/\([^)]*\)|\[[^\]]*\]|\*+/g, "").replace(/\s+/g, "")
@@ -41,11 +42,19 @@ const pickBest = (menuName: string, rows: NutritionRow[]) => {
   const wanted = normalize(menuName);
   return rows.map((row) => {
     const candidate = normalize(row.FOOD_NM_KR || "");
-    const score = candidate === wanted ? 100 : candidate.startsWith(wanted) || candidate.endsWith(wanted) ? 75
-      : candidate.includes(wanted) || wanted.includes(candidate) ? 55 : 0;
-    return { row, score: score + (row.DB_GRP_NM === "음식" || row.DB_GRP_CM === "D" ? 5 : 0) };
+    const closeLength = candidate.length <= Math.max(wanted.length + 6, Math.ceil(wanted.length * 2.5));
+    const exactOnly = /^(우유|요거트|바나나|사과|오렌지|음료|식혜|제철과일|과일주스)$/u.test(wanted);
+    const containsUnexpectedSauce = candidate.includes("소스") && !wanted.includes("소스");
+    const allowsFuzzy = !exactOnly && !containsUnexpectedSauce && wanted.length >= 3 && closeLength;
+    const baseScore = candidate === wanted ? 100
+      : allowsFuzzy && (candidate.startsWith(wanted) || candidate.endsWith(wanted)) ? 75
+      : allowsFuzzy && (candidate.includes(wanted) || wanted.includes(candidate)) ? 55 : 0;
+    const foodGroupBonus = row.DB_GRP_NM === "음식" || row.DB_GRP_CM === "D" ? 5 : 0;
+    return { row, score: baseScore > 0 ? baseScore + foodGroupBonus : 0 };
   }).filter(({ row, score }) => score > 0 && numberFrom(row.AMT_NUM1) !== null)
-    .sort((a, b) => b.score - a.score || String(b.row.UPDATE_DATE || "").localeCompare(String(a.row.UPDATE_DATE || "")))[0]?.row;
+    .sort((a, b) => b.score - a.score
+      || normalize(a.row.FOOD_NM_KR || "").length - normalize(b.row.FOOD_NM_KR || "").length
+      || String(b.row.UPDATE_DATE || "").localeCompare(String(a.row.UPDATE_DATE || "")))[0]?.row;
 };
 
 const defaultServingGrams = (name: string) => {
@@ -150,7 +159,8 @@ Deno.serve(async (request) => {
 
     await mapConcurrent([...namesByKey.entries()], 6, async ([key, name]) => {
       const cached = nutritionByQuery.get(key);
-      const lifetime = cached?.match_status === "matched" ? 30 * 86400000 : cached?.match_status === "no_match" ? 86400000 : 300000;
+      const isCurrentMatchVersion = Number(cached?.raw_data?._babfull_match_version) === MATCH_VERSION;
+      const lifetime = !isCurrentMatchVersion ? 0 : cached?.match_status === "matched" ? 30 * 86400000 : cached?.match_status === "no_match" ? 86400000 : 300000;
       if (cached && new Date(cached.fetched_at).getTime() > Date.now() - lifetime) return;
       try {
         const result = await fetchNutrition(foodSafetyKey, dataGoKey, name);
@@ -159,13 +169,13 @@ Deno.serve(async (request) => {
           normalized_query: key, mfds_food_code: row.FOOD_CD, matched_name: row.FOOD_NM_KR,
           serving_amount: numberFrom(row.SERVING_SIZE) || numberFrom(row.Z10500) || 100,
           serving_unit: String(row.SERVING_SIZE || row.Z10500 || "100g"), calories_per_serving: numberFrom(row.AMT_NUM1),
-          match_status: "matched", raw_data: { ...row, _babfull_source: result.source }, fetched_at: new Date().toISOString(),
-        } : { normalized_query: key, match_status: "no_match", fetched_at: new Date().toISOString() };
+          match_status: "matched", raw_data: { ...row, _babfull_source: result.source, _babfull_match_version: MATCH_VERSION }, fetched_at: new Date().toISOString(),
+        } : { normalized_query: key, match_status: "no_match", raw_data: { _babfull_match_version: MATCH_VERSION }, fetched_at: new Date().toISOString() };
         await db.from("food_nutrition_cache").upsert(cacheRow as any);
         nutritionByQuery.set(key, cacheRow);
       } catch (error) {
         console.warn(`영양정보 조회 실패: ${name}`, error);
-        const cacheRow = { normalized_query: key, match_status: "error", fetched_at: new Date().toISOString() };
+        const cacheRow = { normalized_query: key, match_status: "error", raw_data: { _babfull_match_version: MATCH_VERSION }, fetched_at: new Date().toISOString() };
         await db.from("food_nutrition_cache").upsert(cacheRow);
         nutritionByQuery.set(key, cacheRow);
       }
