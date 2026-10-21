@@ -25,7 +25,7 @@ const getSeoulDate = () => {
 const menuSets = [
   {
     breakfast: ["백미밥", "미역국", "계란말이", "도시락김", "배추김치"],
-    lunch: ["백미밥", "팽이버섯된장국", "수제돈가스", "오이무침", "무말랭이무침", "깍두기", "양배추샐러드"],
+    lunch: ["백미밥", "팽이버섯된장국", "수제돈가스", "오이무침", "무말랭이무침", "깍두기", "양배추샐러드", "감자조림", "단무지"],
   },
   {
     breakfast: ["잡곡밥", "콩나물국", "소시지볶음", "연근조림", "배추김치"],
@@ -61,10 +61,18 @@ export const sampleMeals = Array.from({ length: 6 }, (_, index) => index - 4).fl
     const date = formatDateKey(addDays(monday, weekOffset * 7 + dayIndex));
     const rotated = menuSets[(dayIndex + weekOffset + menuSets.length) % menuSets.length];
     const menus = weekOffset === 0 ? baseMenus : rotated;
-    return [
-      { id: `${date}-breakfast`, date, type: "breakfast", items: menus.breakfast, published: true },
-      { id: `${date}-lunch`, date, type: "lunch", items: menus.lunch, published: true },
+    if (weekOffset === 1 && dayIndex === 0) {
+      return ["breakfast", "lunch"].map((type) => ({
+        id: `${date}-${type}`, date, type, items: [], published: true, operating: false, note: "대체공휴일",
+      }));
+    }
+    const records = [
+      { id: `${date}-lunch`, date, type: "lunch", items: menus.lunch, published: true, operating: true, note: null },
     ];
+    if (dayIndex !== 4) {
+      records.unshift({ id: `${date}-breakfast`, date, type: "breakfast", items: menus.breakfast, published: true, operating: true, note: null });
+    }
+    return records;
   })
 );
 

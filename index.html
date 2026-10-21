@@ -107,13 +107,13 @@
             </div>
           </div>
           <p class="period-label" id="month-label"></p>
+          <section class="selected-day" id="selected-day" aria-live="polite"></section>
           <div class="calendar-card">
             <div class="calendar-weekdays" aria-hidden="true">
               <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
             </div>
             <div class="calendar-grid" id="calendar-grid"></div>
           </div>
-          <section class="selected-day" id="selected-day" aria-live="polite"></section>
         </section>
 
         <section class="page-view" id="search-view" data-view="search" aria-labelledby="search-title">
@@ -153,7 +153,15 @@
         </a>
         <a href="#weekly" data-route="weekly">
           <img src="asset/btn_월간메뉴.png" alt="" />
-          <span>주간식단</span>
+          <span>주간</span>
+        </a>
+        <a href="#calendar" data-route="calendar">
+          <img src="asset/btn_월간메뉴.png" alt="" />
+          <span>월간</span>
+        </a>
+        <a href="#search" data-route="search">
+          <span class="mobile-nav__glyph" aria-hidden="true">⌕</span>
+          <span>검색</span>
         </a>
         <a href="#mypage" data-route="mypage">
           <img src="asset/btn_마이페이지.png" alt="" />

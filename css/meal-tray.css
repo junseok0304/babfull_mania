@@ -47,11 +47,23 @@
 
 .tray-slot--side-1 { left: 8.1%; top: 8.5%; width: 15.8%; height: 33.3%; border-radius: 13% / 10%; }
 .tray-slot--side-2 { left: 28.4%; top: 8.5%; width: 14.8%; height: 33.3%; border-radius: 13% / 10%; }
+.tray-slot--side-1-top { left: 8.1%; top: 8.5%; width: 15.8%; height: 15.9%; border-radius: 13% / 16%; }
+.tray-slot--side-1-bottom { left: 8.1%; top: 25.8%; width: 15.8%; height: 15.9%; border-radius: 13% / 16%; }
+.tray-slot--side-2-top { left: 28.4%; top: 8.5%; width: 14.8%; height: 15.9%; border-radius: 13% / 16%; }
+.tray-slot--side-2-bottom { left: 28.4%; top: 25.8%; width: 14.8%; height: 15.9%; border-radius: 13% / 16%; }
 .tray-slot--side-3 { left: 44.2%; top: 8.5%; width: 14.8%; height: 33.3%; border-radius: 13% / 10%; }
 .tray-slot--side-4 { left: 61.7%; top: 8.5%; width: 15.8%; height: 33.3%; border-radius: 13% / 10%; }
 .tray-slot--small { left: 80.1%; top: 8.5%; width: 12.5%; height: 22.5%; border-radius: 15% / 13%; }
 .tray-slot--rice { left: 8.9%; top: 49%; width: 35.4%; height: 40.1%; border-radius: 7% / 8%; }
 .tray-slot--soup { left: 49.1%; top: 49.5%; width: 28.6%; height: 40.8%; border-radius: 50%; }
+
+.tray-slot--side-1-top span,
+.tray-slot--side-1-bottom span,
+.tray-slot--side-2-top span,
+.tray-slot--side-2-bottom span {
+  -webkit-line-clamp: 1;
+  font-size: clamp(6px, 1.9vw, 10px);
+}
 
 .tray-caption {
   display: flex;

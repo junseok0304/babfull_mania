@@ -53,14 +53,13 @@ const getDefaultState = (meals, nowMinutes) => {
 const classifyMenu = (name) => {
   if (/밥$|백미|잡곡|흑미|현미/.test(name)) return "rice";
   if (/국$|탕$|찌개$|육개장|장국/.test(name)) return "soup";
-  if (/김치|깍두기/.test(name)) return "kimchi";
+  if (/김치|깍두기|단무지/.test(name)) return "kimchi";
   if (/소스|쌈장|간장$/.test(name)) return "sauce";
   if (/가스|까스|볶음|불고기|갈비|산적|계란말이|두부조림/.test(name)) return "main";
   return "side";
 };
 
-const arrangeTray = (items) => {
-  const slots = ["side-1", "side-2", "side-3", "side-4", "small"];
+export const arrangeTray = (items) => {
   const result = [];
   const remaining = [];
 
@@ -76,14 +75,22 @@ const arrangeTray = (items) => {
     return order[a.category] - order[b.category];
   });
 
-  const smallIndex = remaining.findIndex(({ category }) => category === "sauce" || category === "kimchi");
-  if (smallIndex >= 0) {
-    const [small] = remaining.splice(smallIndex, 1);
-    result.push({ name: small.name, slot: "small" });
-    slots.pop();
+  const condimentIndex = remaining.findIndex(({ category }) => category === "sauce" || category === "kimchi");
+
+  if (remaining.length <= 3) {
+    const condiment = condimentIndex >= 0 ? remaining.splice(condimentIndex, 1)[0] : null;
+    remaining.forEach((item, index) => result.push({ name: item.name, slot: `side-${index + 1}` }));
+    if (condiment) result.push({ name: condiment.name, slot: "side-4" });
+    return result;
   }
 
+  const dense = remaining.length > 5;
+  const slots = dense
+    ? ["side-1-top", "side-1-bottom", "side-2-top", "side-2-bottom", "side-3", "side-4"]
+    : ["side-1", "side-2", "side-3", "side-4"];
+  const condiment = condimentIndex >= 0 ? remaining.splice(condimentIndex, 1)[0] : null;
   remaining.slice(0, slots.length).forEach((item, index) => result.push({ name: item.name, slot: slots[index] }));
+  if (condiment) result.push({ name: condiment.name, slot: "small" });
   return result;
 };
 
@@ -104,7 +111,8 @@ const trayTemplate = (meal) => {
 
 const mealCardTemplate = (meal, state, forceOpen = null) => {
   const manuallySet = manualOpenState.get(meal.id);
-  const isOpen = forceOpen ?? manuallySet ?? state.open.has(meal.type);
+  const desktopDefaultOpen = window.matchMedia("(min-width: 960px)").matches;
+  const isOpen = forceOpen ?? manuallySet ?? (desktopDefaultOpen || state.open.has(meal.type));
   const isCurrent = state.current === meal.type;
   const time = meal.type === "breakfast"
     ? `${appSettings.breakfastStart}–${appSettings.breakfastEnd}`
@@ -137,7 +145,9 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
 };
 
 const findNextMeals = (todayKey) => {
-  const future = getCachedMeals().filter((meal) => meal.date > todayKey).sort((a, b) => a.date.localeCompare(b.date));
+  const future = getCachedMeals()
+    .filter((meal) => meal.date > todayKey && meal.published && meal.operating !== false)
+    .sort((a, b) => a.date.localeCompare(b.date));
   if (!future.length) return [];
   const nextDate = future[0].date;
   return future.filter((meal) => meal.date === nextDate);
@@ -161,7 +171,7 @@ export const renderHomeMeals = () => {
   const guidance = document.querySelector("#meal-guidance");
   const todayKey = formatDateKey(getSeoulDate());
   const nowMinutes = getSeoulMinutes();
-  const todayMeals = getCachedMeals().filter((meal) => meal.date === todayKey && meal.published);
+  const todayMeals = getCachedMeals().filter((meal) => meal.date === todayKey && meal.published && meal.operating !== false);
   const todayState = getDefaultState(todayMeals, nowMinutes);
 
   let visibleMeals = todayMeals;
@@ -188,4 +198,5 @@ export const renderHomeMeals = () => {
 
 export const scheduleMealRefresh = () => {
   window.setInterval(renderHomeMeals, 60_000);
+  window.matchMedia("(min-width: 960px)").addEventListener("change", renderHomeMeals);
 };

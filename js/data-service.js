@@ -9,6 +9,8 @@ const mapMeal = (record) => ({
   date: record.meal_date,
   type: record.meal_type,
   published: record.is_published,
+  operating: record.is_operating,
+  note: record.admin_note,
   items: [...(record.meal_items ?? [])]
     .sort((a, b) => a.display_order - b.display_order)
     .map((item) => item.original_menu_text || item.foods?.original_name)
@@ -21,7 +23,7 @@ export const initializeData = async () => {
 
   const { data, error } = await client
     .from("meals")
-    .select("id, meal_date, meal_type, is_published, meal_items(display_order, original_menu_text, foods(original_name))")
+    .select("id, meal_date, meal_type, is_published, is_operating, admin_note, meal_items(display_order, original_menu_text, foods(original_name))")
     .eq("is_published", true)
     .order("meal_date", { ascending: true });
 

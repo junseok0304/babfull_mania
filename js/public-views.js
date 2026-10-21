@@ -22,6 +22,18 @@ const escapeHtml = (value) => String(value)
   .replaceAll("'", "&#039;");
 
 const mealsForDate = (dateKey) => getCachedMeals().filter((meal) => meal.date === dateKey && meal.published);
+const operatingMealsForDate = (dateKey) => mealsForDate(dateKey).filter((meal) => meal.operating !== false);
+
+const getDayStatus = (date, meals = mealsForDate(formatDateKey(date))) => {
+  const operatingMeals = meals.filter((meal) => meal.operating !== false);
+  const closedMeal = meals.find((meal) => meal.operating === false);
+  if (!operatingMeals.length && closedMeal) return { kind: "closed", label: closedMeal.note || "휴무일" };
+  if (!operatingMeals.length) return { kind: date.getDay() === 0 || date.getDay() === 6 ? "closed" : "empty", label: date.getDay() === 0 || date.getDay() === 6 ? "휴무일" : "미제공" };
+  if (!operatingMeals.some((meal) => meal.type === "breakfast") && operatingMeals.some((meal) => meal.type === "lunch")) {
+    return { kind: "partial", label: "조식 미제공" };
+  }
+  return null;
+};
 
 const dateLabel = (date) => new Intl.DateTimeFormat("ko-KR", {
   month: "long",
@@ -31,33 +43,39 @@ const dateLabel = (date) => new Intl.DateTimeFormat("ko-KR", {
 const renderWeekly = () => {
   const today = getSeoulDate();
   const monday = addDays(getMonday(today), weekOffset * 7);
-  const sunday = addDays(monday, 6);
+  const friday = addDays(monday, 4);
   const todayKey = formatDateKey(today);
-  document.querySelector("#week-label").textContent = `${dateLabel(monday)} – ${dateLabel(sunday)}`;
+  document.querySelector("#week-label").textContent = `${dateLabel(monday)} – ${dateLabel(friday)} · 월–금`;
 
-  document.querySelector("#weekly-grid").innerHTML = Array.from({ length: 7 }, (_, index) => {
+  document.querySelector("#weekly-grid").innerHTML = Array.from({ length: 5 }, (_, index) => {
     const date = addDays(monday, index);
     const key = formatDateKey(date);
-    const meals = mealsForDate(key);
+    const allMeals = mealsForDate(key);
+    const meals = allMeals.filter((meal) => meal.operating !== false);
+    const status = getDayStatus(date, allMeals);
+    const statusContent = status ? `<p class="day-card__status day-card__status--${status.kind}">${escapeHtml(status.label)}</p>` : "";
     const mealContent = meals.length
-      ? meals.map((meal) => `<dl class="day-card__meal"><dt>${mealLabels[meal.type]}</dt><dd>${meal.items.map(escapeHtml).join(" · ")}</dd></dl>`).join("")
-      : '<p class="day-card__empty">등록된 식단이 없어요.</p>';
+      ? meals.map((meal) => `<dl class="day-card__meal day-card__meal--${meal.type}"><dt>${mealLabels[meal.type]}</dt><dd>${meal.items.map(escapeHtml).join(" · ")}</dd></dl>`).join("")
+      : `<p class="day-card__empty">${status?.kind === "closed" ? "식당을 운영하지 않아요." : "등록된 식단이 없어요."}</p>`;
     return `<article class="day-card${key === todayKey ? " is-today" : ""}">
       <header class="day-card__header"><div class="day-card__date"><strong>${date.getDate()}</strong><span>${weekdays[date.getDay()]}요일</span></div>${key === todayKey ? '<span class="current-badge">오늘</span>' : ""}</header>
-      ${mealContent}
+      ${statusContent}${mealContent}
     </article>`;
   }).join("");
 };
 
 const renderSelectedDay = () => {
-  const meals = mealsForDate(selectedDate);
+  const allMeals = mealsForDate(selectedDate);
+  const meals = allMeals.filter((meal) => meal.operating !== false);
   const target = document.querySelector("#selected-day");
+  const date = new Date(`${selectedDate}T00:00:00`);
+  const status = getDayStatus(date, allMeals);
   if (!meals.length) {
-    target.innerHTML = `<h2>${selectedDate}</h2><p class="selected-day__empty">등록된 식단이 없습니다.</p>`;
+    target.innerHTML = `<h2>${selectedDate}</h2><p class="selected-day__status selected-day__status--${status?.kind || "empty"}">${escapeHtml(status?.label || "미제공")}</p><p class="selected-day__empty">${status?.kind === "closed" ? "식당을 운영하지 않는 날입니다." : "등록된 식단이 없습니다."}</p>`;
     return;
   }
-  target.innerHTML = `<h2>${selectedDate} 식단</h2>${meals.map((meal) =>
-    `<div class="selected-day__meal"><strong>${mealLabels[meal.type]}</strong><span>${meal.items.map(escapeHtml).join(" · ")}</span></div>`
+  target.innerHTML = `<h2>${selectedDate} 식단</h2>${status ? `<p class="selected-day__status selected-day__status--${status.kind}">${escapeHtml(status.label)}</p>` : ""}${meals.map((meal) =>
+    `<div class="selected-day__meal selected-day__meal--${meal.type}"><strong>${mealLabels[meal.type]}</strong><span>${meal.items.map(escapeHtml).join(" · ")}</span></div>`
   ).join("")}`;
 };
 
@@ -72,10 +90,13 @@ const renderCalendar = () => {
   document.querySelector("#calendar-grid").innerHTML = Array.from({ length: 42 }, (_, index) => {
     const date = addDays(gridStart, index);
     const key = formatDateKey(date);
-    const meals = mealsForDate(key);
+    const allMeals = mealsForDate(key);
+    const meals = allMeals.filter((meal) => meal.operating !== false);
+    const status = getDayStatus(date, allMeals);
     const preview = meals.flatMap((meal) => meal.items.slice(0, 2)).join(" · ");
-    return `<button class="calendar-day${date.getMonth() !== month ? " is-outside" : ""}${key === todayKey ? " is-today" : ""}${key === selectedDate ? " is-selected" : ""}" type="button" data-date="${key}" aria-label="${key}${meals.length ? `, 식단 ${meals.length}개` : ", 식단 없음"}">
+    return `<button class="calendar-day${date.getMonth() !== month ? " is-outside" : ""}${key === todayKey ? " is-today" : ""}${key === selectedDate ? " is-selected" : ""}${status && !meals.length ? " has-status" : ""}" type="button" data-date="${key}" aria-label="${key}${meals.length ? `, 식단 ${meals.length}개` : `, ${status?.label || "식단 없음"}`}">
       <span class="calendar-day__number">${date.getDate()}</span>
+      ${status ? `<span class="calendar-day__status calendar-day__status--${status.kind}">${escapeHtml(status.label)}</span>` : ""}
       ${preview ? `<span class="calendar-day__preview">${escapeHtml(preview)}</span>` : ""}
       ${meals.length ? `<span class="calendar-day__dots" aria-hidden="true">${meals.map(() => "<i></i>").join("")}</span>` : ""}
     </button>`;

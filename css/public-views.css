@@ -129,9 +129,18 @@
 }
 
 .day-card__meal + .day-card__meal {
-  margin-top: 11px;
-  padding-top: 11px;
-  border-top: 1px solid #f1f1f2;
+  margin-top: 8px;
+}
+
+.day-card__meal {
+  margin: 0;
+  padding: 10px;
+  border-radius: 11px;
+  background: #f0fdf4;
+}
+
+.day-card__meal--breakfast {
+  background: #eef2ff;
 }
 
 .day-card__meal dt {
@@ -141,11 +150,36 @@
   font-weight: 800;
 }
 
+.day-card__meal--breakfast dt {
+  color: var(--breakfast);
+}
+
 .day-card__meal dd {
   margin: 0;
   color: #3f3f46;
   font-size: 12px;
   line-height: 1.55;
+}
+
+.day-card__status {
+  display: inline-flex;
+  margin: 0 0 9px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #f4f4f5;
+  color: var(--secondary);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.day-card__status--closed {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.day-card__status--partial {
+  background: #fff7ed;
+  color: #c2410c;
 }
 
 .calendar-card {
@@ -235,8 +269,30 @@
   display: none;
 }
 
+.calendar-day__status {
+  position: absolute;
+  right: 4px;
+  bottom: 5px;
+  left: 4px;
+  overflow: hidden;
+  color: #a1a1aa;
+  font-size: 8px;
+  font-weight: 800;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-day__status--closed {
+  color: #e11d48;
+}
+
+.calendar-day__status--partial {
+  color: #ea580c;
+}
+
 .selected-day {
-  margin-top: 14px;
+  margin: 0 0 14px;
   padding: 18px;
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -249,7 +305,17 @@
 }
 
 .selected-day__meal + .selected-day__meal {
-  margin-top: 12px;
+  margin-top: 8px;
+}
+
+.selected-day__meal {
+  padding: 11px 12px;
+  border-radius: 11px;
+  background: #f0fdf4;
+}
+
+.selected-day__meal--breakfast {
+  background: #eef2ff;
 }
 
 .selected-day__meal strong {
@@ -257,6 +323,31 @@
   min-width: 38px;
   color: var(--primary-dark);
   font-size: 12px;
+}
+
+.selected-day__meal--breakfast strong {
+  color: var(--breakfast);
+}
+
+.selected-day__status {
+  display: inline-flex;
+  margin: 0 0 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f4f4f5;
+  color: var(--secondary);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.selected-day__status--closed {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.selected-day__status--partial {
+  background: #fff7ed;
+  color: #c2410c;
 }
 
 .selected-day__meal span,
@@ -349,10 +440,6 @@
 }
 
 @media (min-width: 660px) {
-  .weekly-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .calendar-day {
     min-height: 92px;
     padding: 8px;
@@ -370,14 +457,33 @@
   }
 }
 
-@media (min-width: 760px) {
-  .mobile-menu {
-    display: none !important;
+@media (min-width: 900px) {
+  .weekly-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .day-card {
+    min-width: 0;
+    padding: 13px;
+  }
+
+  .day-card__header {
+    align-items: flex-start;
+  }
+
+  .day-card__date {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .day-card__meal dd {
+    font-size: 11px;
   }
 }
 
-@media (min-width: 1050px) {
-  .weekly-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+@media (min-width: 760px) {
+  .mobile-menu {
+    display: none !important;
   }
 }
