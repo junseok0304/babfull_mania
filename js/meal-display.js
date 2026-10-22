@@ -7,6 +7,21 @@ const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "🌙", lunch: "☀️" };
 const manualOpenState = new Map();
 let homeRenderId = 0;
+let homeDateOffset = 0;
+let homeNavigationBound = false;
+
+const addDays = (date, amount) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + amount);
+  return result;
+};
+
+const formatHomeDate = (date) => new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul",
+  month: "long",
+  day: "numeric",
+  weekday: "short",
+}).format(date);
 
 const minutesFromTime = (value) => {
   const [hour, minute] = value.split(":").map(Number);
@@ -107,9 +122,13 @@ const trayTemplate = (meal) => {
   const slots = arrangeTray(meal.items)
     .map(({ name, slot }) => {
       const image = getFoodImage(name);
-      const imageMarkup = image ? `<img src="${escapeHtml(image.imageUrl || image.fallbackUrl)}"
+      const sourceUrl = image?.documentUrl || image?.imageUrl || image?.fallbackUrl;
+      const imageElement = image ? `<img src="${escapeHtml(image.imageUrl || image.fallbackUrl)}"
         data-fallback-src="${escapeHtml(image.fallbackUrl || "")}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
-        style="--food-zoom:${Number(image.cropZoom) || 1.08};--food-x:${Number(image.focalX) || 50}%;--food-y:${Number(image.focalY) || 50}%" />` : "";
+        style="--food-zoom:${Number(image.cropZoom) || 1.08};--food-x:${Number(image.focalX ?? 50)}%;--food-y:${Number(image.focalY ?? 50)}%" />` : "";
+      const imageMarkup = imageElement && sourceUrl
+        ? `<a class="tray-slot__source" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(name)} 사진 원본 출처 열기" title="사진 원본 출처 보기">${imageElement}</a>`
+        : imageElement;
       return `<div class="tray-slot tray-slot--${slot}${image ? " has-image" : ""}" data-food-name="${escapeHtml(name)}">
         ${imageMarkup}<span>${escapeHtml(name)}</span>
       </div>`;
@@ -159,15 +178,6 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
   </article>`;
 };
 
-const findNextMeals = (todayKey) => {
-  const future = getCachedMeals()
-    .filter((meal) => meal.date > todayKey && meal.published && meal.operating !== false)
-    .sort((a, b) => a.date.localeCompare(b.date));
-  if (!future.length) return [];
-  const nextDate = future[0].date;
-  return future.filter((meal) => meal.date === nextDate);
-};
-
 const bindCardToggles = () => {
   document.querySelectorAll(".meal-card__toggle").forEach((button) => {
     button.addEventListener("click", () => {
@@ -198,25 +208,35 @@ export const renderHomeMeals = async () => {
   const list = document.querySelector("#meal-list");
   const empty = document.querySelector("#meal-empty");
   const guidance = document.querySelector("#meal-guidance");
-  const todayKey = formatDateKey(getSeoulDate());
+  const today = getSeoulDate();
+  const selectedDate = addDays(today, homeDateOffset);
+  const selectedDateKey = formatDateKey(selectedDate);
   const nowMinutes = getSeoulMinutes();
-  const todayMeals = getCachedMeals().filter((meal) => meal.date === todayKey && meal.published && meal.operating !== false);
-  const todayState = getDefaultState(todayMeals, nowMinutes);
+  const dateMeals = getCachedMeals().filter((meal) => meal.date === selectedDateKey && meal.published);
+  const visibleMeals = dateMeals.filter((meal) => meal.operating !== false && meal.items.length > 0);
+  const state = homeDateOffset === 0
+    ? getDefaultState(visibleMeals, nowMinutes)
+    : { current: null, open: new Set(visibleMeals.map((meal) => meal.type)) };
+  const closedNotes = [...new Set(dateMeals.filter((meal) => meal.operating === false).map((meal) => meal.note).filter(Boolean))];
+  const isClosed = !visibleMeals.length && (closedNotes.length > 0 || [0, 6].includes(selectedDate.getDay()));
 
-  let visibleMeals = todayMeals;
-  let state = todayState;
-  if (!todayMeals.length || (!todayState.current && nowMinutes >= minutesFromTime(appSettings.lunchEnd))) {
-    visibleMeals = findNextMeals(todayKey);
-    state = { current: null, open: new Set(visibleMeals[0] ? [visibleMeals[0].type] : []) };
-    guidance.textContent = visibleMeals.length
-      ? `${visibleMeals[0].date}의 다음 제공 식사를 보여드려요.`
-      : "다음 식단 등록을 기다리고 있어요.";
-  } else if (todayState.current === "breakfast") {
+  document.querySelector("#home-selected-date").textContent = formatHomeDate(selectedDate);
+  document.querySelector("#home-date-offset").textContent = homeDateOffset === 0 ? "오늘" : homeDateOffset < 0 ? `${Math.abs(homeDateOffset)}일 전` : `${homeDateOffset}일 후`;
+  document.querySelector("#home-date-prev").disabled = homeDateOffset <= -2;
+  document.querySelector("#home-date-next").disabled = homeDateOffset >= 2;
+
+  if (isClosed) {
+    guidance.textContent = "휴무일입니다.";
+  } else if (!visibleMeals.length) {
+    guidance.textContent = "선택한 날짜에는 식사가 제공되지 않습니다.";
+  } else if (homeDateOffset !== 0) {
+    guidance.textContent = `${formatHomeDate(selectedDate)} 식단입니다.`;
+  } else if (state.current === "breakfast") {
     guidance.textContent = "조식과 오늘의 중식을 함께 확인하세요.";
-  } else if (todayState.current === "lunch") {
+  } else if (state.current === "lunch") {
     guidance.textContent = "지금 이용할 수 있는 중식 메뉴예요.";
   } else {
-    guidance.textContent = "오늘 첫 식사를 미리 확인하세요.";
+    guidance.textContent = "오늘 제공되는 식단입니다.";
   }
 
   await Promise.all([hydrateMealNutrition(visibleMeals), hydrateMealImages(visibleMeals)]);
@@ -224,6 +244,11 @@ export const renderHomeMeals = async () => {
 
   empty.hidden = visibleMeals.length > 0;
   list.hidden = visibleMeals.length === 0;
+  empty.classList.toggle("is-closed", isClosed);
+  document.querySelector("#meal-empty-title").textContent = isClosed ? "휴무일" : "식사 미제공";
+  document.querySelector("#meal-empty-description").textContent = isClosed
+    ? (closedNotes.join(" · ") || "식당을 운영하지 않는 날입니다.")
+    : "선택한 날짜에 등록된 식단이 없습니다.";
   list.innerHTML = visibleMeals.map((meal) => mealCardTemplate(meal, state)).join("");
   bindCardToggles();
 };
@@ -231,4 +256,19 @@ export const renderHomeMeals = async () => {
 export const scheduleMealRefresh = () => {
   window.setInterval(renderHomeMeals, 60_000);
   window.matchMedia("(min-width: 960px)").addEventListener("change", renderHomeMeals);
+  if (!homeNavigationBound) {
+    homeNavigationBound = true;
+    const moveDate = (amount) => {
+      homeDateOffset = Math.max(-2, Math.min(2, homeDateOffset + amount));
+      manualOpenState.clear();
+      renderHomeMeals();
+    };
+    document.querySelector("#home-date-prev").addEventListener("click", () => moveDate(-1));
+    document.querySelector("#home-date-next").addEventListener("click", () => moveDate(1));
+    document.querySelector("#today-button").addEventListener("click", () => {
+      homeDateOffset = 0;
+      manualOpenState.clear();
+      renderHomeMeals();
+    });
+  }
 };

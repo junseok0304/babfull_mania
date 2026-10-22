@@ -11,11 +11,11 @@
     <title>밥풀매니아</title>
     <link rel="stylesheet" href="css/global.css?v=20261021-5" />
     <link rel="stylesheet" href="css/components.css?v=20261021-5" />
-    <link rel="stylesheet" href="css/home.css?v=20261021-5" />
-    <link rel="stylesheet" href="css/meal-tray.css?v=20261021-7" />
+    <link rel="stylesheet" href="css/home.css?v=20261022-1" />
+    <link rel="stylesheet" href="css/meal-tray.css?v=20261022-1" />
     <link rel="stylesheet" href="css/public-views.css?v=20261021-5" />
     <link rel="stylesheet" href="css/mypage.css?v=20261021-5" />
-    <script type="module" src="js/app.js?v=20261021-6"></script>
+    <script type="module" src="js/app.js?v=20261022-1"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문 바로가기</a>
@@ -63,6 +63,12 @@
             </div>
           </div>
 
+          <div class="home-date-nav" aria-label="홈 식단 날짜 이동">
+            <button id="home-date-prev" type="button" aria-label="이전 날짜">‹</button>
+            <div><span id="home-date-offset">오늘</span><strong id="home-selected-date">선택 날짜</strong></div>
+            <button id="home-date-next" type="button" aria-label="다음 날짜">›</button>
+          </div>
+
           <div class="notice notice--loading" id="meal-load-status" role="status">
             <span class="loading-spinner" aria-hidden="true"></span>
             식단을 불러오는 중입니다…
@@ -77,8 +83,8 @@
 
           <div class="empty-state" id="meal-empty" hidden>
             <div class="empty-state__icon" aria-hidden="true">🍚</div>
-            <h2>등록된 다음 식단이 없어요</h2>
-            <p>새로운 식단이 등록되면 이곳에 바로 표시됩니다.</p>
+            <h2 id="meal-empty-title">식단이 없어요</h2>
+            <p id="meal-empty-description">선택한 날짜에 등록된 식단이 없습니다.</p>
           </div>
         </section>
 

@@ -42,6 +42,57 @@
   cursor: pointer;
 }
 
+.home-date-nav {
+  display: grid;
+  min-height: 66px;
+  margin-top: 12px;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.home-date-nav button {
+  border: 0;
+  background: transparent;
+  color: var(--primary-dark);
+  font-size: 32px;
+  cursor: pointer;
+}
+
+.home-date-nav button:disabled {
+  color: #d4d4d8;
+  cursor: default;
+}
+
+.home-date-nav > div {
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+.home-date-nav span {
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.home-date-nav strong {
+  font-size: 17px;
+  letter-spacing: -0.025em;
+}
+
+.empty-state.is-closed .empty-state__icon {
+  filter: grayscale(1);
+}
+
+.empty-state.is-closed h2 {
+  color: #3f3f46;
+}
+
 .meal-list {
   display: grid;
   gap: 16px;
@@ -227,6 +278,10 @@
 
   .intro-row {
     display: flex;
+  }
+
+  .home-date-nav {
+    max-width: 440px;
   }
 }
 
