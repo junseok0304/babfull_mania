@@ -116,8 +116,8 @@ const renderFoodImageWorkspace = (data) => {
         <div class="food-image-editor__preview">${imageMarkup(foodImageEditTarget)}</div>
         <div class="food-image-editor__controls">
           <label><span>확대 <output id="food-image-zoom-value">${Number(foodImageEditTarget.cropZoom || 1.08).toFixed(2)}배</output></span><input data-crop-control="cropZoom" type="range" min="1" max="2.5" step="0.05" value="${Number(foodImageEditTarget.cropZoom) || 1.08}" /></label>
-          <label><span>가로 중심 <output id="food-image-x-value">${Number(foodImageEditTarget.focalX ?? 50)}%</output></span><input data-crop-control="focalX" type="range" min="0" max="100" step="1" value="${Number(foodImageEditTarget.focalX ?? 50)}" /></label>
-          <label><span>세로 중심 <output id="food-image-y-value">${Number(foodImageEditTarget.focalY ?? 50)}%</output></span><input data-crop-control="focalY" type="range" min="0" max="100" step="1" value="${Number(foodImageEditTarget.focalY ?? 50)}" /></label>
+          <label><span>가로 확대 중심 <output id="food-image-x-value">${Number(foodImageEditTarget.focalX ?? 50)}%</output></span><input data-crop-control="focalX" type="range" min="-50" max="150" step="1" value="${Number(foodImageEditTarget.focalX ?? 50)}" /></label>
+          <label><span>세로 확대 중심 <output id="food-image-y-value">${Number(foodImageEditTarget.focalY ?? 50)}%</output></span><input data-crop-control="focalY" type="range" min="-50" max="150" step="1" value="${Number(foodImageEditTarget.focalY ?? 50)}" /></label>
           <button class="primary-button" type="button" data-save-food-image>이 사진과 구도 저장</button>
         </div>
       </div>`

@@ -242,8 +242,8 @@ Deno.serve(async (request) => {
           documentUrl: current.source_document_url,
           sourceName: current.source_name,
           cropZoom: Number(current.crop_zoom) || 1.08,
-          focalX: Number(current.focal_x) || 50,
-          focalY: Number(current.focal_y) || 50,
+          focalX: current.focal_x == null ? 50 : Number(current.focal_x),
+          focalY: current.focal_y == null ? 50 : Number(current.focal_y),
           provider: "Kakao",
           selectionToken: await createCandidateToken(serviceRoleKey, food.id, {
             imageUrl: current.source_url || current.storage_path,
@@ -266,8 +266,8 @@ Deno.serve(async (request) => {
     if (!selectionToken) return Response.json({ error: "사진 후보가 만료되었습니다. 다시 검색해주세요." }, { status: 400, headers: corsHeaders });
     const selected = await verifyCandidateToken(serviceRoleKey, selectionToken, food.id);
     const cropZoom = clampNumber(body?.cropZoom, 1, 2.5, 1.08);
-    const focalX = Math.round(clampNumber(body?.focalX, 0, 100, 50));
-    const focalY = Math.round(clampNumber(body?.focalY, 0, 100, 50));
+    const focalX = Math.round(clampNumber(body?.focalX, -50, 150, 50));
+    const focalY = Math.round(clampNumber(body?.focalY, -50, 150, 50));
 
     const values = {
       food_id: food.id,

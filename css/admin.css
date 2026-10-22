@@ -519,6 +519,7 @@
   object-fit: cover;
   object-position: var(--preview-x, 50%) var(--preview-y, 50%);
   transform: scale(var(--preview-zoom, 1.08));
+  transform-origin: var(--preview-x, 50%) var(--preview-y, 50%);
 }
 
 .food-image-editor {
@@ -540,6 +541,7 @@
   object-fit: cover;
   object-position: var(--preview-x, 50%) var(--preview-y, 50%);
   transform: scale(var(--preview-zoom, 1.08));
+  transform-origin: var(--preview-x, 50%) var(--preview-y, 50%);
 }
 
 .food-image-editor__controls {

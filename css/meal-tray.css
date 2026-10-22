@@ -46,6 +46,7 @@
   object-fit: cover;
   object-position: var(--food-x, 50%) var(--food-y, 50%);
   transform: scale(var(--food-zoom, 1.08));
+  transform-origin: var(--food-x, 50%) var(--food-y, 50%);
 }
 
 .tray-slot--small img {
