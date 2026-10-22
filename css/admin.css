@@ -471,7 +471,10 @@
 }
 
 .food-image-search .primary-button {
+  width: 100%;
+  min-height: 52px;
   padding: 0 18px;
+  border-radius: 14px;
 }
 
 .food-image-workspace {
@@ -1825,8 +1828,12 @@
   }
 
   .food-image-search {
-    grid-template-columns: minmax(260px, 1fr) auto;
-    align-items: end;
+    grid-template-columns: minmax(260px, 1fr) 210px;
+    align-items: stretch;
+  }
+
+  .food-image-search .primary-button {
+    min-height: 68px;
   }
 
   .food-image-workspace {
