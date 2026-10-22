@@ -152,6 +152,12 @@
   line-height: 1.5;
 }
 
+@media (max-width: 759px) {
+  .generated-tray figcaption {
+    margin-bottom: 14px;
+  }
+}
+
 .generated-tray-empty {
   display: grid;
   min-height: 250px;
