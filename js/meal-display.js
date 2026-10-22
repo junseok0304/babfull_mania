@@ -108,6 +108,20 @@ export const arrangeTray = (items) => {
   return result;
 };
 
+export const resolveHomeAvailability = (dateMeals, selectedDate) => {
+  const visibleMeals = dateMeals.filter((meal) => meal.operating !== false && meal.items.length > 0);
+  const closedNotes = [...new Set(dateMeals
+    .filter((meal) => meal.operating === false)
+    .map((meal) => meal.note)
+    .filter(Boolean))];
+  const isClosed = !visibleMeals.length && (closedNotes.length > 0 || [0, 6].includes(selectedDate.getDay()));
+  return {
+    visibleMeals,
+    closedNotes,
+    state: visibleMeals.length ? "available" : isClosed ? "closed" : "empty",
+  };
+};
+
 const escapeHtml = (value) => String(value)
   .replaceAll("&", "&amp;")
   .replaceAll("<", "&lt;")
@@ -239,12 +253,12 @@ export const renderHomeMeals = async () => {
   const isToday = selectedDateKey === formatDateKey(today);
   const nowMinutes = getSeoulMinutes();
   const dateMeals = getCachedMeals().filter((meal) => meal.date === selectedDateKey && meal.published);
-  const visibleMeals = dateMeals.filter((meal) => meal.operating !== false && meal.items.length > 0);
+  const availability = resolveHomeAvailability(dateMeals, selectedDate);
+  const { visibleMeals, closedNotes } = availability;
   const state = isToday
     ? getDefaultState(visibleMeals, nowMinutes)
     : { current: null, open: new Set(visibleMeals.map((meal) => meal.type)) };
-  const closedNotes = [...new Set(dateMeals.filter((meal) => meal.operating === false).map((meal) => meal.note).filter(Boolean))];
-  const isClosed = !visibleMeals.length && (closedNotes.length > 0 || [0, 6].includes(selectedDate.getDay()));
+  const isClosed = availability.state === "closed";
 
   document.querySelector("#home-selected-date").textContent = formatHomeDate(selectedDate);
   document.querySelector("#home-date-offset").textContent = isToday ? "오늘" : `${["월", "화", "수", "목", "금"][selectedWeekdayIndex]}요일`;

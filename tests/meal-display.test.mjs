@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { arrangeTray } from "../js/meal-display.js";
+import { arrangeTray, resolveHomeAvailability } from "../js/meal-display.js";
 
 test("김치와 장류도 별도 작은 칸 없이 일반 반찬 순서로 배치한다", () => {
   const arranged = arrangeTray(["백미밥", "콩나물국", "돈육김치볶음", "깍두기", "쌈장"]);
@@ -36,4 +36,29 @@ test("반찬이 많은 식단은 큰 반찬 칸을 위아래로 나누어 모두
     "side-2-bottom",
     "side-3",
   ]);
+});
+
+test("등록된 식단이 없는 평일은 휴무가 아닌 미제공 상태다", () => {
+  const result = resolveHomeAvailability([], new Date("2026-10-26T00:00:00"));
+
+  assert.equal(result.state, "empty");
+  assert.deepEqual(result.visibleMeals, []);
+});
+
+test("휴무 기록이 있는 날은 메뉴 대신 휴무 상태와 사유를 제공한다", () => {
+  const result = resolveHomeAvailability([
+    { operating: false, items: [], note: "문화체험 휴무" },
+    { operating: false, items: [], note: "문화체험 휴무" },
+  ], new Date("2026-10-22T00:00:00"));
+
+  assert.equal(result.state, "closed");
+  assert.deepEqual(result.closedNotes, ["문화체험 휴무"]);
+});
+
+test("조식이 없어도 중식 메뉴가 있으면 제공 상태를 유지한다", () => {
+  const lunch = { type: "lunch", operating: true, items: ["백미밥", "미역국"] };
+  const result = resolveHomeAvailability([lunch], new Date("2026-10-23T00:00:00"));
+
+  assert.equal(result.state, "available");
+  assert.deepEqual(result.visibleMeals, [lunch]);
 });

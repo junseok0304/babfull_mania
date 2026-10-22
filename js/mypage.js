@@ -56,7 +56,7 @@ const dashboardTemplate = ({ profile, usages }, isDemo) => {
         <h2>개인 QR 식권</h2>
         <p class="card-description">관리자에게 이 화면의 QR을 보여주세요.</p>
         <div class="qr-frame" id="qr-code"><div class="qr-fallback">QR을 만들고 있어요.</div></div>
-        <p class="qr-warning">QR은 캡쳐하여 사용해도 무방합니다.</p>
+        <p class="qr-warning">QR은 캡쳐하여 사용해도 무방합니다.<br />단, 본인 이외의 사용은 금지합니다.</p>
       </section>
       <section class="usage-card">
         <h2>이번 달 이용</h2>
