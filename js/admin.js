@@ -11,6 +11,7 @@ let currentUserId = null;
 let operationalSettings = { ...defaultOperationalSettings };
 let scannerAudioContext = null;
 let scanBusy = false;
+let foodImageCandidates = [];
 const demoUsages = [];
 const demoQrToken = "00000000-0000-4000-8000-000000000001";
 
@@ -60,6 +61,55 @@ const renderMeals = () => {
     <div class="meal-admin-item__top"><strong>${meal.date} · ${mealLabel(meal.type)}</strong><span>${meal.published ? "공개" : "비공개"}</span></div>
     <p>${meal.items.map(escapeHtml).join(" · ")}</p>
   </article>`).join("");
+  const menuSelect = document.querySelector("#food-image-menu");
+  const selectedMenu = menuSelect.value;
+  const menuNames = [...new Set(sortedMeals().flatMap((meal) => meal.items))]
+    .filter((name) => name && !/운영시간|메뉴가 없습니다|휴무/u.test(name))
+    .sort((a, b) => a.localeCompare(b, "ko"));
+  menuSelect.innerHTML = `<option value="">메뉴를 선택하세요</option>${menuNames
+    .map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("")}`;
+  if (menuNames.includes(selectedMenu)) menuSelect.value = selectedMenu;
+};
+
+const imageMarkup = (image, className = "") => `<img class="${className}" src="${escapeHtml(image.imageUrl || image.fallbackUrl)}"
+  data-fallback-src="${escapeHtml(image.fallbackUrl || "")}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" />`;
+
+const bindManagedImageFallbacks = () => {
+  document.querySelectorAll("#food-image-workspace img").forEach((image) => {
+    image.addEventListener("error", () => {
+      const fallback = image.dataset.fallbackSrc;
+      if (fallback && image.src !== fallback) image.src = fallback;
+      else {
+        image.closest("figure, .food-image-candidate")?.classList.add("is-broken");
+        image.remove();
+      }
+    });
+  });
+};
+
+const renderFoodImageWorkspace = (data) => {
+  foodImageCandidates = data.candidates ?? [];
+  const current = data.current
+    ? `<figure class="food-image-current">${imageMarkup(data.current)}<figcaption><span>현재 대표 사진</span><strong>${escapeHtml(data.current.sourceName || "출처 정보 없음")}</strong></figcaption></figure>`
+    : '<div class="food-image-current is-empty"><strong>저장된 대표 사진이 없습니다.</strong></div>';
+  const candidates = foodImageCandidates.length
+    ? `<div class="food-image-candidates">${foodImageCandidates.map((candidate, index) => `<article class="food-image-candidate">
+        <div class="food-image-candidate__preview">${imageMarkup(candidate)}</div>
+        <div class="food-image-candidate__meta"><span>${escapeHtml(candidate.sourceName || "이미지 검색")}</span><small>${candidate.width && candidate.height ? `${candidate.width} × ${candidate.height}` : "크기 정보 없음"}</small></div>
+        <button class="secondary-button" type="button" data-image-candidate="${index}">이 사진 사용</button>
+      </article>`).join("")}</div>`
+    : '<div class="food-image-empty"><strong>다른 사진 후보를 찾지 못했습니다.</strong><span>잠시 후 다시 검색해주세요.</span></div>';
+  document.querySelector("#food-image-workspace").innerHTML = `<div class="food-image-current-panel"><h3>${escapeHtml(data.food.name)}</h3>${current}</div><div class="food-image-results"><h3>대체 사진 후보</h3>${candidates}</div>`;
+  bindManagedImageFallbacks();
+};
+
+const loadFoodImageCandidates = async (foodName) => {
+  if (adminMode !== "supabase") throw new Error("운영 데이터 연결 후 사용할 수 있습니다.");
+  const { data, error } = await client.functions.invoke("manage-food-image", {
+    body: { action: "candidates", foodName },
+  });
+  if (error) throw new Error(data?.error || error.message);
+  renderFoodImageWorkspace(data);
 };
 
 const mapDatabaseMeal = (record) => ({
@@ -581,6 +631,47 @@ document.querySelector("#meal-form").addEventListener("submit", async (event) =>
   } catch (error) {
     message.textContent = error.message || "식단을 저장하지 못했습니다.";
   } finally {
+    button.disabled = false;
+  }
+});
+
+document.querySelector("#food-image-search-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = form.querySelector("button[type=submit]");
+  const message = document.querySelector("#food-image-message");
+  const foodName = form.elements.food_name.value;
+  if (!foodName) return;
+  button.disabled = true;
+  message.textContent = "대체 사진을 찾고 있습니다…";
+  try {
+    await loadFoodImageCandidates(foodName);
+    message.textContent = `${foodName} 사진 후보를 불러왔습니다.`;
+  } catch (error) {
+    message.textContent = error.message || "사진 후보를 불러오지 못했습니다.";
+  } finally {
+    button.disabled = false;
+  }
+});
+
+document.querySelector("#food-image-workspace").addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-image-candidate]");
+  if (!button) return;
+  const candidate = foodImageCandidates[Number(button.dataset.imageCandidate)];
+  const foodName = document.querySelector("#food-image-menu").value;
+  const message = document.querySelector("#food-image-message");
+  if (!candidate || !foodName) return;
+  button.disabled = true;
+  message.textContent = "대표 사진으로 저장하고 있습니다…";
+  try {
+    const { data, error } = await client.functions.invoke("manage-food-image", {
+      body: { action: "select", foodName, imageUrl: candidate.imageUrl },
+    });
+    if (error) throw new Error(data?.error || error.message);
+    await loadFoodImageCandidates(foodName);
+    message.textContent = `${foodName} 대표 사진을 변경했습니다. 사용자 식판에서 계속 재사용됩니다.`;
+  } catch (error) {
+    message.textContent = error.message || "대표 사진을 저장하지 못했습니다.";
     button.disabled = false;
   }
 });

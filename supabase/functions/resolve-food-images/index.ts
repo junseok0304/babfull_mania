@@ -170,7 +170,10 @@ Deno.serve(async (request) => {
     const imageByFoodId = new Map<number, ImageRow>();
     (cached ?? []).forEach((image: ImageRow) => { if (!imageByFoodId.has(image.food_id)) imageByFoodId.set(image.food_id, image); });
 
-    const refreshFoods = foodRows.filter((food) => !imageByFoodId.get(food.id)?.license_note?.includes(`babfull-image-v${IMAGE_MATCH_VERSION}`));
+    const refreshFoods = foodRows.filter((food) => {
+      const note = imageByFoodId.get(food.id)?.license_note || "";
+      return !note.includes("admin-selected") && !note.includes(`babfull-image-v${IMAGE_MATCH_VERSION}`);
+    });
     await mapConcurrent(refreshFoods, 5, async (food) => {
       try {
         const result = await searchImage(kakaoApiKey, food.original_name);
