@@ -124,6 +124,16 @@ const escapeHtml = (value) => String(value)
   .replaceAll('"', "&quot;")
   .replaceAll("'", "&#039;");
 
+const cropStyle = (image) => {
+  const zoom = Number(image.cropZoom) || 1.08;
+  const focalX = Number(image.focalX ?? 50);
+  const focalY = Number(image.focalY ?? 50);
+  const maxShift = zoom > 1 ? ((zoom - 1) * 50) / zoom : 0;
+  const shiftX = ((50 - focalX) / 100) * maxShift;
+  const shiftY = ((50 - focalY) / 100) * maxShift;
+  return `--food-zoom:${zoom};--food-shift-x:${shiftX}%;--food-shift-y:${shiftY}%`;
+};
+
 const trayTemplate = (meal) => {
   const slots = arrangeTray(meal.items)
     .map(({ name, slot }) => {
@@ -131,7 +141,7 @@ const trayTemplate = (meal) => {
       const sourceUrl = image?.documentUrl || image?.imageUrl || image?.fallbackUrl;
       const imageElement = image ? `<img src="${escapeHtml(image.imageUrl || image.fallbackUrl)}"
         data-fallback-src="${escapeHtml(image.fallbackUrl || "")}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
-        style="--food-zoom:${Number(image.cropZoom) || 1.08};--food-x:${Number(image.focalX ?? 50)}%;--food-y:${Number(image.focalY ?? 50)}%" />` : "";
+        style="${cropStyle(image)}" />` : "";
       const imageMarkup = imageElement && sourceUrl
         ? `<a class="tray-slot__source" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(name)} 사진 원본 출처 열기" title="사진 원본 출처 보기">${imageElement}</a>`
         : imageElement;
@@ -146,7 +156,7 @@ const trayTemplate = (meal) => {
 
 const generatedTrayTemplate = (meal) => {
   const imageUrl = meal.trayImage?.imageUrl;
-  if (!imageUrl) return trayTemplate(meal);
+  if (!imageUrl) return `<div class="generated-tray-empty" role="status"><span aria-hidden="true">▦</span><strong>AI 식판 이미지 준비 중</strong><p>이 식사의 완성 식판 이미지는 아직 등록되지 않았어요.</p></div>`;
   const alt = meal.trayImage.altText || `${meal.date} ${labels[meal.type]} 완성 식판 이미지`;
   return `<figure class="generated-tray">
     <a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(alt)} 원본 보기">

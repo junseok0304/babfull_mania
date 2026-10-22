@@ -142,9 +142,24 @@ const renderMeals = () => {
   renderTrayImageManager();
 };
 
-const imageMarkup = (image, className = "") => `<img class="${className}" src="${escapeHtml(image.imageUrl || image.fallbackUrl)}"
-  data-fallback-src="${escapeHtml(image.fallbackUrl || "")}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
-  style="--preview-zoom:${Number(image.cropZoom) || 1.08};--preview-x:${Number(image.focalX ?? 50)}%;--preview-y:${Number(image.focalY ?? 50)}%" />`;
+const getPreviewCrop = (image) => {
+  const zoom = Number(image.cropZoom) || 1.08;
+  const focalX = Number(image.focalX ?? 50);
+  const focalY = Number(image.focalY ?? 50);
+  const maxShift = zoom > 1 ? ((zoom - 1) * 50) / zoom : 0;
+  return {
+    zoom,
+    shiftX: ((50 - focalX) / 100) * maxShift,
+    shiftY: ((50 - focalY) / 100) * maxShift,
+  };
+};
+
+const imageMarkup = (image, className = "") => {
+  const crop = getPreviewCrop(image);
+  return `<img class="${className}" src="${escapeHtml(image.imageUrl || image.fallbackUrl)}"
+    data-fallback-src="${escapeHtml(image.fallbackUrl || "")}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+    style="--preview-zoom:${crop.zoom};--preview-shift-x:${crop.shiftX}%;--preview-shift-y:${crop.shiftY}%" />`;
+};
 
 const bindManagedImageFallbacks = () => {
   document.querySelectorAll("#food-image-workspace img").forEach((image) => {
@@ -950,9 +965,10 @@ document.querySelector("#food-image-workspace").addEventListener("input", (event
   foodImageEditTarget[input.dataset.cropControl] = Number(input.value);
   const preview = document.querySelector(".food-image-editor__preview img");
   if (preview) {
-    preview.style.setProperty("--preview-zoom", foodImageEditTarget.cropZoom || 1.08);
-    preview.style.setProperty("--preview-x", `${foodImageEditTarget.focalX ?? 50}%`);
-    preview.style.setProperty("--preview-y", `${foodImageEditTarget.focalY ?? 50}%`);
+    const crop = getPreviewCrop(foodImageEditTarget);
+    preview.style.setProperty("--preview-zoom", crop.zoom);
+    preview.style.setProperty("--preview-shift-x", `${crop.shiftX}%`);
+    preview.style.setProperty("--preview-shift-y", `${crop.shiftY}%`);
   }
   const outputIds = { cropZoom: "#food-image-zoom-value", focalX: "#food-image-x-value", focalY: "#food-image-y-value" };
   const suffix = input.dataset.cropControl === "cropZoom" ? "배" : "%";

@@ -517,9 +517,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: var(--preview-x, 50%) var(--preview-y, 50%);
-  transform: scale(var(--preview-zoom, 1.08));
-  transform-origin: var(--preview-x, 50%) var(--preview-y, 50%);
+  object-position: center;
+  transform: scale(var(--preview-zoom, 1.08)) translate3d(var(--preview-shift-x, 0%), var(--preview-shift-y, 0%), 0);
+  transform-origin: center;
 }
 
 .food-image-editor {
@@ -539,9 +539,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: var(--preview-x, 50%) var(--preview-y, 50%);
-  transform: scale(var(--preview-zoom, 1.08));
-  transform-origin: var(--preview-x, 50%) var(--preview-y, 50%);
+  object-position: center;
+  transform: scale(var(--preview-zoom, 1.08)) translate3d(var(--preview-shift-x, 0%), var(--preview-shift-y, 0%), 0);
+  transform-origin: center;
 }
 
 .food-image-editor__controls {
@@ -1550,6 +1550,12 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.food-image-search[hidden],
+.food-image-workspace[hidden],
+.saved-food-image-grid[hidden] {
+  display: none !important;
 }
 
 .saved-food-image-card {
