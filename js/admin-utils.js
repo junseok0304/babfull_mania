@@ -39,6 +39,8 @@ export const getManualMealState = (availability, menuItems = [], closureNote = "
   throw new Error("제공 여부를 선택해주세요.");
 };
 
+export const shouldShowClosureReason = (availability) => availability === "closed";
+
 export const buildDashboardSummary = (raw = {}) => {
   const breakfastCount = Number(raw.breakfast_count ?? raw.breakfastCount ?? 0);
   const lunchCount = Number(raw.lunch_count ?? raw.lunchCount ?? 0);

@@ -785,9 +785,14 @@
   position: absolute;
   top: 16px;
   right: 18px;
+  padding: 9px 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: white;
   color: var(--secondary);
   font-size: 11px;
-  font-weight: 750;
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
 }
 
 .is-scanner-mode .admin-sidebar,
@@ -810,7 +815,7 @@
   margin-bottom: 16px;
   padding-top: 4px;
   justify-items: center;
-  gap: 10px;
+  gap: 12px;
   text-align: center;
 }
 
@@ -916,9 +921,17 @@
 
 .scanner-controls {
   display: grid;
-  margin-top: 8px;
+  width: min(100%, 680px);
+  margin: 12px auto 0;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
+}
+
+#scan-result,
+.kiosk-admin-options {
+  width: min(100%, 680px);
+  margin-right: auto;
+  margin-left: auto;
 }
 
 .scanner-controls #scanner-start {
@@ -1406,6 +1419,23 @@
   display: grid;
   margin-bottom: 12px;
   gap: 8px;
+}
+
+.user-search .primary-button {
+  min-width: 112px;
+  padding-right: 24px;
+  padding-left: 24px;
+}
+
+.user-admin-item .secondary-button {
+  min-width: 90px;
+  padding-right: 16px;
+  padding-left: 16px;
+}
+
+#meal-menu-field[hidden],
+#meal-closure-field[hidden] {
+  display: none !important;
 }
 
 .user-admin-list {

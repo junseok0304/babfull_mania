@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildDashboardSummary, getAutomaticMealType, getManualMealState } from "../js/admin-utils.js";
+import { buildDashboardSummary, getAutomaticMealType, getManualMealState, shouldShowClosureReason } from "../js/admin-utils.js";
 
 const settings = {
   breakfastStart: "08:00",
@@ -31,6 +31,12 @@ test("수동 식단 제공 여부를 저장 상태로 변환한다", () => {
   assert.deepEqual(getManualMealState("provided", [" 백미밥 "]), { menuItems: ["백미밥"], isOperating: true, adminNote: null });
   assert.deepEqual(getManualMealState("unavailable", ["테스트"]), { menuItems: [], isOperating: false, adminNote: "미제공" });
   assert.deepEqual(getManualMealState("closed", ["테스트"], "문화체험 휴무"), { menuItems: [], isOperating: false, adminNote: "문화체험 휴무" });
+});
+
+test("휴무 사유는 휴무를 선택한 경우에만 표시한다", () => {
+  assert.equal(shouldShowClosureReason("provided"), false);
+  assert.equal(shouldShowClosureReason("unavailable"), false);
+  assert.equal(shouldShowClosureReason("closed"), true);
 });
 
 test("월간 대시보드 집계값과 식사 이용 비율을 계산한다", () => {

@@ -7,8 +7,8 @@
     <meta name="description" content="밥풀매니아 관리자 대시보드" />
     <title>밥풀매니아 관리자</title>
     <link rel="stylesheet" href="../css/global.css?v=20261021-7" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261023-1" />
-    <script type="module" src="../js/admin.js?v=20261023-1"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261023-2" />
+    <script type="module" src="../js/admin.js?v=20261023-2"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -57,7 +57,7 @@
         <section class="admin-view" data-admin-view="meals">
           <section class="admin-card import-card">
             <div class="admin-card__heading">
-              <div><p class="section-kicker">원본 식단 연동</p><h2>식단 최신화</h2></div>
+              <div><p class="section-kicker">식단 정보 가져오기</p><h2>식단 최신화</h2></div>
               <button class="primary-button" id="menu-sync" type="button">지금 가져오기</button>
             </div>
             <div class="import-status" id="menu-import-status" aria-live="polite"><p>수집 상태를 확인하고 있어요.</p></div>
@@ -125,7 +125,7 @@
         <section class="admin-view" data-admin-view="scanner">
           <section class="scanner-kiosk">
               <a class="scanner-kiosk__exit" href="#dashboard">운영 화면으로</a>
-              <div class="scanner-kiosk__intro"><span>밥full QR</span><h2>밥full 정기권 인식 스캐너</h2><p>정기권 이용자는 반드시 QR 스캔 후 식당 이용해주세요.</p></div>
+              <div class="scanner-kiosk__intro"><h2>밥full 정기권 인식 스캐너</h2><p>정기권 이용자는 반드시 QR 스캔 후 식당 이용해주세요.</p></div>
               <div class="qr-reader" id="qr-reader"><div class="scanner-placeholder"><span class="scanner-placeholder__icon">▦</span><strong>스캔 대기 중</strong><p>아래 버튼을 눌러 카메라를 켜주세요.</p></div></div>
               <div class="scanner-controls">
                 <button class="primary-button" id="scanner-start" type="button">카메라 켜고 운영 시작</button>
@@ -152,7 +152,7 @@
         </section>
         <section class="admin-view" data-admin-view="users">
           <section class="admin-card">
-            <div class="admin-card__heading"><div><p class="section-kicker">Supabase 프로필</p><h2>사용자 관리</h2></div><button class="secondary-button" id="user-refresh" type="button">새로고침</button></div>
+            <div class="admin-card__heading"><div><p class="section-kicker">활성 사용자</p><h2>사용자 관리</h2></div><button class="secondary-button" id="user-refresh" type="button">새로고침</button></div>
             <form class="user-search" id="user-search-form">
               <label><span class="sr-only">사용자 검색</span><input name="query" type="search" placeholder="이름 또는 소속 검색" /></label>
               <label><span class="sr-only">계정 상태</span><select name="status"><option value="all">전체 상태</option><option value="active">활성</option><option value="inactive">비활성</option></select></label>

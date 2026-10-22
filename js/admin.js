@@ -1,6 +1,6 @@
 import { formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
 import { getSupabaseClient } from "./supabase-client.js";
-import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState } from "./admin-utils.js";
+import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState, shouldShowClosureReason } from "./admin-utils.js?v=20261023-2";
 
 const titles = { dashboard: "대시보드", meals: "식단 관리", scanner: "QR 스캐너", users: "사용자 관리", usages: "이용 내역", settings: "운영 설정" };
 let adminMode = "demo";
@@ -937,7 +937,7 @@ const syncMealAvailability = () => {
   const availability = form.elements.availability.value;
   const provided = availability === "provided";
   document.querySelector("#meal-menu-field").hidden = !provided;
-  document.querySelector("#meal-closure-field").hidden = availability !== "closed";
+  document.querySelector("#meal-closure-field").hidden = !shouldShowClosureReason(availability);
   form.elements.menu_items.required = provided;
   form.elements.closure_note.required = false;
 };
