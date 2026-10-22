@@ -1546,6 +1546,54 @@
   font-size: 11px;
 }
 
+.saved-food-image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.saved-food-image-card {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+}
+
+.saved-food-image-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #f4f4f5;
+}
+
+.saved-food-image-card > div {
+  display: grid;
+  padding: 11px 12px 7px;
+  gap: 3px;
+}
+
+.saved-food-image-card strong {
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saved-food-image-card span {
+  overflow: hidden;
+  color: var(--secondary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saved-food-image-card button {
+  margin: 4px 10px 10px;
+  min-height: 40px;
+  font-size: 13px;
+}
+
 .tray-mode-settings {
   grid-column: 1 / -1;
 }
@@ -1738,6 +1786,10 @@
   .tray-image-form > button {
     width: 210px;
     justify-self: end;
+  }
+
+  .saved-food-image-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .settings-price-note,

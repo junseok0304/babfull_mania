@@ -7,8 +7,8 @@
     <meta name="description" content="밥풀매니아 관리자 대시보드" />
     <title>밥풀매니아 관리자</title>
     <link rel="stylesheet" href="../css/global.css?v=20261021-7" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261022-6" />
-    <script type="module" src="../js/admin.js?v=20261022-6"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261022-7" />
+    <script type="module" src="../js/admin.js?v=20261022-7"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -102,6 +102,7 @@
               <button class="is-active" type="button" data-food-image-list="pending">미설정 메뉴 <span id="food-image-pending-count">0</span></button>
               <button type="button" data-food-image-list="saved">저장된 사진 <span id="food-image-saved-count">0</span></button>
             </div>
+            <div class="saved-food-image-grid" id="saved-food-image-grid" hidden></div>
             <form class="food-image-search" id="food-image-search-form">
               <input id="food-image-menu" name="food_name" type="hidden" />
               <div class="food-menu-navigator" aria-label="사진을 변경할 메뉴">
