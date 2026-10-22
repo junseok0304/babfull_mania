@@ -1438,6 +1438,148 @@
   line-height: 1.6;
 }
 
+.tray-image-manager,
+.food-image-manager {
+  margin-top: 18px;
+}
+
+.tray-image-form {
+  display: grid;
+  gap: 14px;
+}
+
+.tray-image-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.tray-image-form select,
+.tray-image-form input[type="file"] {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.tray-image-file small {
+  color: var(--secondary);
+  font-weight: 500;
+}
+
+.tray-image-preview {
+  display: grid;
+  min-height: 240px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed #a7c9b3;
+  border-radius: 16px;
+  background: #f7fbf8;
+  color: var(--secondary);
+}
+
+.tray-image-preview.has-image {
+  position: relative;
+  border-style: solid;
+  background: #18181b;
+}
+
+.tray-image-preview img {
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+}
+
+.tray-image-preview.has-image span {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.72);
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.food-image-filter {
+  display: inline-flex;
+  margin: 3px 0 14px;
+  padding: 4px;
+  gap: 4px;
+  border-radius: 13px;
+  background: #eef3ef;
+}
+
+.food-image-filter button {
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--secondary);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.food-image-filter button.is-active {
+  background: white;
+  color: var(--primary-dark);
+  box-shadow: 0 2px 8px rgb(15 23 42 / 0.08);
+}
+
+.food-image-filter span {
+  display: inline-grid;
+  min-width: 22px;
+  height: 22px;
+  margin-left: 4px;
+  place-items: center;
+  border-radius: 999px;
+  background: #dcfce7;
+  font-size: 11px;
+}
+
+.tray-mode-settings {
+  grid-column: 1 / -1;
+}
+
+.settings-form .tray-mode-settings label {
+  display: grid;
+  padding: 12px;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  border: 1px solid #e4e4e7;
+  border-radius: 11px;
+  cursor: pointer;
+}
+
+.settings-form .tray-mode-settings input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.settings-form .tray-mode-settings span {
+  display: grid;
+  gap: 3px;
+}
+
+.settings-form .tray-mode-settings strong {
+  font-size: 14px;
+}
+
+.settings-form .tray-mode-settings small {
+  line-height: 1.45;
+}
+
 /* Admin typography and control rhythm */
 .admin-nav a,
 .admin-table,
@@ -1580,6 +1722,22 @@
   .settings-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
+  }
+
+  .tray-image-form {
+    grid-template-columns: minmax(220px, 0.75fr) minmax(280px, 1.25fr);
+    align-items: start;
+  }
+
+  .tray-image-preview,
+  .tray-image-form > button,
+  .tray-image-form > .form-message {
+    grid-column: 1 / -1;
+  }
+
+  .tray-image-form > button {
+    width: 210px;
+    justify-self: end;
   }
 
   .settings-price-note,

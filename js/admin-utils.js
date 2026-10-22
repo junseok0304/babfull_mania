@@ -6,6 +6,7 @@ export const defaultOperationalSettings = Object.freeze({
   scanBufferMinutes: 30,
   breakfastPrice: 1000,
   lunchPrice: 5300,
+  trayDisplayMode: "search",
 });
 
 const toMinutes = (value) => {

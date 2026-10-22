@@ -55,6 +55,7 @@ export const appSettings = {
   lunchEnd: "14:00",
   breakfastPrice: 1000,
   lunchPrice: 5300,
+  trayDisplayMode: "search",
   isPreview: true,
 };
 

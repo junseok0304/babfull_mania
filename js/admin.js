@@ -13,6 +13,9 @@ let scannerAudioContext = null;
 let scanBusy = false;
 let foodImageCandidates = [];
 let foodImageMenuNames = [];
+let allFoodImageMenuNames = [];
+let savedFoodImageNames = new Set();
+let foodImageListMode = "pending";
 let foodImageMenuIndex = 0;
 let foodImageWorkspaceData = null;
 let foodImageEditTarget = null;
@@ -55,6 +58,19 @@ const updateFoodImageMenuNavigator = () => {
   document.querySelector("#food-image-next").disabled = count < 2;
 };
 
+const refreshFoodImageMenuList = (preferredName = "") => {
+  const previousName = preferredName || document.querySelector("#food-image-menu")?.value || "";
+  foodImageMenuNames = allFoodImageMenuNames.filter((name) => (
+    foodImageListMode === "saved" ? savedFoodImageNames.has(name) : !savedFoodImageNames.has(name)
+  ));
+  const preferredIndex = foodImageMenuNames.indexOf(previousName);
+  foodImageMenuIndex = preferredIndex >= 0 ? preferredIndex : Math.min(foodImageMenuIndex, Math.max(0, foodImageMenuNames.length - 1));
+  document.querySelector("#food-image-pending-count").textContent = allFoodImageMenuNames.filter((name) => !savedFoodImageNames.has(name)).length;
+  document.querySelector("#food-image-saved-count").textContent = allFoodImageMenuNames.filter((name) => savedFoodImageNames.has(name)).length;
+  document.querySelectorAll("[data-food-image-list]").forEach((button) => button.classList.toggle("is-active", button.dataset.foodImageList === foodImageListMode));
+  updateFoodImageMenuNavigator();
+};
+
 const renderStats = () => {
   const today = formatDateKey(getSeoulDate());
   const todayMeals = meals.filter((meal) => meal.date === today);
@@ -71,6 +87,24 @@ const renderStats = () => {
 
 const sortedMeals = () => [...meals].sort((a, b) => b.date.localeCompare(a.date) || a.type.localeCompare(b.type));
 
+const renderTrayImageManager = () => {
+  const select = document.querySelector("#tray-image-meal");
+  const preview = document.querySelector("#tray-image-preview");
+  if (!select || !preview) return;
+  const selectedId = select.value;
+  const available = sortedMeals().filter((meal) => meal.published && meal.items.length);
+  select.innerHTML = available.map((meal) => `<option value="${escapeHtml(meal.id)}"${String(meal.id) === selectedId ? " selected" : ""}>${escapeHtml(meal.date)} · ${mealLabel(meal.type)}${meal.trayImage ? " · 이미지 등록됨" : ""}</option>`).join("");
+  if (!select.value && available[0]) select.value = String(available[0].id);
+  const meal = available.find((item) => String(item.id) === select.value);
+  if (meal?.trayImage?.imageUrl) {
+    preview.classList.add("has-image");
+    preview.innerHTML = `<img src="${escapeHtml(meal.trayImage.imageUrl)}" alt="${escapeHtml(meal.trayImage.altText || `${meal.date} ${mealLabel(meal.type)} 완성 식판`)}" /><span>현재 저장된 고정 식판 이미지</span>`;
+  } else {
+    preview.classList.remove("has-image");
+    preview.innerHTML = "<span>이미지를 선택하면 미리보기가 표시됩니다.</span>";
+  }
+};
+
 const renderMeals = () => {
   const recent = sortedMeals().slice(0, 6);
   document.querySelector("#dashboard-meals").innerHTML = recent.map((meal) => `<tr><td>${meal.date}</td><td>${mealLabel(meal.type)}</td><td>${meal.items.slice(0, 3).map(escapeHtml).join(" · ")}</td><td>${meal.published ? "공개" : "비공개"}</td></tr>`).join("");
@@ -82,10 +116,9 @@ const renderMeals = () => {
   const menuNames = [...new Set(sortedMeals().flatMap((meal) => meal.items))]
     .filter((name) => name && !/운영시간|메뉴가 없습니다|휴무/u.test(name))
     .sort((a, b) => a.localeCompare(b, "ko"));
-  foodImageMenuNames = menuNames;
-  const previousIndex = menuNames.indexOf(selectedMenu);
-  foodImageMenuIndex = previousIndex >= 0 ? previousIndex : Math.min(foodImageMenuIndex, Math.max(0, menuNames.length - 1));
-  updateFoodImageMenuNavigator();
+  allFoodImageMenuNames = menuNames;
+  refreshFoodImageMenuList(selectedMenu);
+  renderTrayImageManager();
 };
 
 const imageMarkup = (image, className = "") => `<img class="${className}" src="${escapeHtml(image.imageUrl || image.fallbackUrl)}"
@@ -167,22 +200,38 @@ const mapDatabaseMeal = (record) => ({
   date: record.meal_date,
   type: record.meal_type,
   published: record.is_published,
+  trayImage: record.meal_tray_images?.[0] ? {
+    id: record.meal_tray_images[0].id,
+    storagePath: record.meal_tray_images[0].storage_path,
+    imageUrl: record.meal_tray_images[0].image_url,
+    altText: record.meal_tray_images[0].alt_text,
+  } : null,
   items: [...(record.meal_items ?? [])].sort((a, b) => a.display_order - b.display_order).map((item) => item.original_menu_text),
 });
 
 const loadDatabaseMeals = async () => {
   const { data, error } = await client.from("meals")
-    .select("id, meal_date, meal_type, is_published, meal_items(display_order, original_menu_text)")
+    .select("id, meal_date, meal_type, is_published, meal_tray_images(id, storage_path, image_url, alt_text), meal_items(display_order, original_menu_text)")
     .order("meal_date", { ascending: false }).limit(80);
   if (error) throw error;
   meals = (data ?? []).map(mapDatabaseMeal);
 };
 
+const loadSavedFoodImageNames = async () => {
+  if (!client) return;
+  const { data, error } = await client.from("food_images")
+    .select("foods(original_name)")
+    .ilike("license_note", "%admin-selected%");
+  if (error) throw error;
+  savedFoodImageNames = new Set((data ?? []).map((row) => row.foods?.original_name).filter(Boolean));
+};
+
 const loadOperationalSettings = async () => {
   if (!client) return;
-  const [{ data: hours }, { data: prices }] = await Promise.all([
+  const [{ data: hours }, { data: prices }, { data: trayMode }] = await Promise.all([
     client.from("app_settings").select("setting_value").eq("setting_key", "meal_hours").single(),
     client.from("app_settings").select("setting_value").eq("setting_key", "meal_prices").single(),
+    client.from("app_settings").select("setting_value").eq("setting_key", "tray_display_mode").maybeSingle(),
   ]);
   const value = hours?.setting_value ?? {};
   const priceValue = prices?.setting_value ?? {};
@@ -194,6 +243,7 @@ const loadOperationalSettings = async () => {
     scanBufferMinutes: Number(value.scan_buffer_minutes ?? defaultOperationalSettings.scanBufferMinutes),
     breakfastPrice: Number(priceValue.breakfast ?? defaultOperationalSettings.breakfastPrice),
     lunchPrice: Number(priceValue.lunch ?? defaultOperationalSettings.lunchPrice),
+    trayDisplayMode: trayMode?.setting_value?.mode === "ai" ? "ai" : "search",
   };
 };
 
@@ -255,6 +305,7 @@ const initializeAdmin = async () => {
   currentUserId = userId;
   await loadOperationalSettings();
   await loadDatabaseMeals();
+  await loadSavedFoodImageNames();
   adminMode = "supabase";
   return true;
 };
@@ -489,6 +540,8 @@ const renderSettings = () => {
   form.elements.scan_buffer_minutes.value = operationalSettings.scanBufferMinutes;
   form.elements.breakfast_price.value = operationalSettings.breakfastPrice;
   form.elements.lunch_price.value = operationalSettings.lunchPrice;
+  const trayMode = form.querySelector(`input[name="tray_display_mode"][value="${operationalSettings.trayDisplayMode}"]`);
+  if (trayMode) trayMode.checked = true;
   form.querySelector("button[type=submit]").disabled = adminMode !== "supabase";
 };
 
@@ -597,6 +650,10 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
       lunch_price: Number(values.get("lunch_price")),
     });
     if (priceError) throw priceError;
+    const { error: trayModeError } = await client.rpc("admin_update_tray_display_mode", {
+      target_mode: values.get("tray_display_mode"),
+    });
+    if (trayModeError) throw trayModeError;
     await loadOperationalSettings();
     setScanDefaults();
     message.textContent = "운영 설정을 저장했습니다.";
@@ -647,7 +704,7 @@ const saveMeal = async (payload) => {
     note: payload.adminNote || null,
   });
   if (error) throw error;
-  const { data } = await client.from("meals").select("id, meal_date, meal_type, is_published, meal_items(display_order, original_menu_text)").order("meal_date", { ascending: false }).limit(80);
+  const { data } = await client.from("meals").select("id, meal_date, meal_type, is_published, meal_tray_images(id, storage_path, image_url, alt_text), meal_items(display_order, original_menu_text)").order("meal_date", { ascending: false }).limit(80);
   meals = (data ?? []).map(mapDatabaseMeal);
 };
 
@@ -656,6 +713,81 @@ document.querySelector("#admin-menu-button").addEventListener("click", () => {
   const open = !sidebar.classList.contains("is-open");
   sidebar.classList.toggle("is-open", open);
   document.querySelector("#admin-menu-button").setAttribute("aria-expanded", String(open));
+});
+
+document.querySelector("#tray-image-meal").addEventListener("change", () => {
+  document.querySelector("#tray-image-file").value = "";
+  document.querySelector("#tray-image-message").textContent = "";
+  renderTrayImageManager();
+});
+
+document.querySelector("#tray-image-file").addEventListener("change", (event) => {
+  const file = event.target.files?.[0];
+  const preview = document.querySelector("#tray-image-preview");
+  if (!file) {
+    renderTrayImageManager();
+    return;
+  }
+  if (!file.type.startsWith("image/")) {
+    event.target.value = "";
+    document.querySelector("#tray-image-message").textContent = "이미지 파일만 선택할 수 있습니다.";
+    return;
+  }
+  const previewUrl = URL.createObjectURL(file);
+  preview.classList.add("has-image");
+  preview.innerHTML = `<img src="${escapeHtml(previewUrl)}" alt="업로드할 식판 이미지 미리보기" /><span>업로드할 이미지 미리보기</span>`;
+  preview.querySelector("img").addEventListener("load", () => URL.revokeObjectURL(previewUrl), { once: true });
+});
+
+document.querySelector("#tray-image-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = form.querySelector("button[type=submit]");
+  const message = document.querySelector("#tray-image-message");
+  const file = form.elements.tray_image.files?.[0];
+  const meal = meals.find((item) => String(item.id) === String(form.elements.meal_id.value));
+  if (adminMode !== "supabase" || !meal || !file) return;
+  if (file.size > 10 * 1024 * 1024) {
+    message.textContent = "10MB 이하 이미지를 선택해주세요.";
+    return;
+  }
+  const extensions = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+  const extension = extensions[file.type];
+  if (!extension) {
+    message.textContent = "JPG, PNG 또는 WebP 이미지만 업로드할 수 있습니다.";
+    return;
+  }
+  const storagePath = `${meal.date}/${meal.type}-${meal.id}-${Date.now()}.${extension}`;
+  button.disabled = true;
+  message.textContent = "식판 이미지를 업로드하고 있습니다…";
+  try {
+    const { error: uploadError } = await client.storage.from("meal-tray-images").upload(storagePath, file, {
+      contentType: file.type, cacheControl: "31536000", upsert: false,
+    });
+    if (uploadError) throw uploadError;
+    const { data: publicUrlData } = client.storage.from("meal-tray-images").getPublicUrl(storagePath);
+    const { error: saveError } = await client.from("meal_tray_images").upsert({
+      meal_id: meal.id,
+      storage_path: storagePath,
+      image_url: publicUrlData.publicUrl,
+      alt_text: `${meal.date} ${mealLabel(meal.type)}: ${meal.items.join(", ")}`,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "meal_id" });
+    if (saveError) {
+      await client.storage.from("meal-tray-images").remove([storagePath]);
+      throw saveError;
+    }
+    await loadDatabaseMeals();
+    renderMeals();
+    form.elements.meal_id.value = String(meal.id);
+    renderTrayImageManager();
+    form.elements.tray_image.value = "";
+    message.textContent = `${meal.date} ${mealLabel(meal.type)} 고정 식판 이미지를 저장했습니다.`;
+  } catch (error) {
+    message.textContent = error.message || "식판 이미지를 저장하지 못했습니다.";
+  } finally {
+    button.disabled = false;
+  }
 });
 
 window.addEventListener("hashchange", () => route(location.hash.slice(1)));
@@ -705,6 +837,27 @@ document.querySelector("#food-image-search-form").addEventListener("submit", asy
     button.disabled = false;
   }
 });
+
+document.querySelectorAll("[data-food-image-list]").forEach((filterButton) => filterButton.addEventListener("click", async () => {
+  foodImageListMode = filterButton.dataset.foodImageList;
+  foodImageMenuIndex = 0;
+  foodImageEditTarget = null;
+  refreshFoodImageMenuList();
+  const foodName = document.querySelector("#food-image-menu").value;
+  if (!foodName) {
+    document.querySelector("#food-image-workspace").innerHTML = `<div class="food-image-empty"><strong>${foodImageListMode === "saved" ? "아직 확정 저장한 사진이 없습니다." : "모든 메뉴 사진을 설정했습니다."}</strong></div>`;
+    return;
+  }
+  if (!foodImageBrowsingStarted) return;
+  const message = document.querySelector("#food-image-message");
+  message.textContent = `${foodName} 사진을 불러오고 있습니다…`;
+  try {
+    await loadFoodImageCandidates(foodName, foodImageSearchPages.get(foodName) || 1);
+    message.textContent = `${foodName} 사진 후보를 불러왔습니다.`;
+  } catch (error) {
+    message.textContent = error.message || "사진 후보를 불러오지 못했습니다.";
+  }
+}));
 
 const browseFoodImageMenu = async (direction) => {
   if (!foodImageMenuNames.length) return;
@@ -776,8 +929,10 @@ document.querySelector("#food-image-workspace").addEventListener("click", async 
       },
     });
     if (error) throw new Error(await getFunctionErrorMessage(error, data, "대표 사진을 저장하지 못했습니다. 사진을 다시 검색해주세요."));
+    savedFoodImageNames.add(foodName);
     foodImageEditTarget = null;
     await loadFoodImageCandidates(foodName, foodImageSearchPages.get(foodName) || 1);
+    refreshFoodImageMenuList(foodName);
     message.textContent = `${foodName} 대표 사진과 구도를 저장했습니다. 사용자 식판에서 계속 재사용됩니다.`;
   } catch (error) {
     message.textContent = error.message || "대표 사진을 저장하지 못했습니다.";

@@ -121,6 +121,33 @@
   font-size: 10px;
 }
 
+.generated-tray {
+  margin: 0;
+}
+
+.generated-tray a {
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: 18px;
+  background: #f4f4f5;
+  box-shadow: inset 0 0 0 1px rgb(24 24 27 / 0.06);
+}
+
+.generated-tray img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.generated-tray figcaption {
+  margin: 9px 2px 0;
+  color: var(--secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .tray-caption::before {
   width: 5px;
   height: 5px;

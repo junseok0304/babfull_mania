@@ -1,5 +1,5 @@
 import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
-import { getCachedMeals } from "./data-service.js";
+import { getCachedMeals } from "./data-service.js?v=20261022-1";
 import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
 
@@ -144,6 +144,18 @@ const trayTemplate = (meal) => {
     <p class="tray-caption">메뉴별 음식 사진은 실제 제공 모습과 다를 수 있어요.</p>`;
 };
 
+const generatedTrayTemplate = (meal) => {
+  const imageUrl = meal.trayImage?.imageUrl;
+  if (!imageUrl) return trayTemplate(meal);
+  const alt = meal.trayImage.altText || `${meal.date} ${labels[meal.type]} 완성 식판 이미지`;
+  return `<figure class="generated-tray">
+    <a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(alt)} 원본 보기">
+      <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" />
+    </a>
+    <figcaption>메뉴를 바탕으로 미리 제작한 식판 이미지예요. 실제 제공 모습과 다를 수 있어요.</figcaption>
+  </figure>`;
+};
+
 const mealCardTemplate = (meal, state, forceOpen = null) => {
   const manuallySet = manualOpenState.get(meal.id);
   const desktopDefaultOpen = window.matchMedia("(min-width: 960px)").matches;
@@ -173,7 +185,7 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
     </button>
     <div class="meal-card__body" id="body-${meal.id}">
       <div class="meal-card__body-inner">
-        <div>${trayTemplate(meal)}</div>
+        <div>${appSettings.trayDisplayMode === "ai" ? generatedTrayTemplate(meal) : trayTemplate(meal)}</div>
         <div class="meal-card__details">
           <div class="meal-card__info"><span>${meal.date}</span>${calorie}</div>
           <h3 class="menu-heading">메뉴</h3>
