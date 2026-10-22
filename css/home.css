@@ -32,7 +32,10 @@
 }
 
 @media (min-width: 960px) {
-  .menu-list li { font-size: 19px; }
+  .menu-list li {
+    font-size: 22px;
+    line-height: 1.5;
+  }
 }
 
 .date-button {
