@@ -537,13 +537,13 @@ const renderUsers = async () => {
   target.innerHTML = data.map((profile) => {
     const isSelf = profile.id === currentUserId;
     return `<form class="user-admin-item" data-user-id="${escapeHtml(profile.id)}">
-      <div class="user-admin-person"><div class="scanned-profile__avatar">${escapeHtml(profile.name?.[0] || "밥")}</div><div><strong>${escapeHtml(profile.name || "이름 미등록")}</strong><span>${escapeHtml(profile.affiliation || "소속 미등록")} · ${userTypeLabel(profile.user_type)}</span></div></div>
+      <div class="user-admin-person"><div class="scanned-profile__avatar">${escapeHtml(profile.name?.[0] || "밥")}</div><div><strong>${escapeHtml(profile.name || "이름 미등록")}</strong><span>${escapeHtml(profile.affiliation || "소속 미등록")} · ${userTypeLabel(profile.user_type)}</span>${isSelf ? '<span class="user-admin-self">현재 로그인한 관리자 계정</span>' : ""}</div></div>
       <label>소속<input name="affiliation" value="${escapeHtml(profile.affiliation || "")}" placeholder="소속 미등록" /></label>
       <label>사용자 유형<select name="user_type"><option value="student"${profile.user_type === "student" ? " selected" : ""}>학생</option><option value="faculty"${profile.user_type === "faculty" ? " selected" : ""}>교원</option><option value="staff"${profile.user_type === "staff" ? " selected" : ""}>직원</option><option value="other"${profile.user_type === "other" ? " selected" : ""}>기타</option></select></label>
       <label>권한<select name="role"${isSelf ? " disabled" : ""}><option value="user"${profile.role === "user" ? " selected" : ""}>일반 사용자</option><option value="admin"${profile.role === "admin" ? " selected" : ""}>관리자</option></select>${isSelf ? '<input type="hidden" name="role" value="admin" />' : ""}</label>
       <label class="user-active"><input name="is_active" type="checkbox"${profile.is_active ? " checked" : ""}${isSelf ? " disabled" : ""} /><span>${profile.is_active ? "활성" : "비활성"}</span>${isSelf ? '<input type="hidden" name="self_active" value="true" />' : ""}</label>
       <button class="secondary-button" type="submit">저장</button>
-      <p class="user-admin-message" role="status">${isSelf ? "현재 로그인한 관리자 계정" : ""}</p>
+      <p class="user-admin-message" role="status"></p>
     </form>`;
   }).join("");
 
@@ -849,7 +849,7 @@ document.querySelector("#meal-form").addEventListener("submit", async (event) =>
   try {
     await saveMeal({
       mealDate: data.get("meal_date"), mealType: data.get("meal_type"), menuItems,
-      adminNote: null, isOperating: data.get("is_operating") === "on", isPublished: data.get("is_published") === "on",
+      adminNote: null, isOperating: true, isPublished: true,
     });
     message.textContent = adminMode === "demo" ? "시연 목록에 반영했습니다. 실제 DB에는 저장되지 않았습니다." : "식단을 저장했습니다.";
     form.elements.menu_items.value = "";

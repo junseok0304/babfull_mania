@@ -7,8 +7,8 @@
     <meta name="description" content="밥풀매니아 관리자 대시보드" />
     <title>밥풀매니아 관리자</title>
     <link rel="stylesheet" href="../css/global.css?v=20261021-7" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261022-10" />
-    <script type="module" src="../js/admin.js?v=20261022-9"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261022-11" />
+    <script type="module" src="../js/admin.js?v=20261022-10"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -67,10 +67,6 @@
                   <label>식사 구분<select name="meal_type" required><option value="breakfast">조식</option><option value="lunch">중식</option></select></label>
                 </div>
                 <label>메뉴명 목록<textarea name="menu_items" rows="9" placeholder="메뉴명을 한 줄에 하나씩 입력하세요." required></textarea><small>여러 메뉴를 그대로 붙여넣을 수 있습니다.</small></label>
-                <div class="check-row">
-                  <label><input name="is_operating" type="checkbox" checked /> 운영함</label>
-                  <label><input name="is_published" type="checkbox" checked /> 사용자에게 공개</label>
-                </div>
                 <button class="primary-button" type="submit">식단 저장</button>
                 <p class="form-message" id="meal-form-message" role="status"></p>
               </form>
@@ -172,7 +168,7 @@
             <form class="settings-form" id="settings-form">
               <fieldset><legend>조식 제공시간</legend><label>시작<input name="breakfast_start" type="time" required /></label><label>종료<input name="breakfast_end" type="time" required /></label></fieldset>
               <fieldset><legend>중식 제공시간</legend><label>시작<input name="lunch_start" type="time" required /></label><label>종료<input name="lunch_end" type="time" required /></label></fieldset>
-              <label>QR 자동 선택 허용 범위<input name="scan_buffer_minutes" type="number" min="0" max="120" step="5" required /><small>제공시간 전후에 적용되는 분 단위 범위입니다.</small></label>
+              <label>QR 자동 분류 여유 시간<input name="scan_buffer_minutes" type="number" min="0" max="120" step="5" required /><small>조식·중식 제공 시작 전과 종료 후에도 해당 식사로 자동 기록할 분 수입니다.</small></label>
               <fieldset><legend>식권 가격</legend><label>조식 가격<input name="breakfast_price" type="number" min="0" max="100000" step="100" required /></label><label>중식 가격<input name="lunch_price" type="number" min="0" max="100000" step="100" required /></label></fieldset>
               <p class="settings-price-note">가격 변경 전 이용 기록은 기존 금액을 유지하고, 저장 이후 생성되는 이용 기록부터 새 가격이 적용됩니다.</p>
               <fieldset class="tray-mode-settings"><legend>식판 이미지 제공 방식</legend><label><input name="tray_display_mode" type="radio" value="search" checked /><span><strong>기본 모드</strong><small>메뉴별 검색 사진을 식판 칸마다 표시합니다.</small></span></label><label><input name="tray_display_mode" type="radio" value="ai" /><span><strong>AI 생성 모드</strong><small>관리자가 미리 업로드한 완성 식판 이미지를 표시합니다.</small></span></label></fieldset>
