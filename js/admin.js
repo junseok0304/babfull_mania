@@ -110,6 +110,12 @@ const renderStats = () => {
 
 const sortedMeals = () => [...meals].sort((a, b) => b.date.localeCompare(a.date) || a.type.localeCompare(b.type));
 
+const adminMealStatus = (meal) => {
+  if (meal.operating === false) return { label: "휴무", kind: "closed" };
+  if (!meal.items.length) return { label: "미제공", kind: "empty" };
+  return { label: meal.published ? "공개" : "비공개", kind: meal.published ? "published" : "hidden" };
+};
+
 const renderTrayImageManager = () => {
   const select = document.querySelector("#tray-image-meal");
   const preview = document.querySelector("#tray-image-preview");
@@ -134,10 +140,16 @@ const renderMealList = () => {
   mealListPage = Math.min(Math.max(1, mealListPage), totalPages);
   const pageStart = (mealListPage - 1) * mealListPageSize;
   const pageMeals = allMeals.slice(pageStart, pageStart + mealListPageSize);
-  document.querySelector("#meal-admin-list").innerHTML = pageMeals.length ? pageMeals.map((meal) => `<article class="meal-admin-item">
-    <div class="meal-admin-item__top"><strong>${meal.date} · ${mealLabel(meal.type)}</strong><span>${meal.published ? "공개" : "비공개"}</span></div>
-    <p>${meal.items.map(escapeHtml).join(" · ")}</p>
-  </article>`).join("") : '<div class="meal-admin-empty">등록된 식단이 없습니다.</div>';
+  document.querySelector("#meal-admin-list").innerHTML = pageMeals.length ? pageMeals.map((meal) => {
+    const status = adminMealStatus(meal);
+    const description = meal.items.length
+      ? meal.items.map(escapeHtml).join(" · ")
+      : escapeHtml(meal.note || (meal.operating === false ? "식당을 운영하지 않는 날입니다." : "등록된 메뉴가 없습니다."));
+    return `<article class="meal-admin-item">
+      <div class="meal-admin-item__top"><strong>${meal.date} · ${mealLabel(meal.type)}</strong><span class="meal-admin-status meal-admin-status--${status.kind}">${status.label}</span></div>
+      <p>${description}</p>
+    </article>`;
+  }).join("") : '<div class="meal-admin-empty">등록된 식단이 없습니다.</div>';
 
   const pagination = document.querySelector("#meal-pagination");
   pagination.innerHTML = `<button type="button" data-meal-page="${mealListPage - 1}" aria-label="이전 페이지"${mealListPage === 1 ? " disabled" : ""}>‹</button>
@@ -258,6 +270,8 @@ const mapDatabaseMeal = (record) => ({
   date: record.meal_date,
   type: record.meal_type,
   published: record.is_published,
+  operating: record.is_operating,
+  note: record.admin_note,
   trayImage: firstRelated(record.meal_tray_images) ? {
     id: firstRelated(record.meal_tray_images).id,
     storagePath: firstRelated(record.meal_tray_images).storage_path,
@@ -269,8 +283,8 @@ const mapDatabaseMeal = (record) => ({
 
 const loadDatabaseMeals = async () => {
   const { data, error } = await client.from("meals")
-    .select("id, meal_date, meal_type, is_published, meal_tray_images(id, storage_path, image_url, alt_text), meal_items(display_order, original_menu_text)")
-    .order("meal_date", { ascending: false }).limit(80);
+    .select("id, meal_date, meal_type, is_published, is_operating, admin_note, meal_tray_images(id, storage_path, image_url, alt_text), meal_items(display_order, original_menu_text)")
+    .order("meal_date", { ascending: false });
   if (error) throw error;
   meals = (data ?? []).map(mapDatabaseMeal);
 };
@@ -769,7 +783,7 @@ const saveMeal = async (payload) => {
     note: payload.adminNote || null,
   });
   if (error) throw error;
-  const { data } = await client.from("meals").select("id, meal_date, meal_type, is_published, meal_tray_images(id, storage_path, image_url, alt_text), meal_items(display_order, original_menu_text)").order("meal_date", { ascending: false }).limit(80);
+  const { data } = await client.from("meals").select("id, meal_date, meal_type, is_published, is_operating, admin_note, meal_tray_images(id, storage_path, image_url, alt_text), meal_items(display_order, original_menu_text)").order("meal_date", { ascending: false });
   meals = (data ?? []).map(mapDatabaseMeal);
 };
 

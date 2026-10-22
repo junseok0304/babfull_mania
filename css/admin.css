@@ -417,6 +417,21 @@
   font-weight: 800;
 }
 
+.meal-admin-item .meal-admin-status--closed {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.meal-admin-item .meal-admin-status--empty {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.meal-admin-item .meal-admin-status--hidden {
+  background: #f4f4f5;
+  color: #71717a;
+}
+
 .meal-admin-item p {
   margin: 0;
   color: var(--secondary);
