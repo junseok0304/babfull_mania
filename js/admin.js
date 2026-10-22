@@ -21,6 +21,8 @@ let foodImageMenuIndex = 0;
 let foodImageWorkspaceData = null;
 let foodImageEditTarget = null;
 let foodImageBrowsingStarted = false;
+let mealListPage = 1;
+const mealListPageSize = 5;
 const foodImageSearchPages = new Map();
 const demoUsages = [];
 const demoQrToken = "00000000-0000-4000-8000-000000000001";
@@ -126,13 +128,31 @@ const renderTrayImageManager = () => {
   }
 };
 
+const renderMealList = () => {
+  const allMeals = sortedMeals();
+  const totalPages = Math.max(1, Math.ceil(allMeals.length / mealListPageSize));
+  mealListPage = Math.min(Math.max(1, mealListPage), totalPages);
+  const pageStart = (mealListPage - 1) * mealListPageSize;
+  const pageMeals = allMeals.slice(pageStart, pageStart + mealListPageSize);
+  document.querySelector("#meal-admin-list").innerHTML = pageMeals.length ? pageMeals.map((meal) => `<article class="meal-admin-item">
+    <div class="meal-admin-item__top"><strong>${meal.date} · ${mealLabel(meal.type)}</strong><span>${meal.published ? "공개" : "비공개"}</span></div>
+    <p>${meal.items.map(escapeHtml).join(" · ")}</p>
+  </article>`).join("") : '<div class="meal-admin-empty">등록된 식단이 없습니다.</div>';
+
+  const pagination = document.querySelector("#meal-pagination");
+  pagination.innerHTML = `<button type="button" data-meal-page="${mealListPage - 1}" aria-label="이전 페이지"${mealListPage === 1 ? " disabled" : ""}>‹</button>
+    <span><strong>${mealListPage}</strong> / ${totalPages} 페이지 · 전체 ${allMeals.length}건</span>
+    <button type="button" data-meal-page="${mealListPage + 1}" aria-label="다음 페이지"${mealListPage === totalPages ? " disabled" : ""}>›</button>`;
+  pagination.querySelectorAll("[data-meal-page]").forEach((button) => button.addEventListener("click", () => {
+    mealListPage = Number(button.dataset.mealPage);
+    renderMealList();
+  }));
+};
+
 const renderMeals = () => {
   const recent = sortedMeals().slice(0, 6);
   document.querySelector("#dashboard-meals").innerHTML = recent.map((meal) => `<tr><td>${meal.date}</td><td>${mealLabel(meal.type)}</td><td>${meal.items.slice(0, 3).map(escapeHtml).join(" · ")}</td><td>${meal.published ? "공개" : "비공개"}</td></tr>`).join("");
-  document.querySelector("#meal-admin-list").innerHTML = sortedMeals().slice(0, 14).map((meal) => `<article class="meal-admin-item">
-    <div class="meal-admin-item__top"><strong>${meal.date} · ${mealLabel(meal.type)}</strong><span>${meal.published ? "공개" : "비공개"}</span></div>
-    <p>${meal.items.map(escapeHtml).join(" · ")}</p>
-  </article>`).join("");
+  renderMealList();
   const selectedMenu = document.querySelector("#food-image-menu").value;
   const menuNames = [...new Set(sortedMeals().flatMap((meal) => meal.items))]
     .filter((name) => name && !/운영시간|메뉴가 없습니다|휴무/u.test(name))
@@ -851,6 +871,7 @@ document.querySelector("#meal-form").addEventListener("submit", async (event) =>
       mealDate: data.get("meal_date"), mealType: data.get("meal_type"), menuItems,
       adminNote: null, isOperating: true, isPublished: true,
     });
+    mealListPage = 1;
     message.textContent = adminMode === "demo" ? "시연 목록에 반영했습니다. 실제 DB에는 저장되지 않았습니다." : "식단을 저장했습니다.";
     form.elements.menu_items.value = "";
     renderStats();

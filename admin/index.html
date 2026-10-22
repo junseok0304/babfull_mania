@@ -7,8 +7,8 @@
     <meta name="description" content="밥풀매니아 관리자 대시보드" />
     <title>밥풀매니아 관리자</title>
     <link rel="stylesheet" href="../css/global.css?v=20261021-7" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261022-12" />
-    <script type="module" src="../js/admin.js?v=20261022-10"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261022-13" />
+    <script type="module" src="../js/admin.js?v=20261022-11"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -71,9 +71,10 @@
                 <p class="form-message" id="meal-form-message" role="status"></p>
               </form>
             </section>
-            <section class="admin-card">
+            <section class="admin-card meal-list-card">
               <div class="admin-card__heading"><div><p class="section-kicker">등록 현황</p><h2>식단 목록</h2></div></div>
               <div class="meal-admin-list" id="meal-admin-list"></div>
+              <nav class="meal-pagination" id="meal-pagination" aria-label="식단 목록 페이지"></nav>
             </section>
           </div>
           <section class="admin-card tray-image-manager">

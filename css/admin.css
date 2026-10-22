@@ -380,7 +380,14 @@
 
 .meal-admin-list {
   display: grid;
+  align-content: start;
   gap: 8px;
+}
+
+.meal-list-card {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
 }
 
 .meal-admin-item {
@@ -415,6 +422,51 @@
   color: var(--secondary);
   font-size: 11px;
   line-height: 1.5;
+}
+
+.meal-admin-empty {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--secondary);
+  font-size: 14px;
+}
+
+.meal-pagination {
+  display: grid;
+  margin-top: auto;
+  padding-top: 14px;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 10px;
+}
+
+.meal-pagination button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: white;
+  color: var(--primary-dark);
+  font-size: 25px;
+  cursor: pointer;
+}
+
+.meal-pagination button:disabled {
+  color: #c4c9c6;
+  cursor: default;
+}
+
+.meal-pagination > span {
+  color: var(--secondary);
+  font-size: 13px;
+  text-align: center;
+}
+
+.meal-pagination > span strong {
+  color: var(--primary-dark);
 }
 
 .food-image-manager {
@@ -1858,6 +1910,7 @@
 @media (min-width: 1120px) {
   .admin-two-column {
     grid-template-columns: minmax(390px, 0.8fr) minmax(420px, 1.2fr);
+    align-items: stretch;
   }
 
   .scanner-layout {
