@@ -106,7 +106,7 @@ const renderStats = () => {
   document.querySelector("#dashboard-meal-ratio").innerHTML = `<div class="ratio-summary"><strong>조식 ${dashboardStats.breakfastPercent}%</strong><strong>중식 ${dashboardStats.lunchPercent}%</strong></div><div class="ratio-bar" aria-label="조식 ${dashboardStats.breakfastCount}건, 중식 ${dashboardStats.lunchCount}건"><span style="width:${dashboardStats.breakfastPercent}%"></span></div><p>조식 ${dashboardStats.breakfastCount.toLocaleString("ko-KR")}건 · 중식 ${dashboardStats.lunchCount.toLocaleString("ko-KR")}건</p>`;
   const target = document.querySelector("#dashboard-affiliations");
   const max = Math.max(1, ...dashboardStats.affiliations.map((item) => item.count));
-  target.innerHTML = dashboardStats.affiliations.length ? dashboardStats.affiliations.map((item) => `<div class="affiliation-stat"><div><span>${escapeHtml(item.affiliation)}</span><strong>${item.count.toLocaleString("ko-KR")}건</strong></div><div><span style="width:${Math.round((item.count / max) * 100)}%"></span></div></div>`).join("") : '<p class="dashboard-empty">이번 달 이용 기록이 없습니다.</p>';
+  target.innerHTML = dashboardStats.affiliations.length ? dashboardStats.affiliations.map((item) => `<div class="affiliation-stat"><div><span>${escapeHtml(item.affiliation)}</span><strong>${item.count.toLocaleString("ko-KR")}명</strong></div><div><span style="width:${Math.round((item.count / max) * 100)}%"></span></div></div>`).join("") : '<p class="dashboard-empty">이번 달 이용 기록이 없습니다.</p>';
 };
 
 const loadDashboardStats = async () => {
