@@ -81,11 +81,12 @@ const verifyCandidateToken = async (secret: string, token: string, foodId: numbe
   return payload;
 };
 
-const searchKakao = async (apiKey: string, query: string) => {
+const searchKakao = async (apiKey: string, query: string, page = 1) => {
   const url = new URL("https://dapi.kakao.com/v2/search/image");
   url.searchParams.set("query", query);
   url.searchParams.set("sort", "accuracy");
   url.searchParams.set("size", "24");
+  url.searchParams.set("page", String(page));
   const response = await fetch(url, {
     headers: { Authorization: `KakaoAK ${apiKey}` },
     signal: AbortSignal.timeout(8000),
@@ -95,7 +96,7 @@ const searchKakao = async (apiKey: string, query: string) => {
   return Array.isArray(payload?.documents) ? payload.documents as SearchDocument[] : [];
 };
 
-const searchGoogle = async (apiKey: string, searchEngineId: string, foodName: string): Promise<ImageCandidate[]> => {
+const searchGoogle = async (apiKey: string, searchEngineId: string, foodName: string, page = 1): Promise<ImageCandidate[]> => {
   const url = new URL("https://customsearch.googleapis.com/customsearch/v1");
   url.searchParams.set("key", apiKey);
   url.searchParams.set("cx", searchEngineId);
@@ -104,6 +105,7 @@ const searchGoogle = async (apiKey: string, searchEngineId: string, foodName: st
   url.searchParams.set("imgType", "photo");
   url.searchParams.set("safe", "active");
   url.searchParams.set("num", "8");
+  url.searchParams.set("start", String(Math.min(91, 1 + (page - 1) * 8)));
   const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!response.ok) throw new Error(`Google 이미지 검색 HTTP ${response.status}`);
   const payload = await response.json();
@@ -140,10 +142,11 @@ const findCandidates = async (
   currentUrl?: string | null,
   googleApiKey?: string,
   googleSearchEngineId?: string,
+  searchPage = 1,
 ) => {
   const [exact, descriptive] = await Promise.all([
-    searchKakao(apiKey, `"${foodName}"`),
-    searchKakao(apiKey, `${foodName} 요리 완성 사진`),
+    searchKakao(apiKey, `"${foodName}"`, searchPage),
+    searchKakao(apiKey, `${foodName} 요리 완성 사진`, searchPage),
   ]);
   const seen = new Set<string>();
   const kakaoCandidates = [...exact, ...descriptive]
@@ -164,7 +167,7 @@ const findCandidates = async (
   let googleCandidates: ImageCandidate[] = [];
   if (googleApiKey && googleSearchEngineId) {
     try {
-      googleCandidates = await searchGoogle(googleApiKey, googleSearchEngineId, foodName);
+      googleCandidates = await searchGoogle(googleApiKey, googleSearchEngineId, foodName, searchPage);
     } catch (error) {
       console.warn("Google 이미지 후보 조회 실패", error);
     }
@@ -206,6 +209,7 @@ Deno.serve(async (request) => {
     const body = await request.json();
     const action = String(body?.action || "candidates");
     const foodName = String(body?.foodName || "").trim();
+    const searchPage = Math.round(clampNumber(body?.searchPage, 1, 10, 1));
     if (!foodName || foodName.length > 100) return Response.json({ error: "메뉴명을 확인해주세요." }, { status: 400, headers: corsHeaders });
 
     let { data: food, error: foodError } = await db.from("foods")
@@ -225,7 +229,7 @@ Deno.serve(async (request) => {
       .eq("food_id", food.id).eq("review_status", "approved").order("created_at", { ascending: false }).limit(1).maybeSingle();
 
     if (action === "candidates") {
-      const candidates = await findCandidates(kakaoApiKey, food.original_name, current?.source_url, googleApiKey, googleSearchEngineId);
+      const candidates = await findCandidates(kakaoApiKey, food.original_name, current?.source_url, googleApiKey, googleSearchEngineId, searchPage);
       const signedCandidates = await Promise.all(candidates.map(async (candidate) => ({
         ...candidate,
         selectionToken: await createCandidateToken(serviceRoleKey, food.id, candidate as ImageCandidate),
@@ -253,6 +257,7 @@ Deno.serve(async (request) => {
         } : null,
         candidates: signedCandidates,
         providers: { kakao: true, google: Boolean(googleApiKey && googleSearchEngineId) },
+        searchPage,
       }, { headers: { ...corsHeaders, "Cache-Control": "no-store" } });
     }
 

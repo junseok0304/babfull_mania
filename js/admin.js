@@ -17,6 +17,7 @@ let foodImageMenuIndex = 0;
 let foodImageWorkspaceData = null;
 let foodImageEditTarget = null;
 let foodImageBrowsingStarted = false;
+const foodImageSearchPages = new Map();
 const demoUsages = [];
 const demoQrToken = "00000000-0000-4000-8000-000000000001";
 
@@ -150,13 +151,15 @@ const getFunctionErrorMessage = async (error, data, fallbackMessage) => {
   return error?.message || fallbackMessage;
 };
 
-const loadFoodImageCandidates = async (foodName) => {
+const loadFoodImageCandidates = async (foodName, searchPage = 1) => {
   if (adminMode !== "supabase") throw new Error("운영 데이터 연결 후 사용할 수 있습니다.");
   const { data, error } = await client.functions.invoke("manage-food-image", {
-    body: { action: "candidates", foodName },
+    body: { action: "candidates", foodName, searchPage },
   });
   if (error) throw new Error(await getFunctionErrorMessage(error, data, "사진 후보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요."));
+  foodImageSearchPages.set(foodName, Number(data.searchPage) || searchPage);
   renderFoodImageWorkspace(data);
+  document.querySelector("#food-image-search-form button[type=submit]").textContent = "다른 사진 다시 불러오기";
 };
 
 const mapDatabaseMeal = (record) => ({
@@ -690,11 +693,12 @@ document.querySelector("#food-image-search-form").addEventListener("submit", asy
   const foodName = form.elements.food_name.value;
   if (!foodName) return;
   foodImageBrowsingStarted = true;
+  const nextSearchPage = (foodImageSearchPages.get(foodName) || 0) % 10 + 1;
   button.disabled = true;
   message.textContent = "대체 사진을 찾고 있습니다…";
   try {
-    await loadFoodImageCandidates(foodName);
-    message.textContent = `${foodName} 사진 후보를 불러왔습니다.`;
+    await loadFoodImageCandidates(foodName, nextSearchPage);
+    message.textContent = `${foodName}의 ${nextSearchPage}번째 사진 후보 묶음을 불러왔습니다.`;
   } catch (error) {
     message.textContent = error.message || "사진 후보를 불러오지 못했습니다.";
   } finally {
@@ -714,7 +718,8 @@ const browseFoodImageMenu = async (direction) => {
   navigationButtons.forEach((button) => { button.disabled = true; });
   message.textContent = `${foodName} 사진을 불러오고 있습니다…`;
   try {
-    await loadFoodImageCandidates(foodName);
+    const searchPage = foodImageSearchPages.get(foodName) || 1;
+    await loadFoodImageCandidates(foodName, searchPage);
     message.textContent = `${foodName} 사진 후보를 불러왔습니다.`;
   } catch (error) {
     message.textContent = error.message || "사진 후보를 불러오지 못했습니다.";
@@ -772,7 +777,7 @@ document.querySelector("#food-image-workspace").addEventListener("click", async 
     });
     if (error) throw new Error(await getFunctionErrorMessage(error, data, "대표 사진을 저장하지 못했습니다. 사진을 다시 검색해주세요."));
     foodImageEditTarget = null;
-    await loadFoodImageCandidates(foodName);
+    await loadFoodImageCandidates(foodName, foodImageSearchPages.get(foodName) || 1);
     message.textContent = `${foodName} 대표 사진과 구도를 저장했습니다. 사용자 식판에서 계속 재사용됩니다.`;
   } catch (error) {
     message.textContent = error.message || "대표 사진을 저장하지 못했습니다.";
