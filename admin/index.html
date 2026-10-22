@@ -7,8 +7,8 @@
     <meta name="description" content="밥풀매니아 관리자 대시보드" />
     <title>밥풀매니아 관리자</title>
     <link rel="stylesheet" href="../css/global.css?v=20261021-7" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261022-14" />
-    <script type="module" src="../js/admin.js?v=20261022-13"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261022-15" />
+    <script type="module" src="../js/admin.js?v=20261022-14"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -65,8 +65,10 @@
                 <div class="form-row">
                   <label>날짜<input name="meal_date" type="date" required /></label>
                   <label>식사 구분<select name="meal_type" required><option value="breakfast">조식</option><option value="lunch">중식</option></select></label>
+                  <label>제공 여부<select name="availability" required><option value="provided">제공</option><option value="unavailable">미제공</option><option value="closed">휴무</option></select></label>
                 </div>
-                <label>메뉴명 목록<textarea name="menu_items" rows="9" placeholder="메뉴명을 한 줄에 하나씩 입력하세요." required></textarea><small>여러 메뉴를 그대로 붙여넣을 수 있습니다.</small></label>
+                <label id="meal-menu-field">메뉴명 목록<textarea name="menu_items" rows="9" placeholder="메뉴명을 한 줄에 하나씩 입력하세요." required></textarea><small>제공 식단의 메뉴를 한 줄에 하나씩 입력하세요.</small></label>
+                <label id="meal-closure-field" hidden>휴무 사유<input name="closure_note" type="text" placeholder="예: 문화체험 휴무" /><small>비워두면 ‘휴무일’로 저장됩니다.</small></label>
                 <button class="primary-button" type="submit">식단 저장</button>
                 <p class="form-message" id="meal-form-message" role="status"></p>
               </form>

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getAutomaticMealType } from "../js/admin-utils.js";
+import { getAutomaticMealType, getManualMealState } from "../js/admin-utils.js";
 
 const settings = {
   breakfastStart: "08:00",
@@ -25,4 +25,10 @@ test("관리자가 변경한 허용 범위를 자동 선택에 반영한다", ()
   const elevenFifteen = new Date("2026-10-21T02:15:00Z");
   assert.equal(getAutomaticMealType(elevenFifteen, settings), "lunch");
   assert.equal(getAutomaticMealType(elevenFifteen, strict), "breakfast");
+});
+
+test("수동 식단 제공 여부를 저장 상태로 변환한다", () => {
+  assert.deepEqual(getManualMealState("provided", [" 백미밥 "]), { menuItems: ["백미밥"], isOperating: true, adminNote: null });
+  assert.deepEqual(getManualMealState("unavailable", ["테스트"]), { menuItems: [], isOperating: false, adminNote: "미제공" });
+  assert.deepEqual(getManualMealState("closed", ["테스트"], "문화체험 휴무"), { menuItems: [], isOperating: false, adminNote: "문화체험 휴무" });
 });

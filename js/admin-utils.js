@@ -27,3 +27,14 @@ export const getAutomaticMealType = (now = new Date(), settings = defaultOperati
   if (minutes >= lunchWindow[0] && minutes <= lunchWindow[1]) return "lunch";
   return minutes < lunchWindow[0] ? "breakfast" : "lunch";
 };
+
+export const getManualMealState = (availability, menuItems = [], closureNote = "") => {
+  const items = menuItems.map((item) => String(item).trim()).filter(Boolean);
+  if (availability === "provided") {
+    if (!items.length) throw new Error("제공 식단의 메뉴를 입력해주세요.");
+    return { menuItems: items, isOperating: true, adminNote: null };
+  }
+  if (availability === "unavailable") return { menuItems: [], isOperating: false, adminNote: "미제공" };
+  if (availability === "closed") return { menuItems: [], isOperating: false, adminNote: String(closureNote).trim() || "휴무일" };
+  throw new Error("제공 여부를 선택해주세요.");
+};

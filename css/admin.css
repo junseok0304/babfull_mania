@@ -311,7 +311,7 @@
 
 .form-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -806,7 +806,11 @@
 }
 
 .scanner-kiosk__intro {
-  margin-bottom: 8px;
+  display: grid;
+  margin-bottom: 16px;
+  padding-top: 4px;
+  justify-items: center;
+  gap: 10px;
   text-align: center;
 }
 
@@ -821,7 +825,7 @@
 }
 
 .scanner-kiosk__intro h2 {
-  margin: 6px 0 4px;
+  margin: 0;
   font-size: clamp(27px, 3vw, 36px);
   line-height: 1.15;
   letter-spacing: -0.04em;
@@ -1909,6 +1913,9 @@
 }
 
 @media (max-width: 639px) {
+  .meal-form .form-row {
+    grid-template-columns: 1fr;
+  }
   .food-image-results__heading {
     display: grid;
   }

@@ -1,6 +1,6 @@
 import { formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
 import { getSupabaseClient } from "./supabase-client.js";
-import { defaultOperationalSettings, getAutomaticMealType } from "./admin-utils.js";
+import { defaultOperationalSettings, getAutomaticMealType, getManualMealState } from "./admin-utils.js";
 
 const titles = { dashboard: "대시보드", meals: "식단 관리", scanner: "QR 스캐너", users: "사용자 관리", usages: "이용 내역", settings: "운영 설정" };
 let adminMode = "demo";
@@ -879,14 +879,19 @@ document.querySelector("#meal-form").addEventListener("submit", async (event) =>
   const button = form.querySelector("button[type=submit]");
   const message = document.querySelector("#meal-form-message");
   const data = new FormData(form);
-  const menuItems = String(data.get("menu_items")).split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
-  if (!menuItems.length) return;
+  let state;
+  try {
+    state = getManualMealState(data.get("availability"), String(data.get("menu_items") || "").split(/\r?\n/), data.get("closure_note"));
+  } catch (error) {
+    message.textContent = error.message;
+    return;
+  }
   button.disabled = true;
   message.textContent = "저장 중…";
   try {
     await saveMeal({
-      mealDate: data.get("meal_date"), mealType: data.get("meal_type"), menuItems,
-      adminNote: null, isOperating: true, isPublished: true,
+      mealDate: data.get("meal_date"), mealType: data.get("meal_type"), menuItems: state.menuItems,
+      adminNote: state.adminNote, isOperating: state.isOperating, isPublished: true,
     });
     mealListPage = 1;
     message.textContent = adminMode === "demo" ? "시연 목록에 반영했습니다. 실제 DB에는 저장되지 않았습니다." : "식단을 저장했습니다.";
@@ -899,6 +904,18 @@ document.querySelector("#meal-form").addEventListener("submit", async (event) =>
     button.disabled = false;
   }
 });
+
+const syncMealAvailability = () => {
+  const form = document.querySelector("#meal-form");
+  const availability = form.elements.availability.value;
+  const provided = availability === "provided";
+  document.querySelector("#meal-menu-field").hidden = !provided;
+  document.querySelector("#meal-closure-field").hidden = availability !== "closed";
+  form.elements.menu_items.required = provided;
+  form.elements.closure_note.required = false;
+};
+document.querySelector("#meal-form").elements.availability.addEventListener("change", syncMealAvailability);
+syncMealAvailability();
 
 document.querySelector("#food-image-search-form").addEventListener("submit", async (event) => {
   event.preventDefault();
