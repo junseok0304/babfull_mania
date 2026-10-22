@@ -7,7 +7,7 @@ const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "🌙", lunch: "☀️" };
 const manualOpenState = new Map();
 let homeRenderId = 0;
-let homeDateOffset = 0;
+let homeWeekdayIndex = null;
 let homeNavigationBound = false;
 
 const addDays = (date, amount) => {
@@ -15,6 +15,12 @@ const addDays = (date, amount) => {
   result.setDate(result.getDate() + amount);
   return result;
 };
+
+const getMonday = (date) => addDays(date, -((date.getDay() + 6) % 7));
+
+const getCurrentWeekdayIndex = (date) => Math.min((date.getDay() + 6) % 7, 4);
+
+const getSelectedWeekdayIndex = (today) => homeWeekdayIndex ?? getCurrentWeekdayIndex(today);
 
 const formatHomeDate = (date) => new Intl.DateTimeFormat("ko-KR", {
   timeZone: "Asia/Seoul",
@@ -209,27 +215,30 @@ export const renderHomeMeals = async () => {
   const empty = document.querySelector("#meal-empty");
   const guidance = document.querySelector("#meal-guidance");
   const today = getSeoulDate();
-  const selectedDate = addDays(today, homeDateOffset);
+  const selectedWeekdayIndex = getSelectedWeekdayIndex(today);
+  const selectedDate = addDays(getMonday(today), selectedWeekdayIndex);
   const selectedDateKey = formatDateKey(selectedDate);
+  const isToday = selectedDateKey === formatDateKey(today);
   const nowMinutes = getSeoulMinutes();
   const dateMeals = getCachedMeals().filter((meal) => meal.date === selectedDateKey && meal.published);
   const visibleMeals = dateMeals.filter((meal) => meal.operating !== false && meal.items.length > 0);
-  const state = homeDateOffset === 0
+  const state = isToday
     ? getDefaultState(visibleMeals, nowMinutes)
     : { current: null, open: new Set(visibleMeals.map((meal) => meal.type)) };
   const closedNotes = [...new Set(dateMeals.filter((meal) => meal.operating === false).map((meal) => meal.note).filter(Boolean))];
   const isClosed = !visibleMeals.length && (closedNotes.length > 0 || [0, 6].includes(selectedDate.getDay()));
 
   document.querySelector("#home-selected-date").textContent = formatHomeDate(selectedDate);
-  document.querySelector("#home-date-offset").textContent = homeDateOffset === 0 ? "오늘" : homeDateOffset < 0 ? `${Math.abs(homeDateOffset)}일 전` : `${homeDateOffset}일 후`;
-  document.querySelector("#home-date-prev").disabled = homeDateOffset <= -2;
-  document.querySelector("#home-date-next").disabled = homeDateOffset >= 2;
+  document.querySelector("#home-date-offset").textContent = isToday ? "오늘" : `${["월", "화", "수", "목", "금"][selectedWeekdayIndex]}요일`;
+  document.querySelector("#home-date-prev").disabled = selectedWeekdayIndex === 0;
+  document.querySelector("#home-date-next").disabled = selectedWeekdayIndex === 4;
+  document.querySelector("#today-button").textContent = [0, 6].includes(today.getDay()) ? "이번 주" : "오늘";
 
   if (isClosed) {
     guidance.textContent = "휴무일입니다.";
   } else if (!visibleMeals.length) {
     guidance.textContent = "선택한 날짜에는 식사가 제공되지 않습니다.";
-  } else if (homeDateOffset !== 0) {
+  } else if (!isToday) {
     guidance.textContent = `${formatHomeDate(selectedDate)} 식단입니다.`;
   } else if (state.current === "breakfast") {
     guidance.textContent = "조식과 오늘의 중식을 함께 확인하세요.";
@@ -259,14 +268,15 @@ export const scheduleMealRefresh = () => {
   if (!homeNavigationBound) {
     homeNavigationBound = true;
     const moveDate = (amount) => {
-      homeDateOffset = Math.max(-2, Math.min(2, homeDateOffset + amount));
+      const today = getSeoulDate();
+      homeWeekdayIndex = Math.max(0, Math.min(4, getSelectedWeekdayIndex(today) + amount));
       manualOpenState.clear();
       renderHomeMeals();
     };
     document.querySelector("#home-date-prev").addEventListener("click", () => moveDate(-1));
     document.querySelector("#home-date-next").addEventListener("click", () => moveDate(1));
     document.querySelector("#today-button").addEventListener("click", () => {
-      homeDateOffset = 0;
+      homeWeekdayIndex = null;
       manualOpenState.clear();
       renderHomeMeals();
     });
