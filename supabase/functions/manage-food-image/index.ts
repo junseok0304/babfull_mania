@@ -14,8 +14,67 @@ type SearchDocument = {
   doc_url?: string;
 };
 
+type ImageCandidate = {
+  imageUrl: string;
+  fallbackUrl: string;
+  documentUrl: string | null;
+  sourceName: string;
+  width: number | null;
+  height: number | null;
+};
+
+type CandidateTokenPayload = ImageCandidate & {
+  foodId: number;
+  expiresAt: number;
+};
+
 const normalize = (value: string) => value.normalize("NFKC").toLocaleLowerCase("ko-KR").replace(/\s+/g, "").trim();
 const isHttpsImage = (value?: string) => Boolean(value?.startsWith("https://") && !/\.gif(?:$|\?)/i.test(value));
+const textEncoder = new TextEncoder();
+
+const toBase64Url = (value: Uint8Array) => {
+  let binary = "";
+  value.forEach((byte) => binary += String.fromCharCode(byte));
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/u, "");
+};
+
+const fromBase64Url = (value: string) => {
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  return Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+};
+
+const importSigningKey = (secret: string) => crypto.subtle.importKey(
+  "raw",
+  textEncoder.encode(secret),
+  { name: "HMAC", hash: "SHA-256" },
+  false,
+  ["sign", "verify"],
+);
+
+const createCandidateToken = async (secret: string, foodId: number, candidate: ImageCandidate) => {
+  const payload: CandidateTokenPayload = { ...candidate, foodId, expiresAt: Date.now() + 15 * 60 * 1000 };
+  const encodedPayload = toBase64Url(textEncoder.encode(JSON.stringify(payload)));
+  const key = await importSigningKey(secret);
+  const signature = await crypto.subtle.sign("HMAC", key, textEncoder.encode(encodedPayload));
+  return `${encodedPayload}.${toBase64Url(new Uint8Array(signature))}`;
+};
+
+const verifyCandidateToken = async (secret: string, token: string, foodId: number) => {
+  const [encodedPayload, encodedSignature, ...extra] = token.split(".");
+  if (!encodedPayload || !encodedSignature || extra.length) throw new Error("사진 후보 정보가 올바르지 않습니다. 다시 검색해주세요.");
+  const key = await importSigningKey(secret);
+  const verified = await crypto.subtle.verify(
+    "HMAC",
+    key,
+    fromBase64Url(encodedSignature),
+    textEncoder.encode(encodedPayload),
+  );
+  if (!verified) throw new Error("사진 후보 정보가 변경되었습니다. 다시 검색해주세요.");
+  const payload = JSON.parse(new TextDecoder().decode(fromBase64Url(encodedPayload))) as CandidateTokenPayload;
+  if (payload.foodId !== foodId || payload.expiresAt < Date.now()) throw new Error("사진 후보가 만료되었습니다. 다시 검색해주세요.");
+  if (!isHttpsImage(payload.imageUrl) || !isHttpsImage(payload.fallbackUrl)) throw new Error("사용할 수 없는 사진 주소입니다.");
+  return payload;
+};
 
 const searchKakao = async (apiKey: string, query: string) => {
   const url = new URL("https://dapi.kakao.com/v2/search/image");
@@ -103,9 +162,13 @@ Deno.serve(async (request) => {
     const { data: current } = await db.from("food_images")
       .select("id, storage_path, source_url, source_document_url, source_name")
       .eq("food_id", food.id).eq("review_status", "approved").order("created_at", { ascending: false }).limit(1).maybeSingle();
-    const candidates = await findCandidates(kakaoApiKey, food.original_name, current?.source_url);
 
     if (action === "candidates") {
+      const candidates = await findCandidates(kakaoApiKey, food.original_name, current?.source_url);
+      const signedCandidates = await Promise.all(candidates.map(async (candidate) => ({
+        ...candidate,
+        selectionToken: await createCandidateToken(serviceRoleKey, food.id, candidate as ImageCandidate),
+      })));
       return Response.json({
         food: { id: food.id, name: food.original_name },
         current: current ? {
@@ -114,14 +177,14 @@ Deno.serve(async (request) => {
           documentUrl: current.source_document_url,
           sourceName: current.source_name,
         } : null,
-        candidates,
+        candidates: signedCandidates,
       }, { headers: { ...corsHeaders, "Cache-Control": "no-store" } });
     }
 
     if (action !== "select") return Response.json({ error: "지원하지 않는 요청입니다." }, { status: 400, headers: corsHeaders });
-    const selectedUrl = String(body?.imageUrl || "");
-    const selected = candidates.find((candidate) => candidate.imageUrl === selectedUrl);
-    if (!selected) return Response.json({ error: "현재 검색 후보에 포함된 사진만 선택할 수 있습니다." }, { status: 400, headers: corsHeaders });
+    const selectionToken = String(body?.selectionToken || "");
+    if (!selectionToken) return Response.json({ error: "사진 후보가 만료되었습니다. 다시 검색해주세요." }, { status: 400, headers: corsHeaders });
+    const selected = await verifyCandidateToken(serviceRoleKey, selectionToken, food.id);
 
     const values = {
       food_id: food.id,

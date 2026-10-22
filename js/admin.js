@@ -103,12 +103,27 @@ const renderFoodImageWorkspace = (data) => {
   bindManagedImageFallbacks();
 };
 
+const getFunctionErrorMessage = async (error, data, fallbackMessage) => {
+  if (data?.error) return data.error;
+  const response = error?.context;
+  if (response && typeof response.clone === "function") {
+    try {
+      const payload = await response.clone().json();
+      if (payload?.error) return payload.error;
+    } catch {
+      // JSON 응답이 아니면 아래의 일반 메시지를 사용한다.
+    }
+  }
+  if (error?.message === "Edge Function returned a non-2xx status code") return fallbackMessage;
+  return error?.message || fallbackMessage;
+};
+
 const loadFoodImageCandidates = async (foodName) => {
   if (adminMode !== "supabase") throw new Error("운영 데이터 연결 후 사용할 수 있습니다.");
   const { data, error } = await client.functions.invoke("manage-food-image", {
     body: { action: "candidates", foodName },
   });
-  if (error) throw new Error(data?.error || error.message);
+  if (error) throw new Error(await getFunctionErrorMessage(error, data, "사진 후보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요."));
   renderFoodImageWorkspace(data);
 };
 
@@ -665,9 +680,9 @@ document.querySelector("#food-image-workspace").addEventListener("click", async 
   message.textContent = "대표 사진으로 저장하고 있습니다…";
   try {
     const { data, error } = await client.functions.invoke("manage-food-image", {
-      body: { action: "select", foodName, imageUrl: candidate.imageUrl },
+      body: { action: "select", foodName, selectionToken: candidate.selectionToken },
     });
-    if (error) throw new Error(data?.error || error.message);
+    if (error) throw new Error(await getFunctionErrorMessage(error, data, "대표 사진을 저장하지 못했습니다. 사진을 다시 검색해주세요."));
     await loadFoodImageCandidates(foodName);
     message.textContent = `${foodName} 대표 사진을 변경했습니다. 사용자 식판에서 계속 재사용됩니다.`;
   } catch (error) {
