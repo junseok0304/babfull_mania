@@ -4,6 +4,8 @@ import { getSupabaseClient } from "./supabase-client.js";
 let cachedMeals = sampleMeals;
 let dataMode = "preview";
 
+const firstRelated = (value) => Array.isArray(value) ? value[0] : value;
+
 const withTimeout = (promise, timeoutMs, message) => Promise.race([
   promise,
   new Promise((_, reject) => window.setTimeout(() => reject(new Error(message)), timeoutMs)),
@@ -16,9 +18,9 @@ const mapMeal = (record) => ({
   published: record.is_published,
   operating: record.is_operating,
   note: record.admin_note,
-  trayImage: record.meal_tray_images?.[0] ? {
-    imageUrl: record.meal_tray_images[0].image_url,
-    altText: record.meal_tray_images[0].alt_text,
+  trayImage: firstRelated(record.meal_tray_images) ? {
+    imageUrl: firstRelated(record.meal_tray_images).image_url,
+    altText: firstRelated(record.meal_tray_images).alt_text,
   } : null,
   items: [...(record.meal_items ?? [])]
     .sort((a, b) => a.display_order - b.display_order)

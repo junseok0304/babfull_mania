@@ -205,6 +205,8 @@ const getFunctionErrorMessage = async (error, data, fallbackMessage) => {
   return error?.message || fallbackMessage;
 };
 
+const firstRelated = (value) => Array.isArray(value) ? value[0] : value;
+
 const loadFoodImageCandidates = async (foodName, searchPage = 1) => {
   if (adminMode !== "supabase") throw new Error("운영 데이터 연결 후 사용할 수 있습니다.");
   const { data, error } = await client.functions.invoke("manage-food-image", {
@@ -221,11 +223,11 @@ const mapDatabaseMeal = (record) => ({
   date: record.meal_date,
   type: record.meal_type,
   published: record.is_published,
-  trayImage: record.meal_tray_images?.[0] ? {
-    id: record.meal_tray_images[0].id,
-    storagePath: record.meal_tray_images[0].storage_path,
-    imageUrl: record.meal_tray_images[0].image_url,
-    altText: record.meal_tray_images[0].alt_text,
+  trayImage: firstRelated(record.meal_tray_images) ? {
+    id: firstRelated(record.meal_tray_images).id,
+    storagePath: firstRelated(record.meal_tray_images).storage_path,
+    imageUrl: firstRelated(record.meal_tray_images).image_url,
+    altText: firstRelated(record.meal_tray_images).alt_text,
   } : null,
   items: [...(record.meal_items ?? [])].sort((a, b) => a.display_order - b.display_order).map((item) => item.original_menu_text),
 });
