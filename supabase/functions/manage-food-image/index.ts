@@ -21,6 +21,7 @@ type ImageCandidate = {
   sourceName: string;
   width: number | null;
   height: number | null;
+  provider: "Kakao" | "Google";
 };
 
 type CandidateTokenPayload = ImageCandidate & {
@@ -30,6 +31,10 @@ type CandidateTokenPayload = ImageCandidate & {
 
 const normalize = (value: string) => value.normalize("NFKC").toLocaleLowerCase("ko-KR").replace(/\s+/g, "").trim();
 const isHttpsImage = (value?: string) => Boolean(value?.startsWith("https://") && !/\.gif(?:$|\?)/i.test(value));
+const clampNumber = (value: unknown, minimum: number, maximum: number, fallback: number) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.min(maximum, Math.max(minimum, number)) : fallback;
+};
 const textEncoder = new TextEncoder();
 
 const toBase64Url = (value: Uint8Array) => {
@@ -90,6 +95,32 @@ const searchKakao = async (apiKey: string, query: string) => {
   return Array.isArray(payload?.documents) ? payload.documents as SearchDocument[] : [];
 };
 
+const searchGoogle = async (apiKey: string, searchEngineId: string, foodName: string): Promise<ImageCandidate[]> => {
+  const url = new URL("https://customsearch.googleapis.com/customsearch/v1");
+  url.searchParams.set("key", apiKey);
+  url.searchParams.set("cx", searchEngineId);
+  url.searchParams.set("q", `${foodName} 요리 완성 사진`);
+  url.searchParams.set("searchType", "image");
+  url.searchParams.set("imgType", "photo");
+  url.searchParams.set("safe", "active");
+  url.searchParams.set("num", "8");
+  const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  if (!response.ok) throw new Error(`Google 이미지 검색 HTTP ${response.status}`);
+  const payload = await response.json();
+  return (Array.isArray(payload?.items) ? payload.items : []).map((item: Record<string, unknown>) => {
+    const image = (item.image || {}) as Record<string, unknown>;
+    return {
+      imageUrl: String(item.link || ""),
+      fallbackUrl: String(image.thumbnailLink || item.link || ""),
+      documentUrl: String(image.contextLink || "") || null,
+      sourceName: String(item.displayLink || "Google 이미지"),
+      width: Number(image.width) || null,
+      height: Number(image.height) || null,
+      provider: "Google" as const,
+    };
+  }).filter((candidate: ImageCandidate) => isHttpsImage(candidate.imageUrl) && isHttpsImage(candidate.fallbackUrl));
+};
+
 const candidateScore = (document: SearchDocument, index: number) => {
   const width = Number(document.width) || 0;
   const height = Number(document.height) || 0;
@@ -103,13 +134,19 @@ const candidateScore = (document: SearchDocument, index: number) => {
   return 150 - index * 3 + resolution + crop + recipe - unreliable - commerce;
 };
 
-const findCandidates = async (apiKey: string, foodName: string, currentUrl?: string | null) => {
+const findCandidates = async (
+  apiKey: string,
+  foodName: string,
+  currentUrl?: string | null,
+  googleApiKey?: string,
+  googleSearchEngineId?: string,
+) => {
   const [exact, descriptive] = await Promise.all([
     searchKakao(apiKey, `"${foodName}"`),
     searchKakao(apiKey, `${foodName} 요리 완성 사진`),
   ]);
   const seen = new Set<string>();
-  return [...exact, ...descriptive]
+  const kakaoCandidates = [...exact, ...descriptive]
     .filter((document) => isHttpsImage(document.image_url) && isHttpsImage(document.thumbnail_url))
     .filter((document) => document.image_url !== currentUrl && !seen.has(document.image_url!) && seen.add(document.image_url!))
     .map((document, index) => ({ document, score: candidateScore(document, index) }))
@@ -122,7 +159,21 @@ const findCandidates = async (apiKey: string, foodName: string, currentUrl?: str
       sourceName: document.display_sitename || "이미지 검색",
       width: Number(document.width) || null,
       height: Number(document.height) || null,
+      provider: "Kakao" as const,
     }));
+  let googleCandidates: ImageCandidate[] = [];
+  if (googleApiKey && googleSearchEngineId) {
+    try {
+      googleCandidates = await searchGoogle(googleApiKey, googleSearchEngineId, foodName);
+    } catch (error) {
+      console.warn("Google 이미지 후보 조회 실패", error);
+    }
+  }
+  const merged = googleCandidates.length
+    ? [...googleCandidates.slice(0, 4), ...kakaoCandidates]
+    : kakaoCandidates;
+  const urls = new Set<string>();
+  return merged.filter((candidate) => candidate.imageUrl !== currentUrl && !urls.has(candidate.imageUrl) && urls.add(candidate.imageUrl)).slice(0, 12);
 };
 
 Deno.serve(async (request) => {
@@ -134,6 +185,8 @@ Deno.serve(async (request) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const kakaoApiKey = Deno.env.get("KAKAO_REST_API_KEY");
+    const googleApiKey = Deno.env.get("GOOGLE_SEARCH_API_KEY");
+    const googleSearchEngineId = Deno.env.get("GOOGLE_SEARCH_ENGINE_ID");
     if (!supabaseUrl || !anonKey || !serviceRoleKey || !kakaoApiKey) throw new Error("사진 관리 서버 환경변수가 설정되지 않았습니다.");
 
     const authorization = request.headers.get("Authorization") || "";
@@ -155,16 +208,24 @@ Deno.serve(async (request) => {
     const foodName = String(body?.foodName || "").trim();
     if (!foodName || foodName.length > 100) return Response.json({ error: "메뉴명을 확인해주세요." }, { status: 400, headers: corsHeaders });
 
-    const { data: food, error: foodError } = await db.from("foods")
-      .select("id, original_name, normalized_name").eq("normalized_name", normalize(foodName)).single();
-    if (foodError || !food) return Response.json({ error: "등록된 메뉴를 찾지 못했습니다." }, { status: 404, headers: corsHeaders });
+    let { data: food, error: foodError } = await db.from("foods")
+      .select("id, original_name, normalized_name").eq("normalized_name", normalize(foodName)).maybeSingle();
+    if (foodError) throw foodError;
+    if (!food) {
+      const result = await db.from("foods")
+        .upsert({ original_name: foodName, normalized_name: normalize(foodName) }, { onConflict: "normalized_name" })
+        .select("id, original_name, normalized_name").single();
+      if (result.error || !result.data) throw result.error || new Error("메뉴를 사진 관리 목록에 등록하지 못했습니다.");
+      food = result.data;
+    }
+    await db.from("meal_items").update({ food_id: food.id }).is("food_id", null).eq("original_menu_text", foodName);
 
     const { data: current } = await db.from("food_images")
-      .select("id, storage_path, source_url, source_document_url, source_name")
+      .select("id, storage_path, source_url, source_document_url, source_name, crop_zoom, focal_x, focal_y")
       .eq("food_id", food.id).eq("review_status", "approved").order("created_at", { ascending: false }).limit(1).maybeSingle();
 
     if (action === "candidates") {
-      const candidates = await findCandidates(kakaoApiKey, food.original_name, current?.source_url);
+      const candidates = await findCandidates(kakaoApiKey, food.original_name, current?.source_url, googleApiKey, googleSearchEngineId);
       const signedCandidates = await Promise.all(candidates.map(async (candidate) => ({
         ...candidate,
         selectionToken: await createCandidateToken(serviceRoleKey, food.id, candidate as ImageCandidate),
@@ -176,8 +237,22 @@ Deno.serve(async (request) => {
           fallbackUrl: current.storage_path,
           documentUrl: current.source_document_url,
           sourceName: current.source_name,
+          cropZoom: Number(current.crop_zoom) || 1.08,
+          focalX: Number(current.focal_x) || 50,
+          focalY: Number(current.focal_y) || 50,
+          provider: "Kakao",
+          selectionToken: await createCandidateToken(serviceRoleKey, food.id, {
+            imageUrl: current.source_url || current.storage_path,
+            fallbackUrl: current.storage_path || current.source_url,
+            documentUrl: current.source_document_url,
+            sourceName: current.source_name || "기존 대표 사진",
+            width: null,
+            height: null,
+            provider: "Kakao",
+          }),
         } : null,
         candidates: signedCandidates,
+        providers: { kakao: true, google: Boolean(googleApiKey && googleSearchEngineId) },
       }, { headers: { ...corsHeaders, "Cache-Control": "no-store" } });
     }
 
@@ -185,6 +260,9 @@ Deno.serve(async (request) => {
     const selectionToken = String(body?.selectionToken || "");
     if (!selectionToken) return Response.json({ error: "사진 후보가 만료되었습니다. 다시 검색해주세요." }, { status: 400, headers: corsHeaders });
     const selected = await verifyCandidateToken(serviceRoleKey, selectionToken, food.id);
+    const cropZoom = clampNumber(body?.cropZoom, 1, 2.5, 1.08);
+    const focalX = Math.round(clampNumber(body?.focalX, 0, 100, 50));
+    const focalY = Math.round(clampNumber(body?.focalY, 0, 100, 50));
 
     const values = {
       food_id: food.id,
@@ -192,6 +270,9 @@ Deno.serve(async (request) => {
       source_url: selected.imageUrl,
       source_document_url: selected.documentUrl,
       source_name: selected.sourceName,
+      crop_zoom: cropZoom,
+      focal_x: focalX,
+      focal_y: focalY,
       license_note: "admin-selected · 관리자가 이미지 검색 후보에서 선택한 대표 사진입니다.",
       review_status: "approved",
       reviewed_by: userData.user.id,

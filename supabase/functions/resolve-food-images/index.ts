@@ -23,6 +23,9 @@ type ImageRow = {
   source_document_url: string | null;
   source_name: string | null;
   license_note: string | null;
+  crop_zoom: number | null;
+  focal_x: number | null;
+  focal_y: number | null;
 };
 
 const IMAGE_MATCH_VERSION = 3;
@@ -136,6 +139,9 @@ const toResponseImage = (food: FoodRow, image?: ImageRow | null) => ({
   fallbackUrl: image?.storage_path || image?.source_url || null,
   documentUrl: image?.source_document_url || null,
   sourceName: image?.source_name || null,
+  cropZoom: image?.crop_zoom == null ? 1.08 : Number(image.crop_zoom),
+  focalX: image?.focal_x == null ? 50 : Number(image.focal_x),
+  focalY: image?.focal_y == null ? 50 : Number(image.focal_y),
 });
 
 Deno.serve(async (request) => {
@@ -163,7 +169,7 @@ Deno.serve(async (request) => {
     if (!foodRows.length) return Response.json({ images: [] }, { headers: corsHeaders });
 
     const { data: cached, error: cacheError } = await db.from("food_images")
-      .select("id, food_id, storage_path, source_url, source_document_url, source_name, license_note")
+      .select("id, food_id, storage_path, source_url, source_document_url, source_name, license_note, crop_zoom, focal_x, focal_y")
       .in("food_id", foodRows.map((food) => food.id)).eq("review_status", "approved")
       .order("created_at", { ascending: false });
     if (cacheError) throw cacheError;
@@ -193,7 +199,7 @@ Deno.serve(async (request) => {
         const previous = imageByFoodId.get(food.id);
         const query = previous ? db.from("food_images").update(values).eq("id", previous.id) : db.from("food_images").insert(values);
         const { data, error } = await query
-          .select("id, food_id, storage_path, source_url, source_document_url, source_name, license_note").single();
+          .select("id, food_id, storage_path, source_url, source_document_url, source_name, license_note, crop_zoom, focal_x, focal_y").single();
         if (error) throw error;
         imageByFoodId.set(food.id, data as ImageRow);
       } catch (error) {

@@ -32,11 +32,12 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.08);
+  object-position: var(--food-x, 50%) var(--food-y, 50%);
+  transform: scale(var(--food-zoom, 1.08));
 }
 
 .tray-slot--small img {
-  object-position: 35% 68%;
+  object-position: var(--food-x, 35%) var(--food-y, 68%);
 }
 
 .tray-slot span {

@@ -108,7 +108,8 @@ const trayTemplate = (meal) => {
     .map(({ name, slot }) => {
       const image = getFoodImage(name);
       const imageMarkup = image ? `<img src="${escapeHtml(image.imageUrl || image.fallbackUrl)}"
-        data-fallback-src="${escapeHtml(image.fallbackUrl || "")}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" />` : "";
+        data-fallback-src="${escapeHtml(image.fallbackUrl || "")}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+        style="--food-zoom:${Number(image.cropZoom) || 1.08};--food-x:${Number(image.focalX) || 50}%;--food-y:${Number(image.focalY) || 50}%" />` : "";
       return `<div class="tray-slot tray-slot--${slot}${image ? " has-image" : ""}" data-food-name="${escapeHtml(name)}">
         ${imageMarkup}<span>${escapeHtml(name)}</span>
       </div>`;
