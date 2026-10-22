@@ -198,7 +198,6 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
         <span class="meal-card__title-row">
           <strong class="meal-card__title">${labels[meal.type]} 식단 <span>(${mealDateLabel(meal.date)})</span></strong>
           ${calorie}
-          ${isCurrent ? '<span class="current-badge">지금</span>' : ""}
         </span>
         <span class="meal-card__meta">제공시간 ${time.replace("–", " ~ ")} <b>가격 ${price.toLocaleString("ko-KR")}원</b></span>
       </span>

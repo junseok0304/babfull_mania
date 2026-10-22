@@ -501,13 +501,27 @@
   font-weight: 800;
 }
 
-.search-result span {
+.search-result__meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.search-result__type {
   padding: 5px 8px;
   border-radius: 999px;
   background: var(--primary-soft);
   color: var(--primary-dark);
   font-size: 13px;
   font-weight: 800;
+}
+
+.search-result__meta .calorie-badge { white-space: nowrap; }
+
+@media (max-width: 520px) {
+  .search-result { grid-template-columns: 1fr; }
+  .search-result__meta { justify-content: flex-start; }
 }
 
 @media (min-width: 660px) {

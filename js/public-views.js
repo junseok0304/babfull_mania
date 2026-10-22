@@ -25,6 +25,7 @@ const escapeHtml = (value) => String(value)
 const mealsForDate = (dateKey) => getCachedMeals().filter((meal) => meal.date === dateKey && meal.published);
 let weeklyRenderId = 0;
 let selectedDayRenderId = 0;
+let searchRenderId = 0;
 
 const getDayStatus = (date, meals = mealsForDate(formatDateKey(date))) => {
   const operatingMeals = meals.filter((meal) => meal.operating !== false);
@@ -156,7 +157,8 @@ const highlightSearchMatch = (value, query) => {
   return `${escapeHtml(source.slice(0, sourceIndexes[start]))}<mark class="search-highlight">${escapeHtml(source.slice(sourceIndexes[start], end))}</mark>${escapeHtml(source.slice(end))}`;
 };
 
-const renderSearch = (query) => {
+const renderSearch = async (query) => {
+  const renderId = ++searchRenderId;
   const normalized = normalizeSearch(query.trim());
   const summary = document.querySelector("#search-summary");
   const results = document.querySelector("#search-results");
@@ -169,10 +171,12 @@ const renderSearch = (query) => {
   const matched = getCachedMeals()
     .filter((meal) => meal.items.some((item) => normalizeSearch(item).includes(normalized)))
     .sort((a, b) => b.date.localeCompare(a.date));
+  await hydrateMealNutrition(matched);
+  if (renderId !== searchRenderId) return;
   summary.textContent = matched.length ? `총 ${matched.length}개의 식단을 찾았어요.` : "검색 결과가 없습니다.";
   results.innerHTML = matched.map((meal) => `<a class="search-result" href="#calendar" data-result-date="${meal.date}">
     <div><strong>${meal.date} · ${mealLabels[meal.type]}</strong><p>${meal.items.map((item) => highlightSearchMatch(item, query)).join(" · ")}</p></div>
-    <span>${mealLabels[meal.type]}</span>
+    <div class="search-result__meta"><span class="search-result__type">${mealLabels[meal.type]}</span>${renderCalorie(meal)}</div>
   </a>`).join("");
 
   document.querySelectorAll("[data-result-date]").forEach((link) => link.addEventListener("click", () => {

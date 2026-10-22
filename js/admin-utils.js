@@ -38,3 +38,23 @@ export const getManualMealState = (availability, menuItems = [], closureNote = "
   if (availability === "closed") return { menuItems: [], isOperating: false, adminNote: String(closureNote).trim() || "휴무일" };
   throw new Error("제공 여부를 선택해주세요.");
 };
+
+export const buildDashboardSummary = (raw = {}) => {
+  const breakfastCount = Number(raw.breakfast_count ?? raw.breakfastCount ?? 0);
+  const lunchCount = Number(raw.lunch_count ?? raw.lunchCount ?? 0);
+  const mealTotal = breakfastCount + lunchCount;
+  return {
+    totalMembers: Number(raw.total_members ?? raw.totalMembers ?? 0),
+    todayUsageCount: Number(raw.today_usage_count ?? raw.todayUsageCount ?? 0),
+    monthUsageCount: Number(raw.month_usage_count ?? raw.monthUsageCount ?? 0),
+    monthRevenue: Number(raw.month_revenue ?? raw.monthRevenue ?? 0),
+    breakfastCount,
+    lunchCount,
+    breakfastPercent: mealTotal ? Math.round((breakfastCount / mealTotal) * 100) : 0,
+    lunchPercent: mealTotal ? Math.round((lunchCount / mealTotal) * 100) : 0,
+    affiliations: Array.isArray(raw.affiliations) ? raw.affiliations.map((item) => ({
+      affiliation: item.affiliation || "소속 미등록",
+      count: Number(item.count || 0),
+    })) : [],
+  };
+};

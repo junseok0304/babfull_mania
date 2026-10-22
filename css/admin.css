@@ -1452,14 +1452,32 @@
 
 .user-active {
   display: flex !important;
+  min-height: 40px;
+  padding: 0 10px;
   align-items: center;
+  align-self: end;
+  justify-content: center;
   grid-template-columns: auto 1fr;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: white;
+  gap: 7px;
 }
 
 .user-active input {
   width: auto;
   height: auto;
 }
+
+.dashboard-insights { display: grid; margin-bottom: 15px; gap: 15px; }
+.dashboard-insight { margin: 0; }
+.ratio-summary, .affiliation-stat > div:first-child { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ratio-bar, .affiliation-stat > div:last-child { height: 12px; margin-top: 12px; overflow: hidden; border-radius: 999px; background: #f59e0b; }
+.ratio-bar span, .affiliation-stat > div:last-child span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+.ratio-summary + .ratio-bar + p, .dashboard-empty { margin: 10px 0 0; color: var(--secondary); font-size: 13px; }
+.affiliation-stat + .affiliation-stat { margin-top: 13px; }
+.affiliation-stat > div:last-child { height: 8px; margin-top: 6px; background: #edf2ee; }
+@media (min-width: 800px) { .dashboard-insights { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 .user-admin-message {
   min-height: 14px;

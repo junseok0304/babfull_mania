@@ -1,6 +1,6 @@
 import { formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
 import { getSupabaseClient } from "./supabase-client.js";
-import { defaultOperationalSettings, getAutomaticMealType, getManualMealState } from "./admin-utils.js";
+import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState } from "./admin-utils.js";
 
 const titles = { dashboard: "대시보드", meals: "식단 관리", scanner: "QR 스캐너", users: "사용자 관리", usages: "이용 내역", settings: "운영 설정" };
 let adminMode = "demo";
@@ -26,6 +26,7 @@ const mealListPageSize = 5;
 const foodImageSearchPages = new Map();
 const demoUsages = [];
 const demoQrToken = "00000000-0000-4000-8000-000000000001";
+let dashboardStats = buildDashboardSummary();
 
 const escapeHtml = (value) => String(value ?? "")
   .replaceAll("&", "&amp;")
@@ -95,17 +96,40 @@ const renderSavedFoodImageGrid = () => {
 };
 
 const renderStats = () => {
-  const today = formatDateKey(getSeoulDate());
-  const todayMeals = meals.filter((meal) => meal.date === today);
-  const published = meals.filter((meal) => meal.published).length;
-  const todayUsages = demoUsages.filter((usage) => usage.date === today);
-  const todayAmount = todayUsages.reduce((sum, usage) => sum + usage.price, 0);
   document.querySelector("#admin-stats").innerHTML = [
-    ["오늘 등록 식단", `${todayMeals.length}건`],
-    ["공개 중인 식단", `${published}건`],
-    ["오늘 식권 이용", `${todayUsages.length}건`],
-    ["오늘 이용 금액", `${todayAmount.toLocaleString("ko-KR")}원`],
+    ["전체 등록 회원", `${dashboardStats.totalMembers.toLocaleString("ko-KR")}명`],
+    ["오늘 이용", `${dashboardStats.todayUsageCount.toLocaleString("ko-KR")}건`],
+    ["이번 달 누적 사용", `${dashboardStats.monthUsageCount.toLocaleString("ko-KR")}건`],
+    ["이번 달 이용 매출", `${dashboardStats.monthRevenue.toLocaleString("ko-KR")}원`],
   ].map(([label, value]) => `<div class="stat-card"><span>${label}</span><strong>${value}</strong></div>`).join("");
+
+  document.querySelector("#dashboard-meal-ratio").innerHTML = `<div class="ratio-summary"><strong>조식 ${dashboardStats.breakfastPercent}%</strong><strong>중식 ${dashboardStats.lunchPercent}%</strong></div><div class="ratio-bar" aria-label="조식 ${dashboardStats.breakfastCount}건, 중식 ${dashboardStats.lunchCount}건"><span style="width:${dashboardStats.breakfastPercent}%"></span></div><p>조식 ${dashboardStats.breakfastCount.toLocaleString("ko-KR")}건 · 중식 ${dashboardStats.lunchCount.toLocaleString("ko-KR")}건</p>`;
+  const target = document.querySelector("#dashboard-affiliations");
+  const max = Math.max(1, ...dashboardStats.affiliations.map((item) => item.count));
+  target.innerHTML = dashboardStats.affiliations.length ? dashboardStats.affiliations.map((item) => `<div class="affiliation-stat"><div><span>${escapeHtml(item.affiliation)}</span><strong>${item.count.toLocaleString("ko-KR")}건</strong></div><div><span style="width:${Math.round((item.count / max) * 100)}%"></span></div></div>`).join("") : '<p class="dashboard-empty">이번 달 이용 기록이 없습니다.</p>';
+};
+
+const loadDashboardStats = async () => {
+  if (adminMode !== "supabase") {
+    const today = formatDateKey(getSeoulDate());
+    const active = demoUsages.filter((usage) => usage.status === "active");
+    dashboardStats = buildDashboardSummary({ today_usage_count: active.filter((usage) => usage.date === today).length, month_usage_count: active.length, month_revenue: active.reduce((sum, usage) => sum + usage.price, 0), breakfast_count: active.filter((usage) => usage.type === "breakfast").length, lunch_count: active.filter((usage) => usage.type === "lunch").length });
+    return;
+  }
+  const month = `${formatDateKey(getSeoulDate()).slice(0, 7)}-01`;
+  const { data, error } = await client.rpc("admin_dashboard_stats", { target_month: month });
+  if (error) throw error;
+  dashboardStats = buildDashboardSummary(data);
+};
+
+const refreshDashboard = async () => {
+  try { await loadDashboardStats(); } catch (error) { console.error("대시보드 통계 조회 실패", error); }
+  renderStats();
+};
+
+const syncFoodImageManagerVisibility = () => {
+  const manager = document.querySelector("#food-image-manager");
+  if (manager) manager.hidden = operationalSettings.trayDisplayMode === "ai";
 };
 
 const sortedMeals = () => [...meals].sort((a, b) => b.date.localeCompare(a.date) || a.type.localeCompare(b.type));
@@ -389,6 +413,7 @@ const initializeAdmin = async () => {
   await loadDatabaseMeals();
   await loadSavedFoodImageNames();
   adminMode = "supabase";
+  syncFoodImageManagerVisibility();
   return true;
 };
 
@@ -493,7 +518,7 @@ const handleDecodedToken = async (token) => {
     renderScannerStatus("정기권 이용 기록을 저장하고 있어요.");
     const usage = await processUsage(profile);
     renderScannedProfile(profile, usage);
-    renderStats();
+    await refreshDashboard();
     return true;
   } catch (error) {
     renderScannerStatus(error.message || "QR을 처리하지 못했습니다.", true);
@@ -625,6 +650,7 @@ const renderSettings = () => {
   const trayMode = form.querySelector(`input[name="tray_display_mode"][value="${operationalSettings.trayDisplayMode}"]`);
   if (trayMode) trayMode.checked = true;
   form.querySelector("button[type=submit]").disabled = adminMode !== "supabase";
+  syncFoodImageManagerVisibility();
 };
 
 const normalizeUsage = (record) => ({
@@ -693,7 +719,7 @@ const renderUsages = async () => {
     try {
       await updateUsage(form.dataset.usageId, data.get("meal_date"), data.get("meal_type"), data.get("status"), data.get("note"));
       message.textContent = "수정됨";
-      renderStats();
+      await refreshDashboard();
     } catch (error) {
       message.textContent = error.message;
       message.classList.add("is-error");
@@ -737,6 +763,7 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
     });
     if (trayModeError) throw trayModeError;
     await loadOperationalSettings();
+    syncFoodImageManagerVisibility();
     setScanDefaults();
     message.textContent = "운영 설정을 저장했습니다.";
   } catch (error) {
@@ -1076,7 +1103,7 @@ const accessAllowed = await initializeAdmin();
 if (accessAllowed !== false) {
   setScanDefaults();
   route(location.hash.slice(1));
-  renderStats();
+  await refreshDashboard();
   renderMeals();
   await renderImportStatus();
 }

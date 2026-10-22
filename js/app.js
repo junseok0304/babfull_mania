@@ -1,5 +1,5 @@
-import { renderHomeMeals, scheduleMealRefresh } from "./meal-display.js?v=20261022-9";
-import { initPublicViews } from "./public-views.js";
+import { renderHomeMeals, scheduleMealRefresh } from "./meal-display.js?v=20261023-1";
+import { initPublicViews } from "./public-views.js?v=20261023-1";
 import { initializeData } from "./data-service.js";
 import { renderMyPage } from "./mypage.js?v=20261022-2";
 

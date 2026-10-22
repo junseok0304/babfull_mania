@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getAutomaticMealType, getManualMealState } from "../js/admin-utils.js";
+import { buildDashboardSummary, getAutomaticMealType, getManualMealState } from "../js/admin-utils.js";
 
 const settings = {
   breakfastStart: "08:00",
@@ -31,4 +31,22 @@ test("수동 식단 제공 여부를 저장 상태로 변환한다", () => {
   assert.deepEqual(getManualMealState("provided", [" 백미밥 "]), { menuItems: ["백미밥"], isOperating: true, adminNote: null });
   assert.deepEqual(getManualMealState("unavailable", ["테스트"]), { menuItems: [], isOperating: false, adminNote: "미제공" });
   assert.deepEqual(getManualMealState("closed", ["테스트"], "문화체험 휴무"), { menuItems: [], isOperating: false, adminNote: "문화체험 휴무" });
+});
+
+test("월간 대시보드 집계값과 식사 이용 비율을 계산한다", () => {
+  assert.deepEqual(buildDashboardSummary({
+    total_members: 12, today_usage_count: 3, month_usage_count: 10, month_revenue: 31800,
+    breakfast_count: 4, lunch_count: 6, affiliations: [{ affiliation: "IT융합자율학부", count: 7 }],
+  }), {
+    totalMembers: 12, todayUsageCount: 3, monthUsageCount: 10, monthRevenue: 31800,
+    breakfastCount: 4, lunchCount: 6, breakfastPercent: 40, lunchPercent: 60,
+    affiliations: [{ affiliation: "IT융합자율학부", count: 7 }],
+  });
+});
+
+test("이용 기록이 없을 때 대시보드 비율은 0으로 안전하게 표시한다", () => {
+  const summary = buildDashboardSummary();
+  assert.equal(summary.breakfastPercent, 0);
+  assert.equal(summary.lunchPercent, 0);
+  assert.deepEqual(summary.affiliations, []);
 });

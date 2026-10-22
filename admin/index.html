@@ -7,8 +7,8 @@
     <meta name="description" content="밥풀매니아 관리자 대시보드" />
     <title>밥풀매니아 관리자</title>
     <link rel="stylesheet" href="../css/global.css?v=20261021-7" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261022-15" />
-    <script type="module" src="../js/admin.js?v=20261022-14"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261023-1" />
+    <script type="module" src="../js/admin.js?v=20261023-1"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -41,6 +41,10 @@
 
         <section class="admin-view is-active" data-admin-view="dashboard">
           <div class="stat-grid" id="admin-stats"></div>
+          <div class="dashboard-insights">
+            <section class="admin-card dashboard-insight"><div class="admin-card__heading"><div><p class="section-kicker">이번 달</p><h2>조식 vs 중식 이용 비율</h2></div></div><div id="dashboard-meal-ratio"></div></section>
+            <section class="admin-card dashboard-insight"><div class="admin-card__heading"><div><p class="section-kicker">이번 달</p><h2>소속별 이용 현황</h2></div></div><div id="dashboard-affiliations"></div></section>
+          </div>
           <section class="admin-card">
             <div class="admin-card__heading">
               <div><p class="section-kicker">최근 등록</p><h2>다가오는 식단</h2></div>
@@ -92,7 +96,7 @@
               <p class="form-message" id="tray-image-message" role="status"></p>
             </form>
           </section>
-          <section class="admin-card food-image-manager">
+          <section class="admin-card food-image-manager" id="food-image-manager">
             <div class="admin-card__heading">
               <div><p class="section-kicker">대표 이미지</p><h2>메뉴 사진 관리</h2></div>
             </div>
