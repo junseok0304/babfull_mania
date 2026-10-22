@@ -258,8 +258,8 @@ const renderFoodImageWorkspace = (data) => {
       </article>`).join("")}</div>`
     : '<div class="food-image-empty"><strong>다른 사진 후보를 찾지 못했습니다.</strong><span>잠시 후 다시 검색해주세요.</span></div>';
   const providerNote = data.providers?.google
-    ? "Kakao와 Google 이미지 후보를 함께 보여드리고 있습니다."
-    : "현재 Kakao 이미지 후보를 보여드리고 있습니다. Google 검색 API 연결 시 Google 후보도 함께 표시됩니다.";
+    ? "이미지 후보 출처: Kakao 이미지 검색 · Google 이미지 검색"
+    : "이미지 후보 출처: Kakao 이미지 검색";
   document.querySelector("#food-image-workspace").innerHTML = `<div class="food-image-current-panel"><h3>${escapeHtml(data.food.name)} 구도 편집</h3>${editor}</div><div class="food-image-results"><div class="food-image-results__heading"><h3>대체 사진 후보</h3><span>${escapeHtml(providerNote)}</span></div>${candidates}</div>`;
   bindManagedImageFallbacks();
 };
