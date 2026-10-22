@@ -1,5 +1,5 @@
 import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
-import { getCachedMeals } from "./data-service.js?v=20261022-2";
+import { getCachedMeals } from "./data-service.js";
 import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
 
