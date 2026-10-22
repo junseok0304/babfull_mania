@@ -63,6 +63,8 @@
   font-size: clamp(7px, 2.4vw, 12px);
   font-weight: 800;
   line-height: 1.2;
+  overflow-wrap: break-word;
+  word-break: keep-all;
 }
 
 .tray-slot.has-image span {
@@ -144,8 +146,9 @@
 
 .generated-tray figcaption {
   margin: 9px 2px 0;
-  color: var(--secondary);
+  color: var(--primary-dark);
   font-size: 13px;
+  font-weight: 750;
   line-height: 1.5;
 }
 

@@ -96,7 +96,7 @@ const renderSelectedDay = async () => {
   await hydrateMealNutrition(meals);
   if (renderId !== selectedDayRenderId) return;
   target.innerHTML = `<h2>${selectedDate} 식단</h2>${status ? `<p class="selected-day__status selected-day__status--${status.kind}">${escapeHtml(status.label)}</p>` : ""}${meals.map((meal) =>
-    `<div class="selected-day__meal selected-day__meal--${meal.type}"><strong>${mealLabels[meal.type]} ${renderCalorie(meal)}</strong><span>${meal.items.map(escapeHtml).join(" · ")}</span></div>`
+    `<div class="selected-day__meal selected-day__meal--${meal.type}"><div class="selected-day__meal-header"><strong>${mealLabels[meal.type]}</strong>${renderCalorie(meal)}</div><span>${meal.items.map(escapeHtml).join(" · ")}</span></div>`
   ).join("")}`;
 };
 
@@ -183,6 +183,25 @@ const renderSearch = (query) => {
   }));
 };
 
+const renderSearchSuggestions = (searchInput) => {
+  const target = document.querySelector("#search-suggestions");
+  const menuNames = [...new Set(getCachedMeals().flatMap((meal) => meal.items ?? []))]
+    .filter((name) => name && !/^\*+$|운영시간|메뉴가 없습니다|휴무/u.test(name));
+  const suggestions = menuNames
+    .map((name) => ({ name, order: Math.random() }))
+    .sort((a, b) => a.order - b.order)
+    .slice(0, 5)
+    .map(({ name }) => name);
+  target.innerHTML = suggestions.length
+    ? `<span>추천 검색어</span>${suggestions.map((name) => `<button type="button" data-search-suggestion="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join("")}`
+    : "";
+  target.querySelectorAll("[data-search-suggestion]").forEach((button) => button.addEventListener("click", () => {
+    searchInput.value = button.dataset.searchSuggestion;
+    renderSearch(searchInput.value);
+    searchInput.focus();
+  }));
+};
+
 export const initPublicViews = () => {
   document.querySelector("#week-prev").addEventListener("click", () => { weekOffset -= 1; renderWeekly(); });
   document.querySelector("#week-next").addEventListener("click", () => { weekOffset += 1; renderWeekly(); });
@@ -200,6 +219,7 @@ export const initPublicViews = () => {
   document.querySelector("#menu-search-form").addEventListener("submit", (event) => event.preventDefault());
   searchInput.addEventListener("input", () => renderSearch(searchInput.value));
   document.querySelector("#menu-search-form").addEventListener("reset", () => window.setTimeout(() => renderSearch(""), 0));
+  renderSearchSuggestions(searchInput);
 
   renderWeekly();
   renderCalendar();

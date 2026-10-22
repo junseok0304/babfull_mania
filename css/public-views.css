@@ -347,6 +347,13 @@
   font-size: 14px;
 }
 
+.selected-day__meal-header {
+  display: inline-flex;
+  margin-right: 16px;
+  align-items: center;
+  gap: 7px;
+}
+
 .selected-day__meal--breakfast strong {
   color: var(--breakfast);
 }
@@ -389,6 +396,33 @@
   border: 2px solid #d4d4d8;
   border-radius: 16px;
   background: var(--surface);
+}
+
+.search-suggestions {
+  display: flex;
+  margin: -3px 0 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.search-suggestions > span {
+  margin-right: 2px;
+  color: var(--secondary);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.search-suggestions button {
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid #bbdbc6;
+  border-radius: 999px;
+  background: #f0fdf4;
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
 }
 
 .search-form:focus-within {

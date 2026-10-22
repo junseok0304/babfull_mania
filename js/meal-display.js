@@ -4,7 +4,7 @@ import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
 
 const labels = { breakfast: "조식", lunch: "중식" };
-const icons = { breakfast: "🌙", lunch: "☀️" };
+const icons = { breakfast: "☀️", lunch: "🍚" };
 const manualOpenState = new Map();
 let homeRenderId = 0;
 let homeWeekdayIndex = null;
@@ -98,22 +98,13 @@ export const arrangeTray = (items) => {
     return order[a.category] - order[b.category];
   });
 
-  const condimentIndex = remaining.findIndex(({ category }) => category === "sauce" || category === "kimchi");
-
-  if (remaining.length <= 3) {
-    const condiment = condimentIndex >= 0 ? remaining.splice(condimentIndex, 1)[0] : null;
+  if (remaining.length <= 4) {
     remaining.forEach((item, index) => result.push({ name: item.name, slot: `side-${index + 1}` }));
-    if (condiment) result.push({ name: condiment.name, slot: "side-4" });
     return result;
   }
 
-  const dense = remaining.length > 5;
-  const slots = dense
-    ? ["side-1-top", "side-1-bottom", "side-2-top", "side-2-bottom", "side-3", "side-4"]
-    : ["side-1", "side-2", "side-3", "side-4"];
-  const condiment = condimentIndex >= 0 ? remaining.splice(condimentIndex, 1)[0] : null;
+  const slots = ["side-1-top", "side-1-bottom", "side-2-top", "side-2-bottom", "side-3", "side-4"];
   remaining.slice(0, slots.length).forEach((item, index) => result.push({ name: item.name, slot: slots[index] }));
-  if (condiment) result.push({ name: condiment.name, slot: "small" });
   return result;
 };
 
@@ -166,6 +157,11 @@ const generatedTrayTemplate = (meal) => {
   </figure>`;
 };
 
+const mealDateLabel = (dateKey) => {
+  const [, month, day] = String(dateKey).split("-").map(Number);
+  return `${month}월 ${day}일`;
+};
+
 const mealCardTemplate = (meal, state, forceOpen = null) => {
   const manuallySet = manualOpenState.get(meal.id);
   const desktopDefaultOpen = window.matchMedia("(min-width: 960px)").matches;
@@ -186,10 +182,11 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
       <span class="meal-card__icon" aria-hidden="true">${icons[meal.type]}</span>
       <span class="meal-card__heading">
         <span class="meal-card__title-row">
-          <strong class="meal-card__title">${labels[meal.type]} 식단</strong>
+          <strong class="meal-card__title">${labels[meal.type]} 식단 <span>(${mealDateLabel(meal.date)})</span></strong>
+          ${calorie}
           ${isCurrent ? '<span class="current-badge">지금</span>' : ""}
         </span>
-        <span class="meal-card__meta">${time} · ${price.toLocaleString("ko-KR")}원</span>
+        <span class="meal-card__meta">제공시간 ${time.replace("–", " ~ ")} <b>가격 ${price.toLocaleString("ko-KR")}원</b></span>
       </span>
       <span class="meal-card__chevron" aria-hidden="true"></span>
     </button>
@@ -197,7 +194,6 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
       <div class="meal-card__body-inner">
         <div>${appSettings.trayDisplayMode === "ai" ? generatedTrayTemplate(meal) : trayTemplate(meal)}</div>
         <div class="meal-card__details">
-          <div class="meal-card__info"><span>${meal.date}</span>${calorie}</div>
           <h3 class="menu-heading">메뉴</h3>
           <ul class="menu-list">${menuItems}</ul>
         </div>

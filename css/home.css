@@ -45,7 +45,8 @@
 .home-date-nav {
   display: grid;
   min-height: 66px;
-  margin-top: 12px;
+  width: 100%;
+  margin: 12px 0 20px;
   grid-template-columns: 48px minmax(0, 1fr) 48px;
   align-items: stretch;
   overflow: hidden;
@@ -146,19 +147,38 @@
 .meal-card__title-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .meal-card__title {
   margin: 0;
-  font-size: 17px;
+  font-size: 18px;
   letter-spacing: -0.025em;
+}
+
+.meal-card__title > span {
+  font-weight: 650;
+}
+
+.meal-card__title-row .calorie-badge {
+  padding: 4px 8px;
+  background: #ecfdf3;
+  color: var(--primary-dark);
+  font-size: 14px;
+  font-weight: 750;
 }
 
 .meal-card__meta {
   margin: 3px 0 0;
   color: var(--secondary);
   font-size: 14px;
+}
+
+.meal-card__meta b {
+  margin-left: 9px;
+  color: #52525b;
+  font-weight: 650;
 }
 
 .current-badge {
@@ -242,7 +262,7 @@
   position: relative;
   padding-left: 12px;
   color: #3f3f46;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.45;
 }
 
@@ -280,9 +300,7 @@
     display: flex;
   }
 
-  .home-date-nav {
-    max-width: 440px;
-  }
+  .home-date-nav { max-width: none; }
 }
 
 @media (min-width: 960px) {
@@ -293,7 +311,8 @@
   }
 
   .meal-card__details {
-    align-self: center;
+    align-self: start;
+    padding-top: 1px;
   }
 
   .menu-list {
