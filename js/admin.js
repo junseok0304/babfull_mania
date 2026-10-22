@@ -111,7 +111,10 @@ const renderStats = () => {
 const sortedMeals = () => [...meals].sort((a, b) => b.date.localeCompare(a.date) || a.type.localeCompare(b.type));
 
 const adminMealStatus = (meal) => {
-  if (meal.operating === false) return { label: "휴무", kind: "closed" };
+  if (meal.operating === false) {
+    const isUnavailable = /미제공|메뉴가 없습니다/u.test(meal.note || "");
+    return isUnavailable ? { label: "미제공", kind: "empty" } : { label: "휴무", kind: "closed" };
+  }
   if (!meal.items.length) return { label: "미제공", kind: "empty" };
   return { label: meal.published ? "공개" : "비공개", kind: meal.published ? "published" : "hidden" };
 };
