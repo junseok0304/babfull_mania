@@ -95,8 +95,8 @@
 
 .notice--loading {
   margin-bottom: 18px;
-  border: 1px solid #bbf7d0;
-  background: #f0fdf4;
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
   color: var(--primary-dark);
 }
 
@@ -105,7 +105,7 @@
   height: 15px;
   margin-top: 1px;
   flex: 0 0 auto;
-  border: 2px solid #bbf7d0;
+  border: 2px solid #fed7aa;
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: loading-spin 700ms linear infinite;

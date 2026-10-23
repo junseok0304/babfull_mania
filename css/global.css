@@ -1,15 +1,15 @@
 :root {
   color-scheme: light;
-  --primary: #16a34a;
-  --primary-dark: #15803d;
-  --primary-soft: #eaf8ef;
-  --accent: #f97316;
+  --primary: #ea580c;
+  --primary-dark: #9a3412;
+  --primary-soft: #fff1e8;
+  --accent: #b45309;
   --breakfast: #5b6fc7;
-  --background: #f8faf9;
+  --background: #fbf8f4;
   --surface: #ffffff;
   --text: #18181b;
   --secondary: #71717a;
-  --border: #e4e4e7;
+  --border: #e8ded6;
   --danger: #dc2626;
   --shadow-sm: 0 3px 16px rgb(24 24 27 / 0.06);
   --shadow-md: 0 18px 45px rgb(24 24 27 / 0.09);
