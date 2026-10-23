@@ -109,7 +109,7 @@
 
 .day-card.is-today {
   border-color: #86efac;
-  background: linear-gradient(150deg, #f0fdf4, white 60%);
+  background: linear-gradient(150deg, #fff7ed, white 60%);
 }
 
 .day-card__header {

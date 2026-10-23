@@ -811,7 +811,7 @@
 .is-scanner-mode .admin-main {
   min-height: 100dvh;
   padding: 14px;
-  background: radial-gradient(circle at top, #ecfdf5, #f4f7f5 50%);
+  background: radial-gradient(circle at top, #fff7ed, #f6f3ef 50%);
 }
 
 .scanner-kiosk__intro {
