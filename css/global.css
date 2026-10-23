@@ -1,15 +1,15 @@
 :root {
   color-scheme: light;
-  --primary: #ea580c;
-  --primary-dark: #9a3412;
-  --primary-soft: #fff1e8;
-  --accent: #b45309;
+  --primary: #b95732;
+  --primary-dark: #8f3f2b;
+  --primary-soft: #fff3ed;
+  --accent: #d1875d;
   --breakfast: #5b6fc7;
-  --background: #fbf8f4;
+  --background: #fbf9f7;
   --surface: #ffffff;
   --text: #18181b;
-  --secondary: #71717a;
-  --border: #e8ded6;
+  --secondary: #6f6a68;
+  --border: #e7dfda;
   --danger: #dc2626;
   --shadow-sm: 0 3px 16px rgb(24 24 27 / 0.06);
   --shadow-md: 0 18px 45px rgb(24 24 27 / 0.09);
@@ -34,7 +34,7 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at 10% 0%, rgb(217 119 6 / 0.10), transparent 26rem),
+    radial-gradient(circle at 10% 0%, rgb(185 87 50 / 0.08), transparent 26rem),
     var(--background);
   color: var(--text);
   line-height: 1.5;

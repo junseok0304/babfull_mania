@@ -116,8 +116,8 @@
 }
 
 .meal-card.is-current {
-  border-color: #86efac;
-  box-shadow: 0 14px 38px rgb(22 163 74 / 0.11);
+  border-color: #e7a98f;
+  box-shadow: 0 14px 38px rgb(185 87 50 / 0.10);
 }
 
 .meal-card__toggle {
@@ -139,7 +139,7 @@
   height: 42px;
   place-items: center;
   border-radius: 14px;
-  background: #ecfdf3;
+  background: var(--primary-soft);
   font-size: 20px;
 }
 
@@ -170,7 +170,7 @@
 
 .meal-card__title-row .calorie-badge {
   padding: 4px 8px;
-  background: #ecfdf3;
+  background: var(--primary-soft);
   color: var(--primary-dark);
   font-size: 14px;
   font-weight: 750;

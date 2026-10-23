@@ -1,5 +1,5 @@
 .admin-body {
-  background: #f4f7f5;
+  background: #f8f7f5;
 }
 
 .admin-error {
@@ -48,7 +48,7 @@
   display: none;
   padding: 24px 18px;
   flex-direction: column;
-  background: #4a2a1a;
+  background: #453b38;
   color: white;
 }
 
@@ -177,7 +177,7 @@
   border: 1px solid #e2e8e4;
   border-radius: 16px;
   background: white;
-  box-shadow: 0 5px 18px rgb(20 83 45 / 0.04);
+  box-shadow: 0 5px 18px rgb(80 60 52 / 0.05);
 }
 
 .stat-card span {
@@ -197,7 +197,7 @@
   border: 1px solid #e2e8e4;
   border-radius: 18px;
   background: white;
-  box-shadow: 0 5px 22px rgb(20 83 45 / 0.05);
+  box-shadow: 0 5px 22px rgb(80 60 52 / 0.06);
 }
 
 .admin-card__heading {
@@ -333,7 +333,7 @@
 .meal-form select:focus,
 .meal-form textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgb(22 163 74 / 0.08);
+  box-shadow: 0 0 0 3px rgb(185 87 50 / 0.10);
 }
 
 .meal-form small {
@@ -779,10 +779,10 @@
   padding: clamp(14px, 1.5vw, 16px);
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid #d9e7de;
+  border: 1px solid #e7ddd7;
   border-radius: 24px;
   background: white;
-  box-shadow: 0 18px 55px rgb(20 83 45 / 0.1);
+  box-shadow: 0 18px 55px rgb(80 60 52 / 0.10);
 }
 
 .scanner-kiosk__exit {
@@ -811,7 +811,7 @@
 .is-scanner-mode .admin-main {
   min-height: 100dvh;
   padding: 14px;
-  background: radial-gradient(circle at top, #fff7ed, #f6f3ef 50%);
+  background: radial-gradient(circle at top, #fff5f0, #f7f5f2 50%);
 }
 
 .scanner-kiosk__intro {
@@ -904,7 +904,7 @@
   width: 100%;
   height: 100%;
   min-height: 0;
-  color: #d1fae5;
+  color: #fed7aa;
 }
 
 .scanner-kiosk .scanner-placeholder span {
@@ -1483,7 +1483,7 @@
   margin-top: 5px;
   padding: 3px 7px;
   border-radius: 999px;
-  background: #ecfdf3;
+  background: var(--primary-soft);
   color: var(--primary-dark);
   font-size: 11px;
   font-weight: 800;
@@ -1515,7 +1515,7 @@
 .ratio-bar span, .affiliation-stat > div:last-child span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
 .ratio-summary + .ratio-bar + p, .dashboard-empty { margin: 10px 0 0; color: var(--secondary); font-size: 13px; }
 .affiliation-stat + .affiliation-stat { margin-top: 13px; }
-.affiliation-stat > div:last-child { height: 8px; margin-top: 6px; background: #edf2ee; }
+.affiliation-stat > div:last-child { height: 8px; margin-top: 6px; background: #eee8e4; }
 @media (min-width: 800px) { .dashboard-insights { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 .user-admin-message {
