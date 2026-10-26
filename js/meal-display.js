@@ -142,6 +142,10 @@ const escapeHtml = (value) => String(value)
   .replaceAll('"', "&quot;")
   .replaceAll("'", "&#039;");
 
+export const formatTrayLabel = (value) => escapeHtml(value)
+  .replaceAll("&amp;", "&amp;<wbr>")
+  .replaceAll("/", "/<wbr>");
+
 const cropStyle = (image) => {
   const zoom = Number(image.cropZoom) || 1.08;
   const focalX = Number(image.focalX ?? 50);
@@ -164,7 +168,7 @@ const trayTemplate = (meal, { textOnly = false } = {}) => {
         ? `<a class="tray-slot__source" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(name)} 사진 원본 출처 열기" title="사진 원본 출처 보기">${imageElement}</a>`
         : imageElement;
       return `<div class="tray-slot tray-slot--${slot}${image ? " has-image" : ""}" data-food-name="${escapeHtml(name)}">
-        ${imageMarkup}<span>${escapeHtml(name)}</span>
+        ${imageMarkup}<span>${formatTrayLabel(name)}</span>
       </div>`;
     })
     .join("");

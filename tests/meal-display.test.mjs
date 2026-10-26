@@ -1,7 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { arrangeTray, resolveHomeAvailability, resolveTrayPresentation } from "../js/meal-display.js";
+import { arrangeTray, formatTrayLabel, resolveHomeAvailability, resolveTrayPresentation } from "../js/meal-display.js";
+
+test("식판 메뉴명은 단어를 쪼개지 않고 복합 메뉴 구분자에서만 줄바꿈한다", () => {
+  assert.equal(formatTrayLabel("계란후라이"), "계란후라이");
+  assert.equal(formatTrayLabel("김말이&만두튀김"), "김말이&amp;<wbr>만두튀김");
+  assert.equal(formatTrayLabel("소세지/두부부침"), "소세지/<wbr>두부부침");
+});
 
 test("김치와 장류도 별도 작은 칸 없이 일반 반찬 순서로 배치한다", () => {
   const arranged = arrangeTray(["백미밥", "콩나물국", "돈육김치볶음", "깍두기", "쌈장"]);

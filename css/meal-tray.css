@@ -103,8 +103,9 @@
   -webkit-line-clamp: unset;
   font-size: clamp(10px, 3vw, 16px);
   line-height: 1.25;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
   word-break: keep-all;
+  hyphens: none;
 }
 
 .meal-tray--text-only .tray-slot--small span,
