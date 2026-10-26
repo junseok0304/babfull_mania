@@ -27,6 +27,30 @@
   border-radius: 22px;
 }
 
+.mypage-title span {
+  display: inline-block;
+  margin-left: 8px;
+  color: var(--secondary);
+  font-size: clamp(14px, 1.3vw, 18px);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  vertical-align: middle;
+}
+
+.login-card p.login-card__development-notice {
+  width: min(100%, 430px);
+  max-width: none;
+  margin: 0 0 18px;
+  padding: 11px 14px;
+  border: 1px solid #f2c8b9;
+  border-radius: 12px;
+  background: #fff5f1;
+  color: #8d3d28;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
 .login-card h2 {
   margin-bottom: 8px;
   font-size: 22px;
