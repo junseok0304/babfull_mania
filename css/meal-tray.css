@@ -60,7 +60,7 @@
   padding: 2px;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  font-size: clamp(7px, 2.4vw, 12px);
+  font-size: clamp(8px, 2.7vw, 14px);
   font-weight: 800;
   line-height: 1.2;
   overflow-wrap: break-word;
@@ -101,7 +101,7 @@
   overflow: visible;
   -webkit-box-orient: initial;
   -webkit-line-clamp: unset;
-  font-size: clamp(8px, 2.5vw, 13px);
+  font-size: clamp(10px, 3vw, 16px);
   line-height: 1.25;
   overflow-wrap: anywhere;
   word-break: keep-all;
@@ -109,7 +109,7 @@
 
 .meal-tray--text-only .tray-slot--small span,
 .meal-tray--text-only .tray-slot--side-5 span {
-  font-size: clamp(7px, 1.7vw, 11px);
+  font-size: clamp(9px, 2.1vw, 14px);
 }
 
 .tray-slot--side-1 { left: 8.1%; top: 8.5%; width: 15.8%; height: 33.3%; border-radius: 13% / 10%; }
@@ -131,6 +131,13 @@
 .tray-slot--side-2-bottom span {
   -webkit-line-clamp: 1;
   font-size: clamp(6px, 1.9vw, 10px);
+}
+
+.meal-tray--text-only .tray-slot--side-1-top span,
+.meal-tray--text-only .tray-slot--side-1-bottom span,
+.meal-tray--text-only .tray-slot--side-2-top span,
+.meal-tray--text-only .tray-slot--side-2-bottom span {
+  font-size: clamp(8px, 2.3vw, 12px);
 }
 
 .tray-slot--side-1-top.has-image span,
