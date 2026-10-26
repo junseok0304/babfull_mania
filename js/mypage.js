@@ -26,7 +26,7 @@ const escapeHtml = (value) => String(value ?? "")
 
 const loginTemplate = (available) => `<div class="login-card">
   <img class="login-card__logo" src="asset/밥풀매니아_로고.png" alt="" />
-  <p class="login-card__development-notice">정기권은 현재 개발 중인 기능으로 실제 이용 정보와 일치하지 않을 수 있습니다.</p>
+  <p class="login-card__development-notice">정기권은 현재 개발 중인 기능으로<br />실제 이용 정보와 일치하지 않을 수 있습니다.</p>
   <h2>내 식권을 확인하세요</h2>
   <p>카카오 계정으로 로그인하면 개인 QR 식권과 이번 달 이용 내역을 확인할 수 있어요.</p>
   <button class="kakao-button" id="kakao-login" type="button" ${available ? "" : "disabled"}>카카오로 시작하기</button>

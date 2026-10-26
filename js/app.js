@@ -1,7 +1,7 @@
 import { renderHomeMeals, scheduleMealRefresh } from "./meal-display.js?v=20261026-4";
 import { initPublicViews } from "./public-views.js?v=20261023-1";
 import { initializeData } from "./data-service.js";
-import { renderMyPage } from "./mypage.js?v=20261026-1";
+import { renderMyPage } from "./mypage.js?v=20261026-2";
 
 const validRoutes = new Set(["home", "weekly", "calendar", "search", "mypage"]);
 const malformedOAuthPrefix = "#mypage#access_token=";
