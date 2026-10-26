@@ -55,7 +55,7 @@ const dashboardTemplate = ({ profile, usages }, isDemo) => {
     <div class="mypage-grid">
       <section class="ticket-card">
         <h2>개인 QR 식권</h2>
-        <p class="card-description">관리자에게 이 화면의 QR을 보여주세요.</p>
+        <p class="card-description">QR 스캐너에 화면의 QR을 인식해 사용합니다.</p>
         <div class="qr-frame" id="qr-code"><div class="qr-fallback">QR을 만들고 있어요.</div></div>
         <p class="qr-warning">QR은 캡쳐하여 사용해도 무방합니다.<br />단, 본인 이외의 사용은 금지합니다.</p>
       </section>

@@ -10,12 +10,12 @@
     />
     <title>밥풀매니아</title>
     <link rel="stylesheet" href="css/global.css?v=20261023-3" />
-    <link rel="stylesheet" href="css/components.css?v=20261023-1" />
+    <link rel="stylesheet" href="css/components.css?v=20261026-1" />
     <link rel="stylesheet" href="css/home.css?v=20261023-3" />
     <link rel="stylesheet" href="css/meal-tray.css?v=20261026-4" />
-    <link rel="stylesheet" href="css/public-views.css?v=20261023-4" />
+    <link rel="stylesheet" href="css/public-views.css?v=20261026-1" />
     <link rel="stylesheet" href="css/mypage.css?v=20261026-1" />
-    <script type="module" src="js/app.js?v=20261026-4"></script>
+    <script type="module" src="js/app.js?v=20261026-5"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문 바로가기</a>
@@ -40,6 +40,7 @@
         <a href="#calendar" data-route="calendar">월간 메뉴</a>
         <a href="#search" data-route="search">메뉴 검색</a>
         <a href="#mypage" data-route="mypage">마이페이지</a>
+        <a class="developer-nav-link" href="#developer" data-route="developer">개발자 정보 보러가기</a>
       </nav>
 
       <nav class="mobile-menu" id="mobile-menu" aria-label="전체 메뉴" hidden>
@@ -48,6 +49,7 @@
         <a href="#calendar" data-route="calendar">월간 메뉴</a>
         <a href="#search" data-route="search">메뉴 검색</a>
         <a href="#mypage" data-route="mypage">마이페이지</a>
+        <a href="#developer" data-route="developer">개발자 정보</a>
       </nav>
 
       <main id="main-content" tabindex="-1">
@@ -152,6 +154,40 @@
           <div id="mypage-content" aria-live="polite">
             <div class="mypage-loading">로그인 상태를 확인하고 있어요.</div>
           </div>
+        </section>
+
+        <section class="page-view" id="developer-view" data-view="developer" aria-labelledby="developer-title">
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">서비스 소개</p>
+              <h1 id="developer-title">개발자 정보</h1>
+            </div>
+          </div>
+          <article class="developer-card">
+            <div class="developer-card__profile">
+              <span class="developer-card__label">개발자</span>
+              <h2>윤준석</h2>
+              <p>성공회대학교 소프트웨어융합학부 재학생</p>
+            </div>
+            <dl class="developer-details">
+              <div>
+                <dt>서비스 문의 및 비즈니스 연락처</dt>
+                <dd><a href="mailto:devjunseok0304@gmail.com">devjunseok0304@gmail.com</a></dd>
+              </div>
+              <div>
+                <dt>제작 배경</dt>
+                <dd>본 서비스는 AI활용프로그래밍 수업의 산출물 일환으로 제작되었습니다.</dd>
+              </div>
+              <div>
+                <dt>서비스 운영 안내</dt>
+                <dd>사전 예고 없이 서비스가 종료될 수 있습니다.</dd>
+              </div>
+              <div>
+                <dt>식단 정보 출처</dt>
+                <dd>학식당 식단 원천 정보는 학생 제보형 서비스인 영준.com을 활용합니다.</dd>
+              </div>
+            </dl>
+          </article>
         </section>
       </main>
 

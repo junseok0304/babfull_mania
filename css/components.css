@@ -186,6 +186,21 @@
     color: var(--primary-dark);
   }
 
+  .desktop-nav .developer-nav-link {
+    margin: 2px 14px 0;
+    padding: 9px 0 2px;
+    border-radius: 0;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--primary) 55%, transparent);
+    text-underline-offset: 5px;
+  }
+
+  .desktop-nav .developer-nav-link:hover,
+  .desktop-nav .developer-nav-link.is-active {
+    background: transparent;
+    color: var(--primary-dark);
+  }
+
   .mobile-nav {
     display: none;
   }
