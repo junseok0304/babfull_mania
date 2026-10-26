@@ -98,12 +98,20 @@ export const arrangeTray = (items) => {
     return order[a.category] - order[b.category];
   });
 
-  if (remaining.length <= 4) {
-    remaining.forEach((item, index) => result.push({ name: item.name, slot: `side-${index + 1}` }));
+  if (remaining.length <= 6) {
+    const wideSlots = ["side-1", "side-2", "side-3", "side-4"];
+    const narrowCount = Math.max(0, remaining.length - wideSlots.length);
+    const narrowItems = [...remaining]
+      .sort((a, b) => [...a.name].length - [...b.name].length)
+      .slice(0, narrowCount);
+    const wideItems = remaining.filter((item) => !narrowItems.includes(item));
+    wideItems.forEach((item, index) => result.push({ name: item.name, slot: wideSlots[index] }));
+    const narrowSlots = narrowCount === 1 ? ["side-5"] : ["small", "side-5"];
+    narrowItems.forEach((item, index) => result.push({ name: item.name, slot: narrowSlots[index] }));
     return result;
   }
 
-  const slots = ["side-1-top", "side-1-bottom", "side-2-top", "side-2-bottom", "side-3", "side-4"];
+  const slots = ["side-1-top", "side-1-bottom", "side-2-top", "side-2-bottom", "side-3", "side-4", "small", "side-5"];
   remaining.slice(0, slots.length).forEach((item, index) => result.push({ name: item.name, slot: slots[index] }));
   return result;
 };

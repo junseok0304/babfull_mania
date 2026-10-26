@@ -97,8 +97,19 @@
 }
 
 .meal-tray--text-only .tray-slot span {
+  display: block;
+  overflow: visible;
+  -webkit-box-orient: initial;
+  -webkit-line-clamp: unset;
   font-size: clamp(8px, 2.5vw, 13px);
   line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.meal-tray--text-only .tray-slot--small span,
+.meal-tray--text-only .tray-slot--side-5 span {
+  font-size: clamp(7px, 1.7vw, 11px);
 }
 
 .tray-slot--side-1 { left: 8.1%; top: 8.5%; width: 15.8%; height: 33.3%; border-radius: 13% / 10%; }
@@ -110,6 +121,7 @@
 .tray-slot--side-3 { left: 44.2%; top: 8.5%; width: 14.8%; height: 33.3%; border-radius: 13% / 10%; }
 .tray-slot--side-4 { left: 61.7%; top: 8.5%; width: 15.8%; height: 33.3%; border-radius: 13% / 10%; }
 .tray-slot--small { left: 80.1%; top: 8.5%; width: 12.5%; height: 22.5%; border-radius: 15% / 13%; }
+.tray-slot--side-5 { left: 80.1%; top: 33%; width: 12.5%; height: 56%; border-radius: 15% / 7%; }
 .tray-slot--rice { left: 8.9%; top: 49%; width: 35.4%; height: 40.1%; border-radius: 7% / 8%; }
 .tray-slot--soup { left: 49.1%; top: 49.5%; width: 28.6%; height: 40.8%; border-radius: 50%; }
 

@@ -16,7 +16,7 @@ test("김치와 장류도 별도 작은 칸 없이 일반 반찬 순서로 배�
   assert.equal(arranged.some(({ slot }) => slot === "small"), false);
 });
 
-test("반찬이 많은 식단은 큰 반찬 칸을 위아래로 나누어 모두 표시한다", () => {
+test("반찬 다섯 개는 남는 우측 세로 칸까지 사용해 넓게 배치한다", () => {
   const arranged = arrangeTray([
     "흑미밥",
     "미역국",
@@ -30,11 +30,18 @@ test("반찬이 많은 식단은 큰 반찬 칸을 위아래로 나누어 모두
   assert.deepEqual(arranged.map(({ slot }) => slot), [
     "rice",
     "soup",
-    "side-1-top",
-    "side-1-bottom",
-    "side-2-top",
-    "side-2-bottom",
+    "side-1",
+    "side-2",
     "side-3",
+    "side-4",
+    "side-5",
+  ]);
+});
+
+test("남는 칸보다 반찬이 많을 때만 큰 반찬 칸을 분할한다", () => {
+  const arranged = arrangeTray(["백미밥", "미역국", "제육볶음", "감자조림", "콩나물무침", "배추김치", "샐러드", "잡채", "과일"]);
+  assert.deepEqual(arranged.map(({ slot }) => slot), [
+    "rice", "soup", "side-1-top", "side-1-bottom", "side-2-top", "side-2-bottom", "side-3", "side-4", "small",
   ]);
 });
 
