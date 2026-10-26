@@ -122,6 +122,11 @@ export const resolveHomeAvailability = (dateMeals, selectedDate) => {
   };
 };
 
+export const resolveTrayPresentation = (displayMode, trayImage) => {
+  if (displayMode !== "ai") return "menu-images";
+  return trayImage?.imageUrl ? "generated" : "menu-text";
+};
+
 const escapeHtml = (value) => String(value)
   .replaceAll("&", "&amp;")
   .replaceAll("<", "&lt;")
@@ -139,10 +144,10 @@ const cropStyle = (image) => {
   return `--food-zoom:${zoom};--food-shift-x:${shiftX}%;--food-shift-y:${shiftY}%`;
 };
 
-const trayTemplate = (meal) => {
+const trayTemplate = (meal, { textOnly = false } = {}) => {
   const slots = arrangeTray(meal.items)
     .map(({ name, slot }) => {
-      const image = getFoodImage(name);
+      const image = textOnly ? null : getFoodImage(name);
       const sourceUrl = image?.documentUrl || image?.imageUrl || image?.fallbackUrl;
       const imageElement = image ? `<img src="${escapeHtml(image.imageUrl || image.fallbackUrl)}"
         data-fallback-src="${escapeHtml(image.fallbackUrl || "")}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
@@ -155,13 +160,13 @@ const trayTemplate = (meal) => {
       </div>`;
     })
     .join("");
-  return `<div class="meal-tray" aria-label="${labels[meal.type]} 메뉴 참고 식판">${slots}</div>
+  return `<div class="meal-tray${textOnly ? " meal-tray--text-only" : ""}" aria-label="${labels[meal.type]} 메뉴 참고 식판">${slots}</div>
     <p class="tray-caption">메뉴별 음식 사진은 실제 제공 모습과 다를 수 있어요.</p>`;
 };
 
 const generatedTrayTemplate = (meal) => {
   const imageUrl = meal.trayImage?.imageUrl;
-  if (!imageUrl) return `<div class="generated-tray-empty" role="status"><span aria-hidden="true">▦</span><strong>AI 식판 이미지 준비 중</strong><p>이 식사의 완성 식판 이미지는 아직 등록되지 않았어요.</p></div>`;
+  if (!imageUrl) return trayTemplate(meal, { textOnly: true });
   const alt = meal.trayImage.altText || `${meal.date} ${labels[meal.type]} 완성 식판 이미지`;
   return `<figure class="generated-tray">
     <a href="${escapeHtml(imageUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(alt)} 원본 보기">
@@ -190,6 +195,10 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
   const calorie = nutrition.totalCalories
     ? `<span class="calorie-badge" title="식약처 식품영양성분 DB와 메뉴 유형별 표준 배식량을 기준으로 계산한 예상치">약 ${Math.round(nutrition.totalCalories).toLocaleString("ko-KR")} kcal</span>`
     : "";
+  const trayPresentation = resolveTrayPresentation(appSettings.trayDisplayMode, meal.trayImage);
+  const trayContent = trayPresentation === "generated"
+    ? generatedTrayTemplate(meal)
+    : trayTemplate(meal, { textOnly: trayPresentation === "menu-text" });
 
   return `<article class="meal-card meal-card--${meal.type}${isOpen ? " is-open" : ""}${isCurrent ? " is-current" : ""}" data-meal-id="${meal.id}">
     <button class="meal-card__toggle" type="button" aria-expanded="${isOpen}" aria-controls="body-${meal.id}">
@@ -205,7 +214,7 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
     </button>
     <div class="meal-card__body" id="body-${meal.id}">
       <div class="meal-card__body-inner">
-        <div>${appSettings.trayDisplayMode === "ai" ? generatedTrayTemplate(meal) : trayTemplate(meal)}</div>
+        <div>${trayContent}</div>
         <div class="meal-card__details">
           <h3 class="menu-heading">메뉴</h3>
           <ul class="menu-list">${menuItems}</ul>

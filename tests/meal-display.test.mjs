@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { arrangeTray, resolveHomeAvailability } from "../js/meal-display.js";
+import { arrangeTray, resolveHomeAvailability, resolveTrayPresentation } from "../js/meal-display.js";
 
 test("김치와 장류도 별도 작은 칸 없이 일반 반찬 순서로 배치한다", () => {
   const arranged = arrangeTray(["백미밥", "콩나물국", "돈육김치볶음", "깍두기", "쌈장"]);
@@ -61,4 +61,11 @@ test("조식이 없어도 중식 메뉴가 있으면 제공 상태를 유지한�
 
   assert.equal(result.state, "available");
   assert.deepEqual(result.visibleMeals, [lunch]);
+});
+
+test("AI 모드라도 완성 식판 이미지가 없으면 메뉴명 식판으로 대체한다", () => {
+  assert.equal(resolveTrayPresentation("ai", null), "menu-text");
+  assert.equal(resolveTrayPresentation("ai", {}), "menu-text");
+  assert.equal(resolveTrayPresentation("ai", { imageUrl: "https://example.com/tray.webp" }), "generated");
+  assert.equal(resolveTrayPresentation("search", { imageUrl: "https://example.com/tray.webp" }), "menu-images");
 });

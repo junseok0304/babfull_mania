@@ -88,6 +88,19 @@
   pointer-events: none;
 }
 
+.meal-tray--text-only .tray-slot {
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: #18181b;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+.meal-tray--text-only .tray-slot span {
+  font-size: clamp(8px, 2.5vw, 13px);
+  line-height: 1.25;
+}
+
 .tray-slot--side-1 { left: 8.1%; top: 8.5%; width: 15.8%; height: 33.3%; border-radius: 13% / 10%; }
 .tray-slot--side-2 { left: 28.4%; top: 8.5%; width: 14.8%; height: 33.3%; border-radius: 13% / 10%; }
 .tray-slot--side-1-top { left: 8.1%; top: 8.5%; width: 15.8%; height: 15.9%; border-radius: 13% / 16%; }
