@@ -2,8 +2,9 @@ import { renderHomeMeals, scheduleMealRefresh } from "./meal-display.js?v=202610
 import { initPublicViews } from "./public-views.js?v=20261023-1";
 import { initializeData } from "./data-service.js";
 import { renderMyPage } from "./mypage.js?v=20261026-3";
+import { initAnalytics, trackPageView } from "./analytics.js?v=20261026-1";
 
-const validRoutes = new Set(["home", "weekly", "calendar", "search", "mypage", "developer"]);
+const validRoutes = new Set(["home", "weekly", "calendar", "search", "mypage", "developer", "terms", "privacy"]);
 const malformedOAuthPrefix = "#mypage#access_token=";
 
 if (window.location.hash.startsWith(malformedOAuthPrefix)) {
@@ -36,6 +37,7 @@ const setRoute = (route) => {
   const mobileMenu = document.querySelector("#mobile-menu");
   mobileMenu.hidden = true;
   document.querySelector("#menu-button").setAttribute("aria-expanded", "false");
+  trackPageView(safeRoute);
 };
 
 const routeFromHash = () => window.location.hash.replace("#", "") || "home";
@@ -47,6 +49,7 @@ document.querySelector("#menu-button").addEventListener("click", () => {
   menu.hidden = !willOpen;
   document.querySelector("#menu-button").setAttribute("aria-expanded", String(willOpen));
 });
+initAnalytics();
 window.addEventListener("hashchange", () => setRoute(routeFromHash()));
 setRoute(routeFromHash());
 const loadStartedAt = Date.now();
