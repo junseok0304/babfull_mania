@@ -60,3 +60,11 @@ export const buildDashboardSummary = (raw = {}) => {
     })) : [],
   };
 };
+
+export const normalizeKakaoShareStats = (rows = []) => rows.map((row) => ({
+  userId: String(row.user_id ?? ""),
+  name: String(row.user_name || "이름 미등록"),
+  affiliation: String(row.affiliation || "소속 미등록"),
+  count: Number(row.share_count || 0),
+  lastSharedAt: row.last_shared_at || null,
+}));

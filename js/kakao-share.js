@@ -32,7 +32,12 @@ export const sendMealToKakaoSelf = async (meal) => {
     }
     throw new Error(payload.error || "카카오톡 메시지를 보내지 못했습니다.");
   }
-  return payload;
+  const { error: trackingError } = await client.rpc("record_kakao_share", {
+    target_meal_date: meal.date,
+    target_meal_type: meal.type,
+  });
+  if (trackingError) console.warn("카카오 공유 횟수를 기록하지 못했습니다.", trackingError.message);
+  return { ...payload, tracked: !trackingError };
 };
 
 export const reconnectKakaoForMessage = () => {

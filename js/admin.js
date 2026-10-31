@@ -1,6 +1,6 @@
 import { formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
 import { getSupabaseClient } from "./supabase-client.js";
-import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState, shouldShowClosureReason } from "./admin-utils.js?v=20261023-2";
+import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState, normalizeKakaoShareStats, shouldShowClosureReason } from "./admin-utils.js?v=20261031-1";
 
 const titles = { dashboard: "대시보드", meals: "식단 관리", scanner: "QR 스캐너", users: "사용자 관리", usages: "이용 내역", settings: "운영 설정" };
 let adminMode = "demo";
@@ -27,6 +27,7 @@ const foodImageSearchPages = new Map();
 const demoUsages = [];
 const demoQrToken = "00000000-0000-4000-8000-000000000001";
 let dashboardStats = buildDashboardSummary();
+let dashboardKakaoShares = [];
 
 const escapeHtml = (value) => String(value ?? "")
   .replaceAll("&", "&amp;")
@@ -107,6 +108,17 @@ const renderStats = () => {
   const target = document.querySelector("#dashboard-affiliations");
   const max = Math.max(1, ...dashboardStats.affiliations.map((item) => item.count));
   target.innerHTML = dashboardStats.affiliations.length ? dashboardStats.affiliations.map((item) => `<div class="affiliation-stat"><div><span>${escapeHtml(item.affiliation)}</span><strong>${item.count.toLocaleString("ko-KR")}명</strong></div><div><span style="width:${Math.round((item.count / max) * 100)}%"></span></div></div>`).join("") : '<p class="dashboard-empty">이번 달 이용 기록이 없습니다.</p>';
+
+  const shareTarget = document.querySelector("#dashboard-kakao-shares");
+  const shareTotal = dashboardKakaoShares.reduce((sum, item) => sum + item.count, 0);
+  shareTarget.innerHTML = dashboardKakaoShares.length
+    ? `<p class="dashboard-share-total">전체 <strong>${shareTotal.toLocaleString("ko-KR")}회</strong></p><div class="dashboard-share-list">${dashboardKakaoShares.map((item) => {
+      const lastShared = item.lastSharedAt
+        ? new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(item.lastSharedAt))
+        : "기록 없음";
+      return `<div class="dashboard-share-row"><div><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.affiliation)} · 최근 ${escapeHtml(lastShared)}</span></div><b>${item.count.toLocaleString("ko-KR")}회</b></div>`;
+    }).join("")}</div>`
+    : '<p class="dashboard-empty">이번 달 카카오 공유 기록이 없습니다.</p>';
 };
 
 const loadDashboardStats = async () => {
@@ -114,12 +126,18 @@ const loadDashboardStats = async () => {
     const today = formatDateKey(getSeoulDate());
     const active = demoUsages.filter((usage) => usage.status === "active");
     dashboardStats = buildDashboardSummary({ today_usage_count: active.filter((usage) => usage.date === today).length, month_usage_count: active.length, month_revenue: active.reduce((sum, usage) => sum + usage.price, 0), breakfast_count: active.filter((usage) => usage.type === "breakfast").length, lunch_count: active.filter((usage) => usage.type === "lunch").length });
+    dashboardKakaoShares = [];
     return;
   }
   const month = `${formatDateKey(getSeoulDate()).slice(0, 7)}-01`;
-  const { data, error } = await client.rpc("admin_dashboard_stats", { target_month: month });
-  if (error) throw error;
-  dashboardStats = buildDashboardSummary(data);
+  const [usageResult, shareResult] = await Promise.all([
+    client.rpc("admin_dashboard_stats", { target_month: month }),
+    client.rpc("admin_kakao_share_stats", { target_month: month }),
+  ]);
+  if (usageResult.error) throw usageResult.error;
+  if (shareResult.error) throw shareResult.error;
+  dashboardStats = buildDashboardSummary(usageResult.data);
+  dashboardKakaoShares = normalizeKakaoShareStats(shareResult.data);
 };
 
 const refreshDashboard = async () => {

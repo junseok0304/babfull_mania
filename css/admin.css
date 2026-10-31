@@ -1517,6 +1517,15 @@
 .affiliation-stat + .affiliation-stat { margin-top: 13px; }
 .affiliation-stat > div:last-child { height: 8px; margin-top: 6px; background: #eee8e4; }
 @media (min-width: 800px) { .dashboard-insights { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.dashboard-share-insight { grid-column: 1 / -1; }
+.dashboard-share-total { margin: 0 0 12px; color: var(--secondary); font-size: 13px; }
+.dashboard-share-total strong { color: var(--text); }
+.dashboard-share-list { display: grid; gap: 8px; }
+.dashboard-share-row { display: flex; min-width: 0; padding: 11px 12px; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid #eee8e4; border-radius: 12px; background: #fcfaf8; }
+.dashboard-share-row > div { display: grid; min-width: 0; gap: 3px; }
+.dashboard-share-row strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.dashboard-share-row span { overflow: hidden; color: var(--secondary); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.dashboard-share-row b { flex: none; color: var(--primary-dark); font-size: 16px; }
 
 .user-admin-message {
   min-height: 14px;

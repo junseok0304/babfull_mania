@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildDashboardSummary, getAutomaticMealType, getManualMealState, shouldShowClosureReason } from "../js/admin-utils.js";
+import { buildDashboardSummary, getAutomaticMealType, getManualMealState, normalizeKakaoShareStats, shouldShowClosureReason } from "../js/admin-utils.js";
 
 const settings = {
   breakfastStart: "08:00",
@@ -55,4 +55,12 @@ test("이용 기록이 없을 때 대시보드 비율은 0으로 안전하게 �
   assert.equal(summary.breakfastPercent, 0);
   assert.equal(summary.lunchPercent, 0);
   assert.deepEqual(summary.affiliations, []);
+});
+
+test("사용자별 카카오 공유 집계값을 관리자 표시 형식으로 변환한다", () => {
+  assert.deepEqual(normalizeKakaoShareStats([{
+    user_id: "user-1", user_name: "윤준석", affiliation: "소프트웨어융합학부", share_count: "3", last_shared_at: "2026-10-31T12:00:00Z",
+  }]), [{
+    userId: "user-1", name: "윤준석", affiliation: "소프트웨어융합학부", count: 3, lastSharedAt: "2026-10-31T12:00:00Z",
+  }]);
 });
