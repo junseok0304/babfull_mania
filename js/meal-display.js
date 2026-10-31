@@ -292,7 +292,7 @@ const bindCardToggles = (meals) => {
           }
           return;
         }
-        button.textContent = "전송 실패";
+        button.textContent = "다시 시도";
         button.title = error.message || "전송하지 못했습니다. 잠시 후 다시 시도해 주세요.";
         window.setTimeout(() => {
           button.disabled = false;
