@@ -16,6 +16,11 @@ const SAMPLE_MENUS = [
   "마카로니샐러드",
 ] as const;
 
+const SAMPLE_DATE = {
+  month: "10",
+  day: "30",
+} as const;
+
 function printHeader(): void {
   console.log(`
 =================================
@@ -44,10 +49,9 @@ export async function runCli(): Promise<void> {
     if (choice !== "1") throw new Error("지원하지 않는 메뉴 번호입니다.");
 
     const config = getKakaoConfig();
-    const now = new Date();
     const templateArgs = {
-      month: String(now.getMonth() + 1),
-      day: String(now.getDate()),
+      month: SAMPLE_DATE.month,
+      day: SAMPLE_DATE.day,
       menuText: formatMenuText(SAMPLE_MENUS),
     };
 
