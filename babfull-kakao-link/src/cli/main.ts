@@ -21,6 +21,9 @@ const SAMPLE_DATE = {
   day: "30",
 } as const;
 
+const SAMPLE_IMAGE_URL =
+  "https://uupatosmuueifsssdkev.supabase.co/storage/v1/object/public/meal-tray-images/2026-10-30/lunch-127-1792979390136-pqlkue.png";
+
 function printHeader(): void {
   console.log(`
 =================================
@@ -53,6 +56,7 @@ export async function runCli(): Promise<void> {
       month: SAMPLE_DATE.month,
       day: SAMPLE_DATE.day,
       menuText: formatMenuText(SAMPLE_MENUS),
+      image: SAMPLE_IMAGE_URL,
     };
 
     console.log(`

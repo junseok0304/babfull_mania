@@ -2,6 +2,7 @@ export interface MenuTemplateArgs {
   month: string;
   day: string;
   menuText: string;
+  image: string;
 }
 
 export interface MemoSendRequest {
