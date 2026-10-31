@@ -1,4 +1,4 @@
-import { getAuthState, getKakaoProviderToken, signInWithKakao } from "./auth.js";
+import { clearKakaoProviderToken, getAuthState, getKakaoProviderToken, signInWithKakao } from "./auth.js?v=20261031-4";
 import { buildKakaoTemplateArgs } from "./kakao-message.js?v=20261031-3";
 
 const TEMPLATE_ID = 138483;
@@ -35,7 +35,10 @@ export const sendMealToKakaoSelf = async (meal) => {
   return payload;
 };
 
-export const reconnectKakaoForMessage = () => signInWithKakao({
-  returnRoute: "home",
-  scopes: "talk_message",
-});
+export const reconnectKakaoForMessage = () => {
+  clearKakaoProviderToken();
+  return signInWithKakao({
+    returnRoute: "home",
+    scopes: "talk_message",
+  });
+};

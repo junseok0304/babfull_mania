@@ -2,7 +2,7 @@ import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
 import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
-import { KakaoShareAuthError, reconnectKakaoForMessage, sendMealToKakaoSelf } from "./kakao-share.js?v=20261031-3";
+import { KakaoShareAuthError, reconnectKakaoForMessage, sendMealToKakaoSelf } from "./kakao-share.js?v=20261031-4";
 
 const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "☀️", lunch: "🍚" };
@@ -282,7 +282,14 @@ const bindCardToggles = (meals) => {
         }, 5000);
       } catch (error) {
         if (error instanceof KakaoShareAuthError) {
-          await reconnectKakaoForMessage();
+          button.textContent = "로그인 페이지로 이동 중…";
+          try {
+            await reconnectKakaoForMessage();
+          } catch (loginError) {
+            button.disabled = false;
+            button.textContent = "다시 로그인";
+            button.title = loginError.message || "카카오 로그인을 다시 시도해 주세요.";
+          }
           return;
         }
         button.textContent = "전송 실패";

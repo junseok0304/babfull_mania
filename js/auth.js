@@ -13,6 +13,10 @@ export const getKakaoProviderToken = (session) => {
   return session?.provider_token || sessionStorage.getItem(KAKAO_PROVIDER_TOKEN_KEY);
 };
 
+export const clearKakaoProviderToken = () => {
+  sessionStorage.removeItem(KAKAO_PROVIDER_TOKEN_KEY);
+};
+
 export const getAuthState = async () => {
   const client = await getSupabaseClient();
   if (!client) return { available: false, session: null, client: null };

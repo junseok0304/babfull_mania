@@ -62,3 +62,16 @@ test("카카오 제공자 토큰이 없으면 재인증 응답을 반환한다",
   assert.equal(response.statusCode, 401);
   assert.equal(response.body.reauthRequired, true);
 });
+
+test("카카오 메시지 동의가 없으면 재로그인 응답을 반환한다", async () => {
+  const originalFetch = global.fetch;
+  global.fetch = async () => new Response(JSON.stringify({ code: -402, msg: "insufficient scopes" }), { status: 403 });
+  try {
+    const response = createResponse();
+    await handler(validRequest(), response);
+    assert.equal(response.statusCode, 401);
+    assert.equal(response.body.reauthRequired, true);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
