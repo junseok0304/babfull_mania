@@ -4,7 +4,7 @@ import { getAccessToken } from "../auth/kakaoAuth.js";
 import { getKakaoConfig } from "../config/env.js";
 import { inspectRoomCapability } from "../rooms/roomService.js";
 import { sendMemoToSelf } from "../senders/memoSender.js";
-import { formatMenuText } from "../templates/menuFormatter.js";
+import { formatMenuTemplateVariables } from "../templates/menuFormatter.js";
 
 const SAMPLE_MENUS = [
   "백미밥",
@@ -52,11 +52,13 @@ export async function runCli(): Promise<void> {
     if (choice !== "1") throw new Error("지원하지 않는 메뉴 번호입니다.");
 
     const config = getKakaoConfig();
+    const menuVariables = formatMenuTemplateVariables(SAMPLE_MENUS);
     const templateArgs = {
       time: "중식",
       month: SAMPLE_DATE.month,
       day: SAMPLE_DATE.day,
-      menuText: formatMenuText(SAMPLE_MENUS),
+      menuText2: menuVariables.menuText2,
+      menuText: menuVariables.menuText,
       image: SAMPLE_IMAGE_URL,
     };
 
@@ -66,6 +68,7 @@ export async function runCli(): Promise<void> {
 템플릿 ID: ${config.templateId}
 월/일: ${templateArgs.month}월 ${templateArgs.day}일
 메뉴:
+${templateArgs.menuText2}
 ${templateArgs.menuText}
 `);
     const confirmed = (await cli.question("전송하시겠습니까? (y/n) > ")).trim().toLowerCase();

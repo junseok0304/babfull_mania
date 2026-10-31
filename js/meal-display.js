@@ -2,7 +2,7 @@ import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
 import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
-import { KakaoShareAuthError, reconnectKakaoForMessage, sendMealToKakaoSelf } from "./kakao-share.js?v=20261031-2";
+import { KakaoShareAuthError, reconnectKakaoForMessage, sendMealToKakaoSelf } from "./kakao-share.js?v=20261031-3";
 
 const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "☀️", lunch: "🍚" };

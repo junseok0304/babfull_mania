@@ -19,7 +19,8 @@ const validRequest = () => ({
     templateId: 138483,
     templateArgs: {
       time: "조식",
-      menuText: "백미밥, 미역국",
+      menuText2: "백미밥",
+      menuText: "미역국",
       day: "30",
       image: "https://uupatosmuueifsssdkev.supabase.co/storage/v1/object/public/meal-tray-images/sample.png",
       month: "10",
@@ -27,7 +28,7 @@ const validRequest = () => ({
   },
 });
 
-test("검증된 다섯 인자를 카카오 나에게 보내기 API로 전달한다", async () => {
+test("검증된 여섯 인자를 카카오 나에게 보내기 API로 전달한다", async () => {
   const originalFetch = global.fetch;
   let sentForm;
   global.fetch = async (_url, options) => {

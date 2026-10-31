@@ -28,18 +28,21 @@ export const formatKakaoMenuText = (items) => {
   return lines.join("\n");
 };
 
-export const formatKakaoCardMenuText = (items, maxLength = 18) => {
+export const formatKakaoMenuVariables = (items) => {
   const menus = normalizeMenus(items);
   if (!menus.length) throw new Error("공유할 메뉴가 없습니다.");
+  if (menus.length === 1) return { menuText2: menus[0], menuText: "" };
 
-  for (let visibleCount = menus.length; visibleCount >= 1; visibleCount -= 1) {
-    const remainingCount = menus.length - visibleCount;
-    const suffix = remainingCount ? ` 외 ${remainingCount}개` : "";
-    const candidate = `${menus.slice(0, visibleCount).join(", ")}${suffix}`;
-    if (graphemeLength(candidate) <= maxLength) return candidate;
+  let best = null;
+  for (let split = 1; split < menus.length; split += 1) {
+    const menuText2 = menus.slice(0, split).join("·");
+    const menuText = menus.slice(split).join("·");
+    const firstLength = graphemeLength(menuText2);
+    const secondLength = graphemeLength(menuText);
+    const score = Math.max(firstLength, secondLength) * 100 + Math.abs(firstLength - secondLength);
+    if (!best || score < best.score) best = { menuText2, menuText, score };
   }
-
-  return `전체 메뉴 ${menus.length}개`;
+  return { menuText2: best.menuText2, menuText: best.menuText };
 };
 
 export const buildKakaoTemplateArgs = (meal) => {
@@ -53,9 +56,11 @@ export const buildKakaoTemplateArgs = (meal) => {
   const [, month, day] = String(meal.date).match(/^\d{4}-(\d{2})-(\d{2})$/) || [];
   if (!month || !day) throw new Error("식단 날짜 형식이 올바르지 않습니다.");
 
+  const menuVariables = formatKakaoMenuVariables(meal.items);
   return {
     time: meal.type === "breakfast" ? "조식" : "중식",
-    menuText: formatKakaoCardMenuText(meal.items),
+    menuText2: menuVariables.menuText2,
+    menuText: menuVariables.menuText,
     day: String(Number(day)),
     image,
     month: String(Number(month)),

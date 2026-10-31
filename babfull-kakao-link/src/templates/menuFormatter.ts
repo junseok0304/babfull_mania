@@ -50,4 +50,26 @@ export function formatMenuText(
   return lines.join("\n");
 }
 
+export function formatMenuTemplateVariables(menuItems: readonly string[]): {
+  menuText2: string;
+  menuText: string;
+} {
+  const menus = menuItems
+    .map((item) => item.trim().replace(/\s+/gu, " "))
+    .filter(Boolean);
+  if (menus.length === 0) throw new MenuFormatError("메뉴 데이터가 없습니다.");
+  if (menus.length === 1) return { menuText2: menus[0]!, menuText: "" };
+
+  let best: { menuText2: string; menuText: string; score: number } | null = null;
+  for (let split = 1; split < menus.length; split += 1) {
+    const menuText2 = menus.slice(0, split).join("·");
+    const menuText = menus.slice(split).join("·");
+    const firstLength = charLength(menuText2);
+    const secondLength = charLength(menuText);
+    const score = Math.max(firstLength, secondLength) * 100 + Math.abs(firstLength - secondLength);
+    if (!best || score < best.score) best = { menuText2, menuText, score };
+  }
+  return { menuText2: best!.menuText2, menuText: best!.menuText };
+}
+
 export { MAX_MENU_LINE_LENGTH };

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { charLength, formatMenuText, MenuFormatError } from "../src/templates/menuFormatter.js";
+import { charLength, formatMenuTemplateVariables, formatMenuText, MenuFormatError } from "../src/templates/menuFormatter.js";
 
 describe("formatMenuText", () => {
   it("정확히 24글자인 한 줄을 유지한다", () => {
@@ -57,5 +57,16 @@ describe("formatMenuText", () => {
     assert.equal(formatMenuText([
       "백미밥", "우동장국", "쫄면", "김말이&만두튀김", "풋고추된장무침", "김치", "마카로니샐러드",
     ]), "백미밥, 우동장국, 쫄면, 김말이&만두튀김\n풋고추된장무침, 김치, 마카로니샐러드");
+  });
+});
+
+describe("formatMenuTemplateVariables", () => {
+  it("모든 메뉴를 순서대로 두 사용자 인자에 균형 분할한다", () => {
+    assert.deepEqual(formatMenuTemplateVariables([
+      "백미밥", "우동장국", "쫄면", "김말이&만두튀김", "풋고추된장무침", "김치", "마카로니샐러드",
+    ]), {
+      menuText2: "백미밥·우동장국·쫄면·김말이&만두튀김",
+      menuText: "풋고추된장무침·김치·마카로니샐러드",
+    });
   });
 });

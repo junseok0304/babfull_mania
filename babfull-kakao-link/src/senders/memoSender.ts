@@ -2,6 +2,7 @@ export interface MenuTemplateArgs {
   time: string;
   month: string;
   day: string;
+  menuText2: string;
   menuText: string;
   image: string;
 }

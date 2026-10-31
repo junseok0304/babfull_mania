@@ -9,7 +9,8 @@ const parseBody = (body) => {
 const validTemplateArgs = (args) => {
   if (!args || !["조식", "중식"].includes(args.time)) return false;
   if (!/^\d{1,2}$/.test(args.month) || !/^\d{1,2}$/.test(args.day)) return false;
-  if (typeof args.menuText !== "string" || !args.menuText.trim() || args.menuText.length > 500) return false;
+  if (typeof args.menuText2 !== "string" || typeof args.menuText !== "string") return false;
+  if (!`${args.menuText2}${args.menuText}`.trim() || args.menuText2.length > 500 || args.menuText.length > 500) return false;
   try {
     const imageUrl = new URL(args.image);
     return imageUrl.protocol === "https:" && imageUrl.hostname === IMAGE_HOST;

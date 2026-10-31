@@ -9,7 +9,8 @@ const request = {
     time: "중식",
     month: "11",
     day: "2",
-    menuText: "백미밥, 김치",
+    menuText2: "백미밥",
+    menuText: "김치",
     image: "https://example.com/lunch.png",
   },
 };
@@ -28,7 +29,7 @@ describe("sendMemoToSelf", () => {
     const form = options?.body as URLSearchParams;
     assert.equal(form.get("template_id"), "138483");
     assert.deepEqual(JSON.parse(form.get("template_args")!), request.templateArgs);
-    assert.deepEqual(Object.keys(JSON.parse(form.get("template_args")!)), ["time", "month", "day", "menuText", "image"]);
+    assert.deepEqual(Object.keys(JSON.parse(form.get("template_args")!)), ["time", "month", "day", "menuText2", "menuText", "image"]);
     assert.equal((options?.headers as Record<string, string>).Authorization, "Bearer secret-access-token");
   });
 
