@@ -1,5 +1,6 @@
 # Product documents and local progress notes
 *.md
+!babfull-kakao-link/README.md
 
 # Secrets and environment-specific configuration
 .env
@@ -21,5 +22,8 @@ js/config.local.json
 *.log
 .cache/
 coverage/
+**/.local/
+**/dist/
+**/node_modules/
 supabase/.temp/
 .vercel
