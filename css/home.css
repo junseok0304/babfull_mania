@@ -284,6 +284,61 @@
   content: "";
 }
 
+.meal-card__share {
+  display: flex;
+  margin-top: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px 10px;
+}
+
+.kakao-share-button {
+  display: inline-flex;
+  min-height: 40px;
+  width: fit-content;
+  padding: 8px 13px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ead57a;
+  border-radius: 10px;
+  background: #fee500;
+  color: #191919;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.kakao-share-button:hover:not(:disabled) {
+  background: #f7dc00;
+}
+
+.kakao-share-button:disabled {
+  border-color: #e4e4e7;
+  background: #f4f4f5;
+  color: #a1a1aa;
+  cursor: not-allowed;
+}
+
+.kakao-share-status {
+  flex: 1 1 180px;
+  color: var(--secondary);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (max-width: 420px) {
+  .meal-card__share {
+    align-items: flex-start;
+  }
+
+  .kakao-share-status {
+    flex-basis: 100%;
+  }
+}
+
 @media (min-width: 560px) {
   .date-button {
     display: block;

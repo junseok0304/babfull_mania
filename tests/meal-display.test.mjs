@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { arrangeTray, formatTrayLabel, resolveHomeAvailability, resolveTrayPresentation } from "../js/meal-display.js";
+import { arrangeTray, formatTrayLabel, getDefaultState, resolveHomeAvailability, resolveTrayPresentation } from "../js/meal-display.js";
 
 test("식판 메뉴명은 단어를 쪼개지 않고 복합 메뉴 구분자에서만 줄바꿈한다", () => {
   assert.equal(formatTrayLabel("계란후라이"), "계란후라이");
@@ -81,4 +81,20 @@ test("AI 모드라도 완성 식판 이미지가 없으면 메뉴명 식판으�
   assert.equal(resolveTrayPresentation("ai", {}), "menu-text");
   assert.equal(resolveTrayPresentation("ai", { imageUrl: "https://example.com/tray.webp" }), "generated");
   assert.equal(resolveTrayPresentation("search", { imageUrl: "https://example.com/tray.webp" }), "menu-images");
+});
+
+test("중식 제공시간이 끝나도 당일 중식 서랍은 열린 상태를 유지한다", () => {
+  const state = getDefaultState([
+    { type: "breakfast" },
+    { type: "lunch" },
+  ], 14 * 60 + 30);
+
+  assert.equal(state.current, null);
+  assert.deepEqual([...state.open], ["lunch"]);
+});
+
+test("중식이 없는 날은 마지막 조식 서랍을 제공시간 이후에도 유지한다", () => {
+  const state = getDefaultState([{ type: "breakfast" }], 14 * 60 + 30);
+
+  assert.deepEqual([...state.open], ["breakfast"]);
 });

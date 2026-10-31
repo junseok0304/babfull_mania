@@ -1,4 +1,4 @@
-import { renderHomeMeals, scheduleMealRefresh } from "./meal-display.js?v=20261026-4";
+import { renderHomeMeals, scheduleMealRefresh } from "./meal-display.js?v=20261031-1";
 import { initPublicViews } from "./public-views.js?v=20261023-1";
 import { initializeData } from "./data-service.js";
 import { renderMyPage } from "./mypage.js?v=20261026-3";
@@ -70,8 +70,9 @@ renderHomeMeals();
 scheduleMealRefresh();
 initPublicViews();
 const hasSession = await renderMyPage();
-if (hasSession && sessionStorage.getItem("babfull:post-auth-route") === "mypage") {
+const postAuthRoute = sessionStorage.getItem("babfull:post-auth-route");
+if (hasSession && validRoutes.has(postAuthRoute)) {
   sessionStorage.removeItem("babfull:post-auth-route");
-  window.history.replaceState(null, "", "#mypage");
-  setRoute("mypage");
+  window.history.replaceState(null, "", `#${postAuthRoute}`);
+  setRoute(postAuthRoute);
 }

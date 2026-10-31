@@ -1,4 +1,5 @@
 export interface MenuTemplateArgs {
+  time: string;
   month: string;
   day: string;
   menuText: string;

@@ -53,6 +53,7 @@ export async function runCli(): Promise<void> {
 
     const config = getKakaoConfig();
     const templateArgs = {
+      time: "중식",
       month: SAMPLE_DATE.month,
       day: SAMPLE_DATE.day,
       menuText: formatMenuText(SAMPLE_MENUS),

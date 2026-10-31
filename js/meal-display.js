@@ -2,6 +2,7 @@ import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
 import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
+import { KakaoShareAuthError, reconnectKakaoForMessage, sendMealToKakaoSelf } from "./kakao-share.js";
 
 const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "☀️", lunch: "🍚" };
@@ -45,7 +46,7 @@ const getSeoulMinutes = () => {
   return Number(values.hour) * 60 + Number(values.minute);
 };
 
-const getDefaultState = (meals, nowMinutes) => {
+export const getDefaultState = (meals, nowMinutes) => {
   const breakfast = meals.find((meal) => meal.type === "breakfast");
   const lunch = meals.find((meal) => meal.type === "lunch");
   const breakfastStart = minutesFromTime(appSettings.breakfastStart);
@@ -70,7 +71,8 @@ const getDefaultState = (meals, nowMinutes) => {
     return { current: "lunch", open: new Set(["lunch"]) };
   }
 
-  return { current: null, open: new Set() };
+  const lastMeal = lunch ? "lunch" : breakfast ? "breakfast" : null;
+  return { current: null, open: new Set(lastMeal ? [lastMeal] : []) };
 };
 
 const classifyMenu = (name) => {
@@ -211,6 +213,11 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
   const trayContent = trayPresentation === "generated"
     ? generatedTrayTemplate(meal)
     : trayTemplate(meal, { textOnly: trayPresentation === "menu-text" });
+  const shareDisabled = !meal.trayImage?.imageUrl;
+  const shareAction = `<div class="meal-card__share">
+    <button class="kakao-share-button" type="button" data-kakao-share="${meal.id}" ${shareDisabled ? "disabled" : ""}>카톡으로 공유하기</button>
+    <span class="kakao-share-status" data-kakao-share-status="${meal.id}" aria-live="polite">${shareDisabled ? "식판 이미지 준비 후 공유할 수 있어요." : "내 카카오톡으로 식단 카드를 보내요."}</span>
+  </div>`;
 
   return `<article class="meal-card meal-card--${meal.type}${isOpen ? " is-open" : ""}${isCurrent ? " is-current" : ""}" data-meal-id="${meal.id}">
     <button class="meal-card__toggle" type="button" aria-expanded="${isOpen}" aria-controls="body-${meal.id}">
@@ -230,13 +237,14 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
         <div class="meal-card__details">
           <h3 class="menu-heading">메뉴</h3>
           <ul class="menu-list">${menuItems}</ul>
+          ${shareAction}
         </div>
       </div>
     </div>
   </article>`;
 };
 
-const bindCardToggles = () => {
+const bindCardToggles = (meals) => {
   document.querySelectorAll(".meal-card__toggle").forEach((button) => {
     button.addEventListener("click", () => {
       const card = button.closest(".meal-card");
@@ -257,6 +265,31 @@ const bindCardToggles = () => {
       markFoodImageFailed(slot?.dataset.foodName);
       slot?.classList.remove("has-image");
       image.remove();
+    });
+  });
+  const mealsById = new Map(meals.map((meal) => [String(meal.id), meal]));
+  document.querySelectorAll("[data-kakao-share]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const meal = mealsById.get(button.dataset.kakaoShare);
+      const status = document.querySelector(`[data-kakao-share-status="${button.dataset.kakaoShare}"]`);
+      if (!meal || button.disabled) return;
+      button.disabled = true;
+      button.textContent = "전송 중…";
+      status.textContent = "카카오톡 나와의 채팅으로 보내고 있어요.";
+      try {
+        await sendMealToKakaoSelf(meal);
+        button.textContent = "전송 완료";
+        status.textContent = `${labels[meal.type]} 식단 카드를 나에게 보냈어요.`;
+      } catch (error) {
+        if (error instanceof KakaoShareAuthError) {
+          status.textContent = "카카오 메시지 권한을 연결하고 있어요.";
+          await reconnectKakaoForMessage();
+          return;
+        }
+        button.disabled = false;
+        button.textContent = "다시 보내기";
+        status.textContent = error.message || "전송하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+      }
     });
   });
 };
@@ -311,7 +344,7 @@ export const renderHomeMeals = async () => {
     ? (closedNotes.join(" · ") || "식당을 운영하지 않는 날입니다.")
     : "선택한 날짜에 등록된 식단이 없습니다.";
   list.innerHTML = visibleMeals.map((meal) => mealCardTemplate(meal, state)).join("");
-  bindCardToggles();
+  bindCardToggles(visibleMeals);
 };
 
 export const scheduleMealRefresh = () => {

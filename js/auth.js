@@ -1,19 +1,36 @@
 import { getSupabaseClient } from "./supabase-client.js";
 
+const KAKAO_PROVIDER_TOKEN_KEY = "babfull:kakao-provider-token";
+
+const rememberProviderToken = (session) => {
+  if (session?.provider_token) {
+    sessionStorage.setItem(KAKAO_PROVIDER_TOKEN_KEY, session.provider_token);
+  }
+};
+
+export const getKakaoProviderToken = (session) => {
+  rememberProviderToken(session);
+  return session?.provider_token || sessionStorage.getItem(KAKAO_PROVIDER_TOKEN_KEY);
+};
+
 export const getAuthState = async () => {
   const client = await getSupabaseClient();
   if (!client) return { available: false, session: null, client: null };
   const { data, error } = await client.auth.getSession();
+  rememberProviderToken(data.session);
   return { available: true, session: data.session, client, error };
 };
 
-export const signInWithKakao = async () => {
+export const signInWithKakao = async ({ returnRoute = "mypage", scopes } = {}) => {
   const client = await getSupabaseClient();
   if (!client) throw new Error("Supabase 설정이 필요합니다.");
-  sessionStorage.setItem("babfull:post-auth-route", "mypage");
+  sessionStorage.setItem("babfull:post-auth-route", returnRoute);
   const { error } = await client.auth.signInWithOAuth({
     provider: "kakao",
-    options: { redirectTo: `${window.location.origin}${window.location.pathname}` },
+    options: {
+      redirectTo: `${window.location.origin}${window.location.pathname}`,
+      ...(scopes ? { scopes } : {}),
+    },
   });
   if (error) {
     sessionStorage.removeItem("babfull:post-auth-route");
@@ -26,6 +43,7 @@ export const signOut = async () => {
   if (!client) return;
   const { error } = await client.auth.signOut();
   if (error) throw error;
+  sessionStorage.removeItem(KAKAO_PROVIDER_TOKEN_KEY);
 };
 
 export const loadMyPageData = async (userId) => {
