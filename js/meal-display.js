@@ -2,7 +2,7 @@ import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
 import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
-import { KakaoShareAuthError, reconnectKakaoForMessage, sendMealToKakaoSelf } from "./kakao-share.js";
+import { KakaoShareAuthError, reconnectKakaoForMessage, sendMealToKakaoSelf } from "./kakao-share.js?v=20261031-2";
 
 const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "☀️", lunch: "🍚" };
@@ -215,8 +215,7 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
     : trayTemplate(meal, { textOnly: trayPresentation === "menu-text" });
   const shareDisabled = !meal.trayImage?.imageUrl;
   const shareAction = `<div class="meal-card__share">
-    <button class="kakao-share-button" type="button" data-kakao-share="${meal.id}" ${shareDisabled ? "disabled" : ""}>카톡으로 공유하기</button>
-    <span class="kakao-share-status" data-kakao-share-status="${meal.id}" aria-live="polite">${shareDisabled ? "식판 이미지 준비 후 공유할 수 있어요." : "내 카카오톡으로 식단 카드를 보내요."}</span>
+    <button class="kakao-share-button" type="button" data-kakao-share="${meal.id}" ${shareDisabled ? "disabled" : ""} ${shareDisabled ? 'title="식판 이미지 준비 후 공유할 수 있어요."' : ""}>카톡으로 공유하기</button>
   </div>`;
 
   return `<article class="meal-card meal-card--${meal.type}${isOpen ? " is-open" : ""}${isCurrent ? " is-current" : ""}" data-meal-id="${meal.id}">
@@ -271,24 +270,28 @@ const bindCardToggles = (meals) => {
   document.querySelectorAll("[data-kakao-share]").forEach((button) => {
     button.addEventListener("click", async () => {
       const meal = mealsById.get(button.dataset.kakaoShare);
-      const status = document.querySelector(`[data-kakao-share-status="${button.dataset.kakaoShare}"]`);
       if (!meal || button.disabled) return;
       button.disabled = true;
       button.textContent = "전송 중…";
-      status.textContent = "카카오톡 나와의 채팅으로 보내고 있어요.";
       try {
         await sendMealToKakaoSelf(meal);
         button.textContent = "전송 완료";
-        status.textContent = `${labels[meal.type]} 식단 카드를 나에게 보냈어요.`;
+        window.setTimeout(() => {
+          button.disabled = false;
+          button.textContent = "카톡으로 공유하기";
+        }, 5000);
       } catch (error) {
         if (error instanceof KakaoShareAuthError) {
-          status.textContent = "카카오 메시지 권한을 연결하고 있어요.";
           await reconnectKakaoForMessage();
           return;
         }
-        button.disabled = false;
-        button.textContent = "다시 보내기";
-        status.textContent = error.message || "전송하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+        button.textContent = "전송 실패";
+        button.title = error.message || "전송하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+        window.setTimeout(() => {
+          button.disabled = false;
+          button.textContent = "카톡으로 공유하기";
+          button.removeAttribute("title");
+        }, 5000);
       }
     });
   });

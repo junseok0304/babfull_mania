@@ -1,13 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildKakaoTemplateArgs, formatKakaoMenuText } from "../js/kakao-message.js";
+import { buildKakaoTemplateArgs, formatKakaoCardMenuText, formatKakaoMenuText } from "../js/kakao-message.js";
 
 test("메뉴 이름을 자르지 않고 24글자 이하 줄로 만든다", () => {
   const text = formatKakaoMenuText([
     "백미밥", "우동장국", "쫄면", "김말이&만두튀김", "풋고추된장무침", "김치", "마카로니샐러드",
   ]);
   assert.equal(text, "백미밥, 우동장국, 쫄면, 김말이&만두튀김\n풋고추된장무침, 김치, 마카로니샐러드");
+});
+
+test("카카오 카드에서는 메뉴명을 자르지 않고 외 N개로 한 줄 요약한다", () => {
+  assert.equal(
+    formatKakaoCardMenuText(["백미밥", "우동장국", "쫄면", "김말이&만두튀김", "풋고추된장무침", "김치", "마카로니샐러드"]),
+    "백미밥, 우동장국, 쫄면 외 4개",
+  );
 });
 
 test("조식 식단을 카카오 템플릿 인자로 변환한다", () => {

@@ -288,8 +288,6 @@
   display: flex;
   margin-top: 16px;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 7px 10px;
 }
 
 .kakao-share-button {
@@ -320,23 +318,6 @@
   background: #f4f4f5;
   color: #a1a1aa;
   cursor: not-allowed;
-}
-
-.kakao-share-status {
-  flex: 1 1 180px;
-  color: var(--secondary);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-@media (max-width: 420px) {
-  .meal-card__share {
-    align-items: flex-start;
-  }
-
-  .kakao-share-status {
-    flex-basis: 100%;
-  }
 }
 
 @media (min-width: 560px) {

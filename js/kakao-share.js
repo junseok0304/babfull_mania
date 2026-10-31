@@ -1,5 +1,5 @@
 import { getAuthState, getKakaoProviderToken, signInWithKakao } from "./auth.js";
-import { buildKakaoTemplateArgs } from "./kakao-message.js";
+import { buildKakaoTemplateArgs } from "./kakao-message.js?v=20261031-2";
 
 const TEMPLATE_ID = 138483;
 

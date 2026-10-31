@@ -3,10 +3,12 @@ const segmenter = new Intl.Segmenter("ko", { granularity: "grapheme" });
 
 const graphemeLength = (value) => [...segmenter.segment(value)].length;
 
+const normalizeMenus = (items) => items
+  .map((item) => String(item ?? "").trim().replace(/\s+/g, " "))
+  .filter(Boolean);
+
 export const formatKakaoMenuText = (items) => {
-  const menus = items
-    .map((item) => String(item ?? "").trim().replace(/\s+/g, " "))
-    .filter(Boolean);
+  const menus = normalizeMenus(items);
   if (!menus.length) throw new Error("공유할 메뉴가 없습니다.");
 
   const lines = [];
@@ -26,6 +28,20 @@ export const formatKakaoMenuText = (items) => {
   return lines.join("\n");
 };
 
+export const formatKakaoCardMenuText = (items, maxLength = 18) => {
+  const menus = normalizeMenus(items);
+  if (!menus.length) throw new Error("공유할 메뉴가 없습니다.");
+
+  for (let visibleCount = menus.length; visibleCount >= 1; visibleCount -= 1) {
+    const remainingCount = menus.length - visibleCount;
+    const suffix = remainingCount ? ` 외 ${remainingCount}개` : "";
+    const candidate = `${menus.slice(0, visibleCount).join(", ")}${suffix}`;
+    if (graphemeLength(candidate) <= maxLength) return candidate;
+  }
+
+  return `전체 메뉴 ${menus.length}개`;
+};
+
 export const buildKakaoTemplateArgs = (meal) => {
   if (!meal || !["breakfast", "lunch"].includes(meal.type)) {
     throw new Error("조식 또는 중식 식단만 공유할 수 있습니다.");
@@ -39,7 +55,7 @@ export const buildKakaoTemplateArgs = (meal) => {
 
   return {
     time: meal.type === "breakfast" ? "조식" : "중식",
-    menuText: formatKakaoMenuText(meal.items),
+    menuText: formatKakaoCardMenuText(meal.items),
     day: String(Number(day)),
     image,
     month: String(Number(month)),
