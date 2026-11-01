@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/vendor/kakao-sdk.js",
+      "destination": "https://t1.kakaocdn.net/kakao_js_sdk/2.8.4/kakao.min.js"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/favicon.svg"
+    }
+  ]
+}
