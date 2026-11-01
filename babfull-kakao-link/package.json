@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "tsx src/index.ts",
+    "share": "tsx src/share.ts",
     "test": "tsx --test tests/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc"

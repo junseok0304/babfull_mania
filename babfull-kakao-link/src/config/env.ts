@@ -29,6 +29,11 @@ export interface KakaoRoomConfig {
   accountPassword: string;
 }
 
+export interface KakaoShareConfig {
+  javascriptKey: string;
+  shareDomain: string;
+}
+
 export function getKakaoConfig(): KakaoConfig {
   const templateId = Number(optional("KAKAO_TEMPLATE_ID") ?? "138483");
   if (!Number.isInteger(templateId) || templateId <= 0) {
@@ -45,10 +50,17 @@ export function getKakaoConfig(): KakaoConfig {
 }
 
 export function getKakaoRoomConfig(): KakaoRoomConfig {
+  const share = getKakaoShareConfig();
+  return {
+    ...share,
+    accountEmail: required("KAKAO_ACCOUNT_EMAIL"),
+    accountPassword: required("KAKAO_ACCOUNT_PASSWORD"),
+  };
+}
+
+export function getKakaoShareConfig(): KakaoShareConfig {
   return {
     javascriptKey: required("KAKAO_JAVASCRIPT_KEY"),
     shareDomain: optional("KAKAO_SHARE_DOMAIN") ?? "https://babfullmania.vercel.app",
-    accountEmail: required("KAKAO_ACCOUNT_EMAIL"),
-    accountPassword: required("KAKAO_ACCOUNT_PASSWORD"),
   };
 }
