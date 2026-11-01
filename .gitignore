@@ -1,5 +1,6 @@
 # Product documents and local progress notes
 *.md
+!README.md
 !babfull-kakao-link/README.md
 
 # Secrets and environment-specific configuration
