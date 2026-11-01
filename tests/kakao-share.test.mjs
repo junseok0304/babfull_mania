@@ -8,9 +8,11 @@ test("공식 카카오 공유창에 식단 템플릿 인자를 전달한다", ()
   let shareRequest = null;
   global.window = {
     Kakao: {
-      isInitialized: () => false,
-      init: (key) => { initializedKey = key; },
-      Share: { sendCustom: (request) => { shareRequest = request; } },
+      isInitialized: () => Boolean(initializedKey),
+      init: (key) => {
+        initializedKey = key;
+        global.window.Kakao.Share = { sendCustom: (request) => { shareRequest = request; } };
+      },
     },
   };
 

@@ -34,10 +34,13 @@ const loadKakaoSdk = () => {
 
 const getKakaoSdk = (methodName) => {
   const kakao = window.Kakao;
-  if (!kakao?.Share?.[methodName]) {
+  if (!kakao?.init || !kakao?.isInitialized) {
     throw new Error("카카오톡 공유 기능을 불러오지 못했습니다. 페이지를 새로고침해 주세요.");
   }
   if (!kakao.isInitialized()) kakao.init(KAKAO_JAVASCRIPT_KEY);
+  if (!kakao.Share?.[methodName]) {
+    throw new Error("카카오톡 공유 기능을 초기화하지 못했습니다. 페이지를 새로고침해 주세요.");
+  }
   return kakao;
 };
 
