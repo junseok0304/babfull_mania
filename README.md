@@ -1,4 +1,5 @@
 <div align="center">
+<img width="592" height="836" alt="밥풀매니아포스터" src="https://github.com/user-attachments/assets/d6dc5813-7f2d-4366-a6bc-7cc8ef7f9de1" />
 
 # 밥풀매니아
 
