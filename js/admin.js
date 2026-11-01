@@ -118,7 +118,7 @@ const renderStats = () => {
         : "기록 없음";
       return `<div class="dashboard-share-row"><div><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.affiliation)} · 최근 ${escapeHtml(lastShared)}</span></div><b>${item.count.toLocaleString("ko-KR")}회</b></div>`;
     }).join("")}</div>`
-    : '<p class="dashboard-empty">이번 달 카카오 공유 기록이 없습니다.</p>';
+    : '<p class="dashboard-empty">이번 달 카카오 공유창 실행 기록이 없습니다.</p>';
 };
 
 const loadDashboardStats = async () => {

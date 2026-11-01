@@ -72,6 +72,7 @@ export const initAnalytics = () => {
       send("select_search_suggestion", { search_term: target.dataset.searchSuggestion || "" });
     }
     if (target.id === "kakao-login") send("login_start", { method: "kakao" });
+    if (target.matches("[data-kakao-share]")) send("share", { method: "KakaoTalk" });
   });
 
   document.querySelector("#menu-search-form")?.addEventListener("submit", () => {

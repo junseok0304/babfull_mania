@@ -2,7 +2,7 @@ import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
 import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
-import { KakaoShareAuthError, reconnectKakaoForMessage, sendMealToKakaoSelf } from "./kakao-share.js?v=20261031-7";
+import { openMealKakaoSharePicker } from "./kakao-share.js?v=20261101-1";
 
 const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "☀️", lunch: "🍚" };
@@ -268,37 +268,26 @@ const bindCardToggles = (meals) => {
   });
   const mealsById = new Map(meals.map((meal) => [String(meal.id), meal]));
   document.querySelectorAll("[data-kakao-share]").forEach((button) => {
-    button.addEventListener("click", async () => {
+    button.addEventListener("click", () => {
       const meal = mealsById.get(button.dataset.kakaoShare);
       if (!meal || button.disabled) return;
       button.disabled = true;
-      button.textContent = "전송 중…";
+      button.textContent = "공유창 여는 중…";
       try {
-        await sendMealToKakaoSelf(meal);
-        button.textContent = "전송 완료";
+        openMealKakaoSharePicker(meal);
+        button.textContent = "공유 대상을 선택하세요";
         window.setTimeout(() => {
           button.disabled = false;
           button.textContent = "카톡으로 공유하기";
-        }, 5000);
+        }, 3000);
       } catch (error) {
-        if (error instanceof KakaoShareAuthError) {
-          button.textContent = "로그인 페이지로 이동 중…";
-          try {
-            await reconnectKakaoForMessage();
-          } catch (loginError) {
-            button.disabled = false;
-            button.textContent = "다시 로그인";
-            button.title = loginError.message || "카카오 로그인을 다시 시도해 주세요.";
-          }
-          return;
-        }
         button.textContent = "다시 시도";
-        button.title = error.message || "전송하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+        button.title = error.message || "공유창을 열지 못했습니다. 잠시 후 다시 시도해 주세요.";
         window.setTimeout(() => {
           button.disabled = false;
           button.textContent = "카톡으로 공유하기";
           button.removeAttribute("title");
-        }, 5000);
+        }, 3000);
       }
     });
   });

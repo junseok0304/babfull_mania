@@ -1,55 +1,37 @@
-import { clearKakaoProviderToken, getAuthState, getKakaoProviderToken, signInWithKakao } from "./auth.js?v=20261031-4";
-import { buildKakaoTemplateArgs } from "./kakao-message.js?v=20261031-3";
+import { buildKakaoTemplateArgs } from "./kakao-message.js?v=20261101-1";
+import { getAuthState } from "./auth.js?v=20261101-1";
 
+// JavaScript 키는 브라우저에 공개되는 플랫폼 키이며 등록 도메인에서만 사용할 수 있다.
+const KAKAO_JAVASCRIPT_KEY = "38a2a6d37a352a1a567f10ee8d1a0cec";
 const TEMPLATE_ID = 138483;
 
-export class KakaoShareAuthError extends Error {}
-
-export const sendMealToKakaoSelf = async (meal) => {
-  const { available, session, error } = await getAuthState();
-  if (error) throw error;
-  if (!available) throw new Error("로그인 서비스를 사용할 수 없습니다.");
-  if (!session?.user) throw new KakaoShareAuthError("카카오 로그인이 필요합니다.");
-
-  const providerToken = getKakaoProviderToken(session);
-  if (!providerToken) throw new KakaoShareAuthError("카카오 메시지 권한을 다시 연결해야 합니다.");
-
-  const response = await fetch("/api/kakao-memo", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${providerToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      templateId: TEMPLATE_ID,
-      templateArgs: buildKakaoTemplateArgs(meal),
-    }),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    if (response.status === 401 || payload.reauthRequired) {
-      throw new KakaoShareAuthError(payload.error || "카카오 메시지 권한이 만료되었습니다.");
-    }
-    throw new Error(payload.error || "카카오톡 메시지를 보내지 못했습니다.");
+const getKakaoSdk = () => {
+  const kakao = window.Kakao;
+  if (!kakao?.Share?.sendCustom) {
+    throw new Error("카카오톡 공유 기능을 불러오지 못했습니다. 페이지를 새로고침해 주세요.");
   }
-  let tracked = false;
+  if (!kakao.isInitialized()) kakao.init(KAKAO_JAVASCRIPT_KEY);
+  return kakao;
+};
+
+const recordAuthenticatedPickerOpen = async (meal) => {
   try {
-    const { error: trackingError } = await client.rpc("record_kakao_share", {
+    const { session, client } = await getAuthState();
+    if (!session?.user || !client) return;
+    const { error } = await client.rpc("record_kakao_share", {
       target_meal_date: meal.date,
       target_meal_type: meal.type,
     });
-    if (trackingError) console.warn("카카오 공유 횟수를 기록하지 못했습니다.", trackingError.message);
-    else tracked = true;
-  } catch (trackingError) {
-    console.warn("카카오 공유 횟수 기록 요청이 중단됐습니다.", trackingError?.message || trackingError);
+    if (error) console.warn("카카오 공유창 실행 횟수를 기록하지 못했습니다.", error.message);
+  } catch (error) {
+    console.warn("카카오 공유창 실행 기록을 건너뜁니다.", error?.message || error);
   }
-  return { ...payload, tracked };
 };
 
-export const reconnectKakaoForMessage = () => {
-  clearKakaoProviderToken();
-  return signInWithKakao({
-    returnRoute: "home",
-    scopes: "talk_message",
-  });
+export const openMealKakaoSharePicker = (meal) => {
+  const templateArgs = buildKakaoTemplateArgs(meal);
+  const kakao = getKakaoSdk();
+  kakao.Share.sendCustom({ templateId: TEMPLATE_ID, templateArgs });
+  void recordAuthenticatedPickerOpen(meal);
+  return { opened: true, templateId: TEMPLATE_ID, templateArgs };
 };
