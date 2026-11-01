@@ -13,9 +13,13 @@
     "build": "tsc"
   },
   "dependencies": {
-    "dotenv": "^16.4.7"
+    "cheerio": "^1.0.0-rc.12",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.4.7",
+    "undici": "^8.12.3"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^22.10.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
