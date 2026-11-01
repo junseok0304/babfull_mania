@@ -1,7 +1,11 @@
 const MAX_LINE_LENGTH = 24;
-const segmenter = new Intl.Segmenter("ko", { granularity: "grapheme" });
+const segmenter = typeof Intl.Segmenter === "function"
+  ? new Intl.Segmenter("ko", { granularity: "grapheme" })
+  : null;
 
-const graphemeLength = (value) => [...segmenter.segment(value)].length;
+const graphemeLength = (value) => segmenter
+  ? [...segmenter.segment(value)].length
+  : Array.from(value).length;
 
 const normalizeMenus = (items) => items
   .map((item) => String(item ?? "").trim().replace(/\s+/g, " "))

@@ -288,6 +288,16 @@
   display: flex;
   margin-top: 16px;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.kakao-share-status:not(:empty) {
+  flex-basis: 100%;
+  color: #a13f28;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .kakao-share-button {

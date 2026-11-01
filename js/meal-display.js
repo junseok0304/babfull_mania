@@ -2,7 +2,7 @@ import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
 import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
-import { openMealKakaoSharePicker } from "./kakao-share.js?v=20261101-1";
+import { bindMealKakaoSharePicker } from "./kakao-share.js?v=20261101-2";
 
 const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "☀️", lunch: "🍚" };
@@ -216,6 +216,7 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
   const shareDisabled = !meal.trayImage?.imageUrl;
   const shareAction = `<div class="meal-card__share">
     <button class="kakao-share-button" type="button" data-kakao-share="${meal.id}" ${shareDisabled ? "disabled" : ""} ${shareDisabled ? 'title="식판 이미지 준비 후 공유할 수 있어요."' : ""}>카톡으로 공유하기</button>
+    <span class="kakao-share-status" data-kakao-share-status="${meal.id}" aria-live="polite"></span>
   </div>`;
 
   return `<article class="meal-card meal-card--${meal.type}${isOpen ? " is-open" : ""}${isCurrent ? " is-current" : ""}" data-meal-id="${meal.id}">
@@ -268,28 +269,15 @@ const bindCardToggles = (meals) => {
   });
   const mealsById = new Map(meals.map((meal) => [String(meal.id), meal]));
   document.querySelectorAll("[data-kakao-share]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const meal = mealsById.get(button.dataset.kakaoShare);
-      if (!meal || button.disabled) return;
+    const meal = mealsById.get(button.dataset.kakaoShare);
+    if (!meal || button.disabled) return;
+    try {
+      bindMealKakaoSharePicker(button, meal);
+    } catch (error) {
       button.disabled = true;
-      button.textContent = "공유창 여는 중…";
-      try {
-        openMealKakaoSharePicker(meal);
-        button.textContent = "공유 대상을 선택하세요";
-        window.setTimeout(() => {
-          button.disabled = false;
-          button.textContent = "카톡으로 공유하기";
-        }, 3000);
-      } catch (error) {
-        button.textContent = "다시 시도";
-        button.title = error.message || "공유창을 열지 못했습니다. 잠시 후 다시 시도해 주세요.";
-        window.setTimeout(() => {
-          button.disabled = false;
-          button.textContent = "카톡으로 공유하기";
-          button.removeAttribute("title");
-        }, 3000);
-      }
-    });
+      const status = document.querySelector(`[data-kakao-share-status="${button.dataset.kakaoShare}"]`);
+      if (status) status.textContent = error.message || "카카오 공유를 불러오지 못했어요. 새로고침해 주세요.";
+    }
   });
 };
 
