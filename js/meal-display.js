@@ -2,7 +2,7 @@ import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
 import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
-import { bindMealKakaoSharePicker } from "./kakao-share.js?v=20261101-2";
+import { bindMealKakaoSharePicker } from "./kakao-share.js?v=20261101-3";
 
 const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "☀️", lunch: "🍚" };
@@ -271,13 +271,12 @@ const bindCardToggles = (meals) => {
   document.querySelectorAll("[data-kakao-share]").forEach((button) => {
     const meal = mealsById.get(button.dataset.kakaoShare);
     if (!meal || button.disabled) return;
-    try {
-      bindMealKakaoSharePicker(button, meal);
-    } catch (error) {
+    bindMealKakaoSharePicker(button, meal).catch((error) => {
       button.disabled = true;
+      button.removeAttribute("aria-busy");
       const status = document.querySelector(`[data-kakao-share-status="${button.dataset.kakaoShare}"]`);
       if (status) status.textContent = error.message || "카카오 공유를 불러오지 못했어요. 새로고침해 주세요.";
-    }
+    });
   });
 };
 

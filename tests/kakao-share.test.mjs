@@ -29,7 +29,7 @@ test("공식 카카오 공유창에 식단 템플릿 인자를 전달한다", ()
   delete global.window;
 });
 
-test("모바일 호환 공식 공유 버튼을 SDK에 직접 연결한다", () => {
+test("모바일 호환 공식 공유 버튼을 SDK에 직접 연결한다", async () => {
   let shareRequest = null;
   let clickHandler = null;
   global.window = {
@@ -41,12 +41,15 @@ test("모바일 호환 공식 공유 버튼을 SDK에 직접 연결한다", () =
   };
   const button = {
     id: "",
+    disabled: false,
+    setAttribute: () => {},
+    removeAttribute: () => {},
     addEventListener: (eventName, handler) => {
       if (eventName === "click") clickHandler = handler;
     },
   };
 
-  const result = bindMealKakaoSharePicker(button, {
+  const result = await bindMealKakaoSharePicker(button, {
     type: "breakfast",
     date: "2026-10-30",
     items: ["백미밥", "미역국"],
@@ -54,6 +57,7 @@ test("모바일 호환 공식 공유 버튼을 SDK에 직접 연결한다", () =
   });
 
   assert.equal(result.bound, true);
+  assert.equal(button.disabled, false);
   assert.match(button.id, /^kakao-share-button-/);
   assert.equal(shareRequest.container, `#${button.id}`);
   assert.equal(shareRequest.templateId, 138483);
