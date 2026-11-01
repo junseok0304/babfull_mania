@@ -21,7 +21,28 @@ const getMonday = (date) => addDays(date, -((date.getDay() + 6) % 7));
 
 const getCurrentWeekdayIndex = (date) => Math.min((date.getDay() + 6) % 7, 4);
 
-const getSelectedWeekdayIndex = (today) => homeWeekdayIndex ?? getCurrentWeekdayIndex(today);
+export const resolveHomeWeek = (today, meals) => {
+  const currentMonday = getMonday(today);
+  const isWeekend = [0, 6].includes(today.getDay());
+  const nextMonday = addDays(currentMonday, 7);
+  const nextFriday = addDays(nextMonday, 4);
+  const nextMondayKey = formatDateKey(nextMonday);
+  const nextFridayKey = formatDateKey(nextFriday);
+  const hasNextWeekMeals = isWeekend && meals.some((meal) => (
+    meal.published !== false
+      && meal.operating !== false
+      && Array.isArray(meal.items)
+      && meal.items.length > 0
+      && meal.date >= nextMondayKey
+      && meal.date <= nextFridayKey
+  ));
+
+  return {
+    monday: hasNextWeekMeals ? nextMonday : currentMonday,
+    defaultWeekdayIndex: hasNextWeekMeals ? 0 : getCurrentWeekdayIndex(today),
+    isNextWeek: hasNextWeekMeals,
+  };
+};
 
 const formatHomeDate = (date) => new Intl.DateTimeFormat("ko-KR", {
   timeZone: "Asia/Seoul",
@@ -286,12 +307,14 @@ export const renderHomeMeals = async () => {
   const empty = document.querySelector("#meal-empty");
   const guidance = document.querySelector("#meal-guidance");
   const today = getSeoulDate();
-  const selectedWeekdayIndex = getSelectedWeekdayIndex(today);
-  const selectedDate = addDays(getMonday(today), selectedWeekdayIndex);
+  const allMeals = getCachedMeals();
+  const homeWeek = resolveHomeWeek(today, allMeals);
+  const selectedWeekdayIndex = homeWeekdayIndex ?? homeWeek.defaultWeekdayIndex;
+  const selectedDate = addDays(homeWeek.monday, selectedWeekdayIndex);
   const selectedDateKey = formatDateKey(selectedDate);
   const isToday = selectedDateKey === formatDateKey(today);
   const nowMinutes = getSeoulMinutes();
-  const dateMeals = getCachedMeals().filter((meal) => meal.date === selectedDateKey && meal.published);
+  const dateMeals = allMeals.filter((meal) => meal.date === selectedDateKey && meal.published);
   const availability = resolveHomeAvailability(dateMeals, selectedDate);
   const { visibleMeals, closedNotes } = availability;
   const state = isToday
@@ -303,7 +326,9 @@ export const renderHomeMeals = async () => {
   document.querySelector("#home-date-offset").textContent = isToday ? "오늘" : `${["월", "화", "수", "목", "금"][selectedWeekdayIndex]}요일`;
   document.querySelector("#home-date-prev").disabled = selectedWeekdayIndex === 0;
   document.querySelector("#home-date-next").disabled = selectedWeekdayIndex === 4;
-  document.querySelector("#today-button").textContent = [0, 6].includes(today.getDay()) ? "이번 주" : "오늘";
+  document.querySelector("#today-button").textContent = homeWeek.isNextWeek
+    ? "다음 주"
+    : [0, 6].includes(today.getDay()) ? "이번 주" : "오늘";
 
   if (isClosed) {
     guidance.textContent = "휴무일입니다.";
@@ -340,7 +365,9 @@ export const scheduleMealRefresh = () => {
     homeNavigationBound = true;
     const moveDate = (amount) => {
       const today = getSeoulDate();
-      homeWeekdayIndex = Math.max(0, Math.min(4, getSelectedWeekdayIndex(today) + amount));
+      const homeWeek = resolveHomeWeek(today, getCachedMeals());
+      const selectedIndex = homeWeekdayIndex ?? homeWeek.defaultWeekdayIndex;
+      homeWeekdayIndex = Math.max(0, Math.min(4, selectedIndex + amount));
       manualOpenState.clear();
       renderHomeMeals();
     };

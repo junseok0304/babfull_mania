@@ -1,7 +1,29 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { arrangeTray, formatTrayLabel, getDefaultState, resolveHomeAvailability, resolveTrayPresentation } from "../js/meal-display.js";
+import { arrangeTray, formatTrayLabel, getDefaultState, resolveHomeAvailability, resolveHomeWeek, resolveTrayPresentation } from "../js/meal-display.js";
+
+test("주말에는 다음 주 제공 식단이 있으면 다음 주 월요일부터 보여준다", () => {
+  const result = resolveHomeWeek(new Date("2026-11-01T12:00:00+09:00"), [
+    { date: "2026-11-02", published: true, operating: true, items: ["백미밥"] },
+  ]);
+
+  assert.equal(result.isNextWeek, true);
+  assert.equal(result.defaultWeekdayIndex, 0);
+  assert.equal(result.monday.getFullYear(), 2026);
+  assert.equal(result.monday.getMonth(), 10);
+  assert.equal(result.monday.getDate(), 2);
+});
+
+test("주말에 다음 주 제공 메뉴가 없으면 현재 주 금요일을 유지한다", () => {
+  const result = resolveHomeWeek(new Date("2026-11-01T12:00:00+09:00"), [
+    { date: "2026-11-02", published: true, operating: false, items: [] },
+  ]);
+
+  assert.equal(result.isNextWeek, false);
+  assert.equal(result.defaultWeekdayIndex, 4);
+  assert.equal(result.monday.getDate(), 26);
+});
 
 test("식판 메뉴명은 단어를 쪼개지 않고 복합 메뉴 구분자에서만 줄바꿈한다", () => {
   assert.equal(formatTrayLabel("계란후라이"), "계란후라이");
