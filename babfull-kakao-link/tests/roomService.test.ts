@@ -7,11 +7,11 @@ import {
 } from "../src/rooms/roomService.js";
 
 describe("inspectRoomCapability", () => {
-  it("비공식 로컬 실험 기능임을 명시한다", () => {
+  it("실제 검증에서 차단된 비공식 기능임을 명시한다", () => {
     const report = inspectRoomCapability();
-    assert.equal(report.supported, "experimental");
-    assert.match(report.reason, /공식 API 기능은 아니지만/);
-    assert.match(report.reason, /로컬 1회 테스트/);
+    assert.equal(report.supported, false);
+    assert.match(report.reason, /공식 API 기능이 아니/);
+    assert.match(report.reason, /status=-404/);
   });
 
   it("공유 피커 응답에서 유효한 방만 정규화한다", () => {

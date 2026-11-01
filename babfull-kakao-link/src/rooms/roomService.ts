@@ -35,15 +35,15 @@ interface KakaoChatPayload {
 }
 
 export interface RoomCapabilityReport {
-  supported: "experimental";
+  supported: false;
   reason: string;
 }
 
 export function inspectRoomCapability(): RoomCapabilityReport {
   return {
-    supported: "experimental",
+    supported: false,
     reason:
-      "공식 API 기능은 아니지만 kakao-link 2.0.1이 사용하는 공유 피커 내부 응답에서 실제 방 title/id를 조회할 수 있어 로컬 1회 테스트만 지원합니다.",
+      "공식 API 기능이 아니며, kakao-link 2.0.1의 구형 로그인 경로를 실제 검증한 결과 status=-404(올바르지 않은 접근입니다)로 차단되어 현재 채팅방 목록을 가져올 수 없습니다.",
   };
 }
 
@@ -79,7 +79,7 @@ export class UnofficialRoomClient {
     }
     this.#javascriptKey = javascriptKey;
     this.#userAgent =
-      `sdk/1.36.6 os/javascript lang/ko-KR device/Node origin/${encodeURIComponent(domain)}`;
+      `sdk/1.36.6 os/javascript lang/en-US device/Win32 origin/${encodeURIComponent(domain)}`;
   }
 
   async login(email: string, password: string): Promise<void> {
@@ -93,6 +93,15 @@ export class UnofficialRoomClient {
 
     this.#referer = LOGIN_URL;
     this.#captureCookies(loginPage.headers);
+    try {
+      const tracker = await request(
+        "https://stat.tiara.kakao.com/track?d=%7B%22sdk%22%3A%7B%22type%22%3A%22WEB%22%2C%22version%22%3A%221.1.15%22%7D%7D",
+      );
+      this.#captureCookies(tracker.headers);
+      await tracker.body.dump();
+    } catch {
+      // Tracking is not required, but older Kakao login sessions may set a cookie here.
+    }
     const $ = load(await loginPage.body.text());
     const nextData = $("#__NEXT_DATA__").text();
     let cryptoKey: string | undefined;
@@ -116,15 +125,23 @@ export class UnofficialRoomClient {
     form.set("third", "false");
     form.set("k", "true");
 
-    const response = await request("https://accounts.kakao.com/weblogin/authenticate.json", {
-      method: "POST",
-      body: form,
-      headers: {
-        "user-agent": this.#userAgent,
-        referer: this.#referer,
-        cookie: this.#cookieHeader(),
-      },
-    });
+    let response: Awaited<ReturnType<typeof request>>;
+    try {
+      response = await request("https://accounts.kakao.com/weblogin/authenticate.json", {
+        method: "POST",
+        body: form,
+        headers: {
+          "user-agent": this.#userAgent,
+          referer: this.#referer,
+          cookie: this.#cookieHeader(),
+        },
+        headersTimeout: 20_000,
+        bodyTimeout: 20_000,
+      });
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(`카카오 계정 인증 요청 연결 실패: ${detail}`);
+    }
     const responseText = await response.body.text();
     let status: number | undefined;
     try {
@@ -135,6 +152,9 @@ export class UnofficialRoomClient {
     if (status === -450) throw new Error("카카오 계정 이메일 또는 비밀번호가 올바르지 않습니다.");
     if (status === -481 || status === -484) {
       throw new Error("카카오 추가 인증이 필요합니다. 이 CLI는 추가 인증이나 CAPTCHA를 우회하지 않습니다.");
+    }
+    if (status === -404) {
+      throw new Error("구형 비공식 카카오 로그인 경로가 차단됐습니다(status=-404). 채팅방 목록을 조회할 수 없습니다.");
     }
     if (status !== 0) throw new Error(`카카오 로그인 실패 (status=${String(status)})`);
     this.#captureCookies(response.headers);
