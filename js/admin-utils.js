@@ -29,7 +29,7 @@ export const getAutomaticMealType = (now = new Date(), settings = defaultOperati
 };
 
 export const getManualMealState = (availability, menuItems = [], closureNote = "") => {
-  const items = menuItems.map((item) => String(item).trim()).filter(Boolean);
+  const items = menuItems.map((item) => String(item ?? "").trim()).filter(Boolean);
   if (availability === "provided") {
     if (!items.length) throw new Error("제공 식단의 메뉴를 입력해주세요.");
     return { menuItems: items, isOperating: true, adminNote: null };
