@@ -2,6 +2,7 @@
 *.md
 !README.md
 !babfull-kakao-link/README.md
+!skills/**/SKILL.md
 
 # Secrets and environment-specific configuration
 .env
