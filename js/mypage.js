@@ -1,9 +1,11 @@
 import { getAuthState, loadMyPageData, signInWithKakao, signOut } from "./auth.js";
+import { deleteOwnCommunitySuggestion, loadOwnCommunitySuggestions } from "./community-service.js";
 
 const demoData = {
   profile: {
-    name: "밥풀 학생",
-    affiliation: "IT융합자율학부",
+    id: "demo-user",
+    name: "윤준석",
+    affiliation: "성공회대학교 재학생",
     profile_image_url: null,
     auth_provider: "kakao",
     qr_token: "00000000-0000-4000-8000-000000000001",
@@ -15,6 +17,7 @@ const demoData = {
     { id: 4, meal_date: "2026-10-09", meal_type: "breakfast", price: 1000, status: "active" },
     { id: 5, meal_date: "2026-10-07", meal_type: "lunch", price: 5300, status: "active" },
   ],
+  suggestions: [],
 };
 
 const escapeHtml = (value) => String(value ?? "")
@@ -24,18 +27,24 @@ const escapeHtml = (value) => String(value ?? "")
   .replaceAll('"', "&quot;")
   .replaceAll("'", "&#039;");
 
-const loginTemplate = (available) => `<div class="login-card">
+const isLocalhost = () => ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
+const loginTemplate = (available, showDemo) => `<div class="login-card">
   <img class="login-card__logo" src="asset/밥풀매니아_로고.png" alt="" />
-  <p class="login-card__development-notice">정기권은 현재 개발 중인 기능으로<br />실제 이용 정보와 일치하지 않을 수 있습니다.</p>
-  <h2>내 식권을 확인하세요</h2>
-  <p>카카오 계정으로 로그인하면 개인 QR 식권과 이번 달 이용 내역을 확인할 수 있어요.</p>
+  <h2>이용 기록과 건의사항을 관리하세요</h2>
+  <p>카카오 계정으로 로그인하면 개인 QR 식권, 이번 달 이용 내역과 내가 작성한 건의를 확인할 수 있어요.</p>
   <button class="kakao-button" id="kakao-login" type="button" ${available ? "" : "disabled"}>카카오로 시작하기</button>
-  ${available ? "" : '<button class="demo-button" id="demo-mypage" type="button">시연 화면 미리보기</button><p class="login-card__setup">현재는 Supabase 설정 전입니다. 시연 화면은 실제 로그인이나 식권이 아닙니다.</p>'}
+  ${showDemo ? '<button class="demo-button" id="demo-mypage" type="button">시연 화면 미리보기</button>' : ""}
+  ${available ? "" : '<p class="login-card__setup">현재는 로그인 설정을 불러오지 못했습니다.</p>'}
 </div>`;
 
 const usageLabel = (type) => type === "breakfast" ? "조식" : "중식";
 
-const dashboardTemplate = ({ profile, usages }, isDemo) => {
+const formatSuggestionDate = (value) => new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric",
+}).format(new Date(value));
+
+const dashboardTemplate = ({ profile, usages, suggestions = [], suggestionsUnavailable = false }, isDemo) => {
   const activeUsages = usages.filter((usage) => usage.status === "active");
   const total = activeUsages.reduce((sum, usage) => sum + usage.price, 0);
   const initial = escapeHtml(profile.name?.trim()?.[0] || "밥");
@@ -46,6 +55,12 @@ const dashboardTemplate = ({ profile, usages }, isDemo) => {
     <div class="usage-list__meta"><strong>${escapeHtml(usage.meal_date)} · ${usageLabel(usage.meal_type)}</strong><span>정상 처리</span></div>
     <span class="usage-list__price">${usage.price.toLocaleString("ko-KR")}원</span>
   </li>`).join("");
+  const suggestionItems = suggestions.map((suggestion) => `<article class="my-suggestion-item" data-own-suggestion="${suggestion.id}">
+    <div class="my-suggestion-item__meta"><span class="${suggestion.isPrivate ? "is-private" : ""}">${suggestion.isPrivate ? "비밀글" : "공개"}</span><time datetime="${escapeHtml(suggestion.createdAt)}">${escapeHtml(formatSuggestionDate(suggestion.createdAt))}</time></div>
+    <h3>${escapeHtml(suggestion.title)}</h3>
+    <p>${escapeHtml(suggestion.body)}</p>
+    <button type="button" data-delete-own-suggestion="${suggestion.id}">삭제</button>
+  </article>`).join("");
   return `${isDemo ? '<div class="demo-banner"><span>시연용 데이터입니다. 실제 계정·식권과 연결되지 않습니다.</span><button id="exit-demo" type="button">나가기</button></div>' : ""}
     <section class="profile-summary">
       <div class="profile-avatar">${avatar}</div>
@@ -69,6 +84,13 @@ const dashboardTemplate = ({ profile, usages }, isDemo) => {
         <ul class="usage-list">${usageItems || "<li>이번 달 이용 내역이 없습니다.</li>"}</ul>
       </section>
     </div>
+    <section class="my-suggestions-card">
+      <div class="my-suggestions-card__heading"><div><span>내가 작성한 글</span><h2>건의사항 관리</h2></div><a href="#community">새 건의 작성</a></div>
+      <p class="card-description">공개 여부와 관계없이 내가 작성한 건의를 확인하고 삭제할 수 있습니다.</p>
+      ${suggestionsUnavailable ? '<p class="my-suggestion-load-error">건의사항을 불러오지 못했습니다. 잠시 후 다시 확인해주세요.</p>' : ""}
+      <div class="my-suggestion-list">${suggestionItems || '<div class="my-suggestion-empty">작성한 건의사항이 없습니다.</div>'}</div>
+      <p class="my-suggestion-message" id="my-suggestion-message" role="status"></p>
+    </section>
     ${isDemo ? "" : '<button class="logout-button" id="logout" type="button">로그아웃</button>'}`;
 };
 
@@ -92,10 +114,26 @@ const renderDashboard = (data, isDemo = false) => {
     await signOut();
     await renderMyPage();
   });
+  document.querySelectorAll("[data-delete-own-suggestion]").forEach((button) => button.addEventListener("click", async () => {
+    const suggestionId = Number(button.dataset.deleteOwnSuggestion);
+    if (!window.confirm("이 건의사항을 삭제할까요? 삭제 후에는 복구할 수 없습니다.")) return;
+    button.disabled = true;
+    button.textContent = "삭제 중…";
+    try {
+      await deleteOwnCommunitySuggestion(suggestionId, { forceRemote: !isDemo && data.suggestionsMode !== "demo" });
+      data.suggestions = (data.suggestions ?? []).filter((suggestion) => suggestion.id !== suggestionId);
+      window.dispatchEvent(new CustomEvent("babfull:suggestions-changed", { detail: { action: "deleted", suggestionId } }));
+      renderDashboard(data, isDemo);
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = "다시 시도";
+      document.querySelector("#my-suggestion-message").textContent = error.message || "건의사항을 삭제하지 못했습니다.";
+    }
+  }));
 };
 
 const renderLogin = (available) => {
-  document.querySelector("#mypage-content").innerHTML = loginTemplate(available);
+  document.querySelector("#mypage-content").innerHTML = loginTemplate(available, isLocalhost() || !available);
   document.querySelector("#kakao-login")?.addEventListener("click", async () => {
     const button = document.querySelector("#kakao-login");
     button.disabled = true;
@@ -107,10 +145,19 @@ const renderLogin = (available) => {
       window.alert(error.message || "로그인을 시작하지 못했습니다.");
     }
   });
-  document.querySelector("#demo-mypage")?.addEventListener("click", () => renderDashboard(demoData, true));
+  document.querySelector("#demo-mypage")?.addEventListener("click", async () => {
+    const suggestions = await loadOwnCommunitySuggestions();
+    renderDashboard({ ...demoData, suggestions }, true);
+  });
 };
 
 export const renderMyPage = async () => {
+  const explicitDemo = isLocalhost() && new URLSearchParams(window.location.search).get("demo") === "1";
+  if (explicitDemo) {
+    const suggestions = await loadOwnCommunitySuggestions();
+    renderDashboard({ ...demoData, suggestions, suggestionsMode: "demo" }, true);
+    return true;
+  }
   const auth = await getAuthState();
   if (!auth.available || !auth.session) {
     renderLogin(auth.available);
@@ -118,7 +165,14 @@ export const renderMyPage = async () => {
   }
   try {
     const data = await loadMyPageData(auth.session.user.id);
-    renderDashboard(data, false);
+    let suggestions = [];
+    let suggestionsUnavailable = false;
+    try {
+      suggestions = await loadOwnCommunitySuggestions({ forceRemote: true });
+    } catch {
+      suggestionsUnavailable = true;
+    }
+    renderDashboard({ ...data, suggestions, suggestionsUnavailable, suggestionsMode: "remote" }, false);
   } catch {
     document.querySelector("#mypage-content").innerHTML = '<div class="empty-state"><h2>내 정보를 불러오지 못했어요</h2><p>잠시 후 다시 시도하거나 관리자에게 문의해 주세요.</p></div>';
   }

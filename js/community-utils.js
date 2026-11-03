@@ -14,6 +14,8 @@ export const validateSuggestion = ({ title, body, authorName }) => {
 
 export const canViewSuggestion = (suggestion, isAdmin = false) => !suggestion?.isPrivate || isAdmin;
 
+export const isOwnedSuggestion = (suggestion, userId) => Boolean(userId) && suggestion?.authorId === userId;
+
 export const selectFeaturedNotice = (notices = []) => notices.find((notice) => notice.isFeatured) || notices[0] || null;
 
 export const clampLikeCount = (value) => Math.max(0, Number(value) || 0);

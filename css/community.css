@@ -118,9 +118,10 @@
 .announcement-banner strong { overflow: hidden; max-width: 78%; font-size: clamp(18px, 4vw, 26px); line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
 .announcement-banner strong + span { overflow: hidden; max-width: 82%; margin-top: 4px; font-size: 13px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
 
+.app-shell { position: relative; }
 .app-header { height: auto; min-height: 116px; padding-block: 11px; }
 .header-actions { position: absolute; z-index: 3; top: 18px; right: 28px; }
-.app-header .icon-button { border: 1px solid rgb(255 255 255 / 0.68); background: rgb(255 255 255 / 0.84); box-shadow: 0 4px 14px rgb(70 34 24 / 0.09); }
+.header-actions .icon-button { border: 1px solid rgb(255 255 255 / 0.68); background: rgb(255 255 255 / 0.84); box-shadow: 0 4px 14px rgb(70 34 24 / 0.09); }
 .mobile-menu { top: 112px; }
 .mobile-nav { grid-template-columns: repeat(6, 1fr); }
 .mobile-nav a { min-width: 0; }
@@ -204,4 +205,31 @@
   .local-ad-preview__mark { width: 39px; height: 39px; border-radius: 11px; font-size: 12px; }
   .local-ad-preview__copy span { font-size: 10px; }
   .local-ad-preview__size { display: none; }
+}
+
+@media (max-width: 759px) {
+  .header-actions {
+    position: fixed;
+    z-index: 45;
+    top: auto;
+    right: 14px;
+    bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+
+  .header-actions .icon-button {
+    background: rgb(255 250 247 / 0.96);
+    box-shadow: 0 7px 22px rgb(70 34 24 / 0.18);
+  }
+
+  .announcement-banner {
+    padding-right: 20px;
+  }
+
+  .mobile-menu {
+    z-index: 44;
+    top: auto;
+    bottom: calc(154px + env(safe-area-inset-bottom));
+    max-height: calc(100dvh - 160px);
+    overflow-y: auto;
+  }
 }

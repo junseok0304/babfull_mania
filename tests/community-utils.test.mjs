@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   canViewSuggestion,
   clampLikeCount,
+  isOwnedSuggestion,
   normalizeCommunityText,
   selectFeaturedNotice,
   validateSuggestion,
@@ -37,6 +38,12 @@ test("비밀 건의는 운영진에게만, 공개 건의는 모두에게 노출�
   assert.equal(canViewSuggestion({ isPrivate: true }, false), false);
   assert.equal(canViewSuggestion({ isPrivate: true }, true), true);
   assert.equal(canViewSuggestion({ isPrivate: false }, false), true);
+});
+
+test("마이페이지 건의 관리는 로그인 사용자 본인의 글만 식별한다", () => {
+  assert.equal(isOwnedSuggestion({ authorId: "user-a" }, "user-a"), true);
+  assert.equal(isOwnedSuggestion({ authorId: "user-b" }, "user-a"), false);
+  assert.equal(isOwnedSuggestion({ authorId: "user-a" }, ""), false);
 });
 
 test("대표 공지가 없으면 최신 목록의 첫 공지를 배너로 선택한다", () => {

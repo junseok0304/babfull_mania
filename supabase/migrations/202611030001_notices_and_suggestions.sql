@@ -58,7 +58,11 @@ create policy "users remove own notice likes" on public.notice_likes
 
 drop policy if exists "public suggestions or admin only" on public.suggestions;
 create policy "public suggestions or admin only" on public.suggestions
-  for select using (not is_private or public.is_admin());
+  for select using (not is_private or author_id = auth.uid() or public.is_admin());
+
+drop policy if exists "users delete own suggestions" on public.suggestions;
+create policy "users delete own suggestions" on public.suggestions
+  for delete using (author_id = auth.uid());
 
 drop policy if exists "admins manage suggestions" on public.suggestions;
 create policy "admins manage suggestions" on public.suggestions

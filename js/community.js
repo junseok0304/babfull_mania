@@ -118,6 +118,7 @@ export const initCommunity = async () => {
         state.suggestions.unshift(created);
         renderCommunity(state);
       }
+      window.dispatchEvent(new CustomEvent("babfull:suggestions-changed", { detail: { action: "created", suggestion: created } }));
       message.textContent = created.isPrivate
         ? "비밀 건의가 운영진에게 전달되었습니다. 운영진만 내용을 확인할 수 있어요."
         : "건의사항을 공개로 등록했습니다.";
@@ -127,6 +128,12 @@ export const initCommunity = async () => {
     } finally {
       button.disabled = false;
     }
+  });
+
+  window.addEventListener("babfull:suggestions-changed", (event) => {
+    if (event.detail?.action !== "deleted") return;
+    state.suggestions = state.suggestions.filter((suggestion) => suggestion.id !== event.detail.suggestionId);
+    renderCommunity(state);
   });
 
   setActivePanel("notices");

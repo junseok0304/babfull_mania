@@ -1,7 +1,7 @@
 import { renderHomeMeals, scheduleMealRefresh } from "./meal-display.js?v=20261103-1";
 import { initPublicViews } from "./public-views.js?v=20261023-1";
 import { initializeData } from "./data-service.js";
-import { renderMyPage } from "./mypage.js?v=20261026-3";
+import { renderMyPage } from "./mypage.js?v=20261103-1";
 import { initAnalytics, trackPageView } from "./analytics.js?v=20261026-1";
 import { initCommunity } from "./community.js?v=20261103-1";
 import { initLocalAdPreview } from "./ad-preview.js?v=20261103-1";
@@ -52,7 +52,11 @@ document.querySelector("#menu-button").addEventListener("click", () => {
   document.querySelector("#menu-button").setAttribute("aria-expanded", String(willOpen));
 });
 initAnalytics();
-window.addEventListener("hashchange", () => setRoute(routeFromHash()));
+window.addEventListener("hashchange", () => {
+  const nextRoute = routeFromHash();
+  setRoute(nextRoute);
+  if (nextRoute === "mypage") renderMyPage();
+});
 setRoute(routeFromHash());
 const loadStartedAt = Date.now();
 const dataState = await initializeData();

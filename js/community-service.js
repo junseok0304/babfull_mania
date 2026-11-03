@@ -1,5 +1,5 @@
 import { getSupabaseClient } from "./supabase-client.js";
-import { clampLikeCount, selectFeaturedNotice, validateSuggestion } from "./community-utils.js";
+import { clampLikeCount, isOwnedSuggestion, selectFeaturedNotice, validateSuggestion } from "./community-utils.js";
 
 const NOTICE_KEY = "babfull:demo-notices";
 const SUGGESTION_KEY = "babfull:demo-suggestions";
@@ -10,6 +10,7 @@ const demoBannerUrl = new URL("../asset/generated-meal-trays/2026-11-02/2026-11-
 const demoNotices = [
   {
     id: 1,
+    authorId: "demo-other-user",
     title: "11월 식단과 밥풀매니아 새 기능을 확인해보세요",
     body: "이번 주 식단 이미지와 예상 열량을 업데이트했습니다. 공지사항에 좋아요를 누르고 식당 운영에 대한 건의도 남겨주세요.",
     imageUrl: demoBannerUrl,
@@ -21,6 +22,7 @@ const demoNotices = [
   },
   {
     id: 2,
+    authorId: "demo-user",
     title: "건의사항 게시판 시범 운영 안내",
     body: "공개 건의는 모든 이용자가 볼 수 있고, 비밀글은 운영진만 열람합니다. 모든 건의는 로그인 프로필의 실명으로 접수됩니다.",
     imageUrl: null,
@@ -86,6 +88,7 @@ const mapNotice = (record, likedIds = new Set()) => ({
 
 const mapSuggestion = (record) => ({
   id: record.id,
+  authorId: record.author_id,
   authorName: record.author_name,
   title: record.title,
   body: record.body,
@@ -111,7 +114,7 @@ export const loadCommunity = async ({ includePrivate = false } = {}) => {
   const { session, profile } = await loadSessionProfile(client);
   const [noticeResult, suggestionResult, likeResult] = await Promise.all([
     client.from("notices").select("id, title, body, image_url, image_storage_path, is_featured, like_count, published_at").order("published_at", { ascending: false }),
-    client.from("suggestions").select("id, author_name, title, body, is_private, created_at").order("created_at", { ascending: false }),
+    client.from("suggestions").select("id, author_id, author_name, title, body, is_private, created_at").order("created_at", { ascending: false }),
     session ? client.from("notice_likes").select("notice_id").eq("user_id", session.user.id) : Promise.resolve({ data: [] }),
   ]);
   if (noticeResult.error) throw noticeResult.error;
@@ -155,7 +158,7 @@ export const createCommunitySuggestion = async ({ title, body, isPrivate }) => {
     const normalized = validateSuggestion({ title, body, authorName: demoProfile.name });
     const suggestions = parseStored(SUGGESTION_KEY, demoSuggestions);
     const created = {
-      id: Date.now(), authorName: normalized.authorName, title: normalized.title, body: normalized.body,
+      id: Date.now(), authorId: demoProfile.id, authorName: normalized.authorName, title: normalized.title, body: normalized.body,
       isPrivate: Boolean(isPrivate), createdAt: new Date().toISOString(),
     };
     saveStored(SUGGESTION_KEY, [created, ...suggestions]);
@@ -171,7 +174,40 @@ export const createCommunitySuggestion = async ({ title, body, isPrivate }) => {
     private_post: Boolean(isPrivate),
   });
   if (error) throw error;
-  return { id: data, authorName: normalized.authorName, title: normalized.title, body: normalized.body, isPrivate: Boolean(isPrivate), createdAt: new Date().toISOString() };
+  return { id: data, authorId: session.user.id, authorName: normalized.authorName, title: normalized.title, body: normalized.body, isPrivate: Boolean(isPrivate), createdAt: new Date().toISOString() };
+};
+
+export const loadOwnCommunitySuggestions = async ({ forceRemote = false } = {}) => {
+  if (!forceRemote && isCommunityDemo()) {
+    return loadDemoState(true).suggestions.filter((suggestion) => (
+      isOwnedSuggestion(suggestion, demoProfile.id)
+      || (!suggestion.authorId && suggestion.authorName === demoProfile.name)
+    ));
+  }
+  const client = await getSupabaseClient();
+  if (!client) return [];
+  const { data: sessionData } = await client.auth.getSession();
+  const userId = sessionData.session?.user?.id;
+  if (!userId) throw new Error("LOGIN_REQUIRED");
+  const { data, error } = await client.from("suggestions")
+    .select("id, author_id, author_name, title, body, is_private, created_at")
+    .eq("author_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapSuggestion);
+};
+
+export const deleteOwnCommunitySuggestion = async (suggestionId, { forceRemote = false } = {}) => {
+  if (!forceRemote && isCommunityDemo()) {
+    saveStored(SUGGESTION_KEY, parseStored(SUGGESTION_KEY, demoSuggestions).filter((item) => item.id !== suggestionId));
+    return;
+  }
+  const client = await getSupabaseClient();
+  const { data: sessionData } = await client.auth.getSession();
+  const userId = sessionData.session?.user?.id;
+  if (!userId) throw new Error("LOGIN_REQUIRED");
+  const { error } = await client.from("suggestions").delete().eq("id", suggestionId).eq("author_id", userId);
+  if (error) throw error;
 };
 
 const fileToDataUrl = (file) => new Promise((resolve, reject) => {
