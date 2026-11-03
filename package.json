@@ -1,0 +1,17 @@
+{
+  "name": "babfull-mania",
+  "version": "1.0.0",
+  "private": true,
+  "description": "성공회대학교 학식 메뉴를 식판 이미지와 예상 열량으로 보여주는 웹 서비스",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "python3 -m http.server 4173",
+    "test": "node --test tests/*.test.mjs tests/*.test.cjs",
+    "test:kakao": "npm --prefix babfull-kakao-link test",
+    "typecheck": "npm --prefix babfull-kakao-link run typecheck",
+    "test:all": "npm run test && npm run test:kakao && npm run typecheck",
+    "test:assignment": "bash scripts/run-assignment-tests.sh"
+  }
+}
