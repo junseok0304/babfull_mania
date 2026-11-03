@@ -10,6 +10,75 @@
   min-height: 100px;
 }
 
+.local-ad-preview {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 100px;
+  overflow: hidden;
+  padding: 18px 20px;
+  align-items: center;
+  gap: 14px;
+  border: 1px dashed #d3bbae;
+  border-radius: 18px;
+  background: linear-gradient(115deg, #fffaf7, #f8eee9);
+  color: #3e302b;
+}
+
+.local-ad-preview__label {
+  position: absolute;
+  top: 7px;
+  left: 12px;
+  color: #8f766c;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.local-ad-preview__mark {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 13px;
+  background: #a8462b;
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.local-ad-preview__copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.local-ad-preview__copy strong {
+  overflow: hidden;
+  font-size: clamp(15px, 3.8vw, 21px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.local-ad-preview__copy span {
+  overflow: hidden;
+  color: #76655e;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.local-ad-preview__size {
+  margin-left: auto;
+  padding: 5px 8px;
+  flex: 0 0 auto;
+  border: 1px solid #dfcbc2;
+  border-radius: 999px;
+  color: #8d6a5e;
+  font-size: 10px;
+  font-weight: 800;
+}
+
 .announcement-banner {
   position: relative;
   display: flex;
@@ -112,6 +181,7 @@
   .app-header { min-height: 148px; padding: 18px 4px; }
   .top-banner-slot,
   .top-banner-slot > .adsbygoogle { min-height: 90px; }
+  .local-ad-preview { min-height: 90px; padding: 17px 28px; border-radius: 20px; }
   .announcement-banner { min-height: 112px; padding: 22px 34px; border-radius: 24px; }
   .announcement-banner strong { max-width: 67%; }
   .announcement-banner strong + span { max-width: 70%; font-size: 14px; }
@@ -130,4 +200,8 @@
   .mobile-nav a { font-size: 9px; }
   .community-tabs { display: grid; width: 100%; }
   .suggestion-form, .suggestion-public { padding: 17px; }
+  .local-ad-preview { padding: 20px 13px 13px; gap: 10px; }
+  .local-ad-preview__mark { width: 39px; height: 39px; border-radius: 11px; font-size: 12px; }
+  .local-ad-preview__copy span { font-size: 10px; }
+  .local-ad-preview__size { display: none; }
 }

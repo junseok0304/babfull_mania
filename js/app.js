@@ -4,6 +4,7 @@ import { initializeData } from "./data-service.js";
 import { renderMyPage } from "./mypage.js?v=20261026-3";
 import { initAnalytics, trackPageView } from "./analytics.js?v=20261026-1";
 import { initCommunity } from "./community.js?v=20261103-1";
+import { initLocalAdPreview } from "./ad-preview.js?v=20261103-1";
 
 const validRoutes = new Set(["home", "weekly", "calendar", "search", "community", "mypage", "developer", "terms", "privacy"]);
 const malformedOAuthPrefix = "#mypage#access_token=";
@@ -71,6 +72,7 @@ renderHomeMeals();
 scheduleMealRefresh();
 initPublicViews();
 await initCommunity();
+initLocalAdPreview();
 const hasSession = await renderMyPage();
 const postAuthRoute = sessionStorage.getItem("babfull:post-auth-route");
 if (hasSession && validRoutes.has(postAuthRoute)) {
