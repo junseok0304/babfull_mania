@@ -1,10 +1,11 @@
-import { renderHomeMeals, scheduleMealRefresh } from "./meal-display.js?v=20261101-5";
+import { renderHomeMeals, scheduleMealRefresh } from "./meal-display.js?v=20261103-1";
 import { initPublicViews } from "./public-views.js?v=20261023-1";
 import { initializeData } from "./data-service.js";
 import { renderMyPage } from "./mypage.js?v=20261026-3";
 import { initAnalytics, trackPageView } from "./analytics.js?v=20261026-1";
+import { initCommunity } from "./community.js?v=20261103-1";
 
-const validRoutes = new Set(["home", "weekly", "calendar", "search", "mypage", "developer", "terms", "privacy"]);
+const validRoutes = new Set(["home", "weekly", "calendar", "search", "community", "mypage", "developer", "terms", "privacy"]);
 const malformedOAuthPrefix = "#mypage#access_token=";
 
 if (window.location.hash.startsWith(malformedOAuthPrefix)) {
@@ -69,6 +70,7 @@ if (dataState.mode === "supabase") {
 renderHomeMeals();
 scheduleMealRefresh();
 initPublicViews();
+await initCommunity();
 const hasSession = await renderMyPage();
 const postAuthRoute = sessionStorage.getItem("babfull:post-auth-route");
 if (hasSession && validRoutes.has(postAuthRoute)) {

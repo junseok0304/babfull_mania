@@ -6,9 +6,10 @@
     <meta name="theme-color" content="#453b38" />
     <meta name="description" content="밥풀매니아 관리자 대시보드" />
     <title>밥풀매니아 관리자</title>
+    <link rel="icon" type="image/png" href="../asset/밥풀매니아_로고.png?v=20261026" />
     <link rel="stylesheet" href="../css/global.css?v=20261023-3" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261031-1" />
-    <script type="module" src="../js/admin.js?v=20261031-1"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261103-1" />
+    <script type="module" src="../js/admin.js?v=20261103-1"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -20,6 +21,7 @@
         <nav class="admin-nav" aria-label="관리자 메뉴">
           <a href="#dashboard" class="is-active" data-admin-route="dashboard">대시보드</a>
           <a href="#meals" data-admin-route="meals">식단 관리</a>
+          <a href="#community" data-admin-route="community">공지·건의 관리</a>
           <a href="#scanner" data-admin-route="scanner">QR 스캐너</a>
           <a href="#users" data-admin-route="users">사용자 관리</a>
           <a href="#usages" data-admin-route="usages">이용 내역</a>
@@ -120,6 +122,33 @@
             <div class="food-image-workspace" id="food-image-workspace">
               <div class="food-image-empty"><strong>메뉴를 선택해주세요.</strong><span>현재 대표 사진과 검색된 대체 후보가 여기에 표시됩니다.</span></div>
             </div>
+          </section>
+        </section>
+
+        <section class="admin-view" data-admin-view="community">
+          <div class="admin-community-grid">
+            <section class="admin-card">
+              <div class="admin-card__heading"><div><p class="section-kicker">배너·운영 소식</p><h2>공지사항 등록</h2></div></div>
+              <p class="usage-admin-help">사진과 글을 등록하면 공지 목록에 게시됩니다. 대표 배너로 지정한 공지는 사용자 화면 최상단에 표시됩니다.</p>
+              <form class="notice-form" id="notice-form">
+                <label>공지 제목<input name="title" type="text" minlength="2" maxlength="100" placeholder="예: 11월 특별 식단 안내" required /></label>
+                <label>공지 내용<textarea name="body" rows="6" minlength="5" maxlength="3000" placeholder="공지와 이벤트 내용을 입력하세요." required></textarea></label>
+                <label class="notice-file">배너 이미지<input name="image" type="file" accept="image/jpeg,image/png,image/webp" required /><small>JPG·PNG·WebP, 최대 10MB · 가로형 이미지를 권장합니다.</small></label>
+                <div class="notice-image-preview" id="notice-image-preview"><span>사진을 선택하면 배너 미리보기가 표시됩니다.</span></div>
+                <label class="notice-featured"><input name="is_featured" type="checkbox" checked /><span><strong>메인 대표 배너로 표시</strong><small>기존 대표 공지는 일반 공지로 전환됩니다.</small></span></label>
+                <button class="primary-button" type="submit">공지사항 등록</button>
+                <p class="form-message" id="notice-form-message" role="status"></p>
+              </form>
+            </section>
+            <section class="admin-card">
+              <div class="admin-card__heading"><div><p class="section-kicker">게시 현황</p><h2>공지사항 목록</h2></div></div>
+              <div class="admin-community-list" id="admin-notice-list"><div class="admin-community-empty">공지사항을 불러오고 있어요.</div></div>
+            </section>
+          </div>
+          <section class="admin-card admin-suggestion-card">
+            <div class="admin-card__heading"><div><p class="section-kicker">학생 의견</p><h2>건의사항 접수함</h2></div></div>
+            <p class="usage-admin-help">공개 건의와 비밀 건의를 함께 확인합니다. 비밀글 내용과 작성자 실명은 운영진에게만 표시됩니다.</p>
+            <div class="admin-suggestion-list" id="admin-suggestion-list"><div class="admin-community-empty">건의사항을 불러오고 있어요.</div></div>
           </section>
         </section>
 

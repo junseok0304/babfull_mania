@@ -1,8 +1,9 @@
 import { formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
 import { getSupabaseClient } from "./supabase-client.js";
 import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState, normalizeKakaoShareStats, shouldShowClosureReason } from "./admin-utils.js?v=20261031-1";
+import { initAdminCommunity } from "./admin-community.js?v=20261103-1";
 
-const titles = { dashboard: "대시보드", meals: "식단 관리", scanner: "QR 스캐너", users: "사용자 관리", usages: "이용 내역", settings: "운영 설정" };
+const titles = { dashboard: "대시보드", meals: "식단 관리", community: "공지·건의 관리", scanner: "QR 스캐너", users: "사용자 관리", usages: "이용 내역", settings: "운영 설정" };
 let adminMode = "demo";
 let meals = [...sampleMeals];
 let client = null;
@@ -1119,6 +1120,7 @@ document.querySelector("#food-image-workspace").addEventListener("click", async 
 document.querySelector("#meal-form").elements.meal_date.value = formatDateKey(getSeoulDate());
 const accessAllowed = await initializeAdmin();
 if (accessAllowed !== false) {
+  await initAdminCommunity({ client, mode: adminMode, currentUserId });
   setScanDefaults();
   route(location.hash.slice(1));
   await refreshDashboard();

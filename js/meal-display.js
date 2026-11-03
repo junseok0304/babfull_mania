@@ -3,6 +3,7 @@ import { getCachedMeals } from "./data-service.js";
 import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
 import { bindMealKakaoSharePicker } from "./kakao-share.js?v=20261101-4";
+import { getHorizontalSwipeDirection } from "./swipe-utils.js";
 
 const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "☀️", lunch: "🍚" };
@@ -373,6 +374,24 @@ export const scheduleMealRefresh = () => {
     };
     document.querySelector("#home-date-prev").addEventListener("click", () => moveDate(-1));
     document.querySelector("#home-date-next").addEventListener("click", () => moveDate(1));
+    const homeView = document.querySelector("#home-view");
+    let swipeStart = null;
+    homeView.addEventListener("touchstart", (event) => {
+      if (window.matchMedia("(min-width: 760px)").matches || event.touches.length !== 1) return;
+      if (event.target.closest("button, a, input, textarea, select")) return;
+      swipeStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+    }, { passive: true });
+    homeView.addEventListener("touchend", (event) => {
+      if (!swipeStart || event.changedTouches.length !== 1) return;
+      const direction = getHorizontalSwipeDirection({
+        startX: swipeStart.x,
+        startY: swipeStart.y,
+        endX: event.changedTouches[0].clientX,
+        endY: event.changedTouches[0].clientY,
+      });
+      swipeStart = null;
+      if (direction) moveDate(direction);
+    }, { passive: true });
     document.querySelector("#today-button").addEventListener("click", () => {
       homeWeekdayIndex = null;
       manualOpenState.clear();

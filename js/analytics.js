@@ -5,6 +5,7 @@ const routeTitles = {
   weekly: "주간 식단",
   calendar: "월간 메뉴",
   search: "메뉴 검색",
+  community: "공지·건의",
   mypage: "마이페이지",
   developer: "개발자 정보",
   terms: "이용약관",

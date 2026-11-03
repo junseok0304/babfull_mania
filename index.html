@@ -13,6 +13,16 @@
     <link rel="apple-touch-icon" href="asset/밥풀매니아_로고.png?v=20261026" />
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-DTRPCFHW7Q"></script>
     <script>
+      if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+        const adsensePreview = document.createElement("script");
+        adsensePreview.async = true;
+        adsensePreview.crossOrigin = "anonymous";
+        adsensePreview.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9030402652749847";
+        adsensePreview.dataset.previewOnly = "true";
+        document.head.append(adsensePreview);
+      }
+    </script>
+    <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
@@ -20,22 +30,24 @@
     </script>
     <link rel="stylesheet" href="css/global.css?v=20261023-3" />
     <link rel="stylesheet" href="css/components.css?v=20261026-2" />
-    <link rel="stylesheet" href="css/home.css?v=20261101-1" />
+    <link rel="stylesheet" href="css/home.css?v=20261103-1" />
     <link rel="stylesheet" href="css/meal-tray.css?v=20261026-4" />
     <link rel="stylesheet" href="css/public-views.css?v=20261026-2" />
     <link rel="stylesheet" href="css/mypage.css?v=20261026-1" />
-    <script type="module" src="js/app.js?v=20261101-5"></script>
+    <link rel="stylesheet" href="css/community.css?v=20261103-1" />
+    <script type="module" src="js/app.js?v=20261103-1"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문 바로가기</a>
     <div class="app-shell">
       <header class="app-header">
-        <a class="brand" href="#home" aria-label="밥풀매니아 홈">
-          <img
-            src="asset/밥풀매니아_로고_긴버전.png"
-            alt="밥풀매니아"
-          />
-        </a>
+        <div class="top-banner-slot" data-banner-mode="notice">
+          <a class="announcement-banner" id="home-announcement-banner" href="#community" aria-label="공지사항 자세히 보기">
+            <span class="announcement-banner__eyebrow">밥풀매니아</span>
+            <strong>오늘의 식단을 확인하세요</strong>
+            <span>공지와 이벤트 소식도 이곳에서 전해드려요.</span>
+          </a>
+        </div>
         <div class="header-actions">
           <button class="icon-button" id="menu-button" type="button" aria-label="메뉴 열기" aria-expanded="false">
             <span></span><span></span><span></span>
@@ -48,6 +60,7 @@
         <a href="#weekly" data-route="weekly">주간 식단</a>
         <a href="#calendar" data-route="calendar">월간 메뉴</a>
         <a href="#search" data-route="search">메뉴 검색</a>
+        <a href="#community" data-route="community">공지·건의</a>
         <a href="#mypage" data-route="mypage">마이페이지(개발중)</a>
         <a href="#developer" data-route="developer">개발자 정보 및 약관 열람</a>
       </nav>
@@ -57,6 +70,7 @@
         <a href="#weekly" data-route="weekly">주간 식단</a>
         <a href="#calendar" data-route="calendar">월간 메뉴</a>
         <a href="#search" data-route="search">메뉴 검색</a>
+        <a href="#community" data-route="community">공지·건의</a>
         <a href="#mypage" data-route="mypage">마이페이지(개발중)</a>
         <a href="#developer" data-route="developer">개발자 정보 및 이용 약관</a>
       </nav>
@@ -151,6 +165,43 @@
           <div class="search-suggestions" id="search-suggestions" aria-label="추천 검색어"></div>
           <div class="search-summary" id="search-summary">메뉴명을 입력하면 제공된 날짜를 찾아드려요.</div>
           <div class="search-results" id="search-results"></div>
+        </section>
+
+        <section class="page-view" id="community-view" data-view="community" aria-labelledby="community-title">
+          <div class="view-heading community-heading">
+            <div>
+              <p class="eyebrow">함께 만드는 밥풀매니아</p>
+              <h1 id="community-title">공지·건의</h1>
+              <p>운영 소식을 확인하고, 실명으로 더 나은 식당 이용 경험을 제안해주세요.</p>
+            </div>
+          </div>
+          <div class="community-tabs" role="tablist" aria-label="공지와 건의 전환">
+            <button class="is-active" type="button" role="tab" data-community-tab="notices" aria-selected="true">공지사항</button>
+            <button type="button" role="tab" data-community-tab="suggestions" aria-selected="false">건의사항</button>
+          </div>
+          <section data-community-panel="notices" aria-label="공지사항 목록">
+            <div class="community-notice-list" id="community-notice-list" aria-live="polite">
+              <div class="community-empty">공지사항을 불러오고 있어요.</div>
+            </div>
+          </section>
+          <section data-community-panel="suggestions" aria-label="건의사항" hidden>
+            <div class="suggestion-layout">
+              <form class="suggestion-form" id="suggestion-form">
+                <div class="suggestion-identity" id="suggestion-identity">
+                  <span>?</span><div><strong>로그인 상태 확인 중</strong><small>건의사항은 실명으로 등록됩니다.</small></div>
+                </div>
+                <label>제목<input name="title" type="text" minlength="2" maxlength="100" placeholder="어떤 점을 제안하고 싶나요?" required /></label>
+                <label>내용<textarea name="body" rows="7" minlength="5" maxlength="3000" placeholder="운영진이 이해하기 쉽도록 구체적으로 적어주세요." required></textarea></label>
+                <label class="suggestion-private"><input name="is_private" type="checkbox" /><span><strong>비밀글로 작성</strong><small>작성자 본인 정보와 내용은 운영진만 열람합니다.</small></span></label>
+                <button class="community-primary-button" type="submit">건의사항 등록</button>
+                <p class="suggestion-message" id="suggestion-message" role="status"></p>
+              </form>
+              <div class="suggestion-public">
+                <div class="suggestion-public__heading"><span>공개 건의</span><strong>학생들의 목소리</strong></div>
+                <div id="community-suggestion-list" aria-live="polite"><div class="community-empty">건의사항을 불러오고 있어요.</div></div>
+              </div>
+            </div>
+          </section>
         </section>
 
         <section class="page-view" id="mypage-view" data-view="mypage" aria-labelledby="mypage-title">
@@ -273,6 +324,10 @@
         <a href="#search" data-route="search">
           <span class="mobile-nav__glyph" aria-hidden="true">⌕</span>
           <span>검색</span>
+        </a>
+        <a href="#community" data-route="community">
+          <span class="mobile-nav__glyph" aria-hidden="true">!</span>
+          <span>공지</span>
         </a>
         <a href="#mypage" data-route="mypage">
           <img src="asset/btn_마이페이지.png" alt="" />

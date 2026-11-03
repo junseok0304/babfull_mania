@@ -93,6 +93,58 @@
   letter-spacing: -0.025em;
 }
 
+@media (max-width: 759px) {
+  #home-view {
+    margin-top: -22px;
+  }
+
+  .page-intro {
+    display: none;
+  }
+
+  .home-date-nav {
+    min-height: 38px;
+    margin: 0 0 8px;
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    touch-action: pan-y;
+  }
+
+  .home-date-nav button {
+    font-size: 25px;
+  }
+
+  .home-date-nav > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+  }
+
+  .home-date-nav span {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .home-date-nav span::after {
+    margin-left: 7px;
+    color: #c8bbb5;
+    content: "·";
+  }
+
+  .home-date-nav strong {
+    display: inline-flex;
+    align-items: center;
+    font-size: 15px;
+    line-height: 1.2;
+  }
+}
+
 .empty-state.is-closed .empty-state__icon {
   filter: grayscale(1);
 }
