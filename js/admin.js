@@ -1,6 +1,6 @@
 import { formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
 import { getSupabaseClient } from "./supabase-client.js";
-import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState, normalizeKakaoShareStats, shouldShowClosureReason } from "./admin-utils.js?v=20261031-1";
+import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState, isDuplicateMealUsageError, normalizeKakaoShareStats, shouldShowClosureReason } from "./admin-utils.js?v=20261104-1";
 import { initAdminCommunity } from "./admin-community.js?v=20261103-1";
 
 const titles = { dashboard: "대시보드", meals: "식단 관리", community: "공지·건의 관리", scanner: "QR 스캐너", users: "사용자 관리", usages: "이용 내역", settings: "운영 설정" };
@@ -511,7 +511,7 @@ const processUsage = async (profile) => {
   const { date, type } = getScanSelection();
   if (adminMode === "demo") {
     if (demoUsages.some((usage) => usage.userId === profile.id && usage.date === date && usage.type === type)) {
-      throw new Error("이미 사용 처리된 식권입니다.");
+      throw new Error("이미 오늘 사용 처리된 식권입니다.");
     }
     const usage = { id: Date.now(), userId: profile.id, userName: profile.name, affiliation: profile.affiliation, date, type, status: "active", price: type === "breakfast" ? operationalSettings.breakfastPrice : operationalSettings.lunchPrice };
     demoUsages.unshift(usage);
@@ -524,10 +524,24 @@ const processUsage = async (profile) => {
 
 const renderScannedProfile = (profile, usage) => {
   const overlay = document.querySelector("#scan-success");
+  document.querySelector("#scan-success-icon").textContent = "✓";
+  document.querySelector("#scan-success-title").innerHTML = "정기권 이용 처리가<br />완료되었습니다.";
   document.querySelector("#scan-success-detail").textContent = `${mealLabel(usage.meal_type || usage.type)} · ${Number(usage.price).toLocaleString("ko-KR")}원`;
+  overlay.classList.remove("is-duplicate");
   overlay.hidden = false;
   playSuccessChime();
   renderScannerStatus("처리가 완료되었습니다. 다음 QR을 기다립니다.");
+};
+
+const renderDuplicateUsage = () => {
+  const { date, type } = getScanSelection();
+  const overlay = document.querySelector("#scan-success");
+  document.querySelector("#scan-success-icon").textContent = "!";
+  document.querySelector("#scan-success-title").innerHTML = "이미 오늘 사용 처리된<br />식권입니다.";
+  document.querySelector("#scan-success-detail").textContent = `${date} · ${mealLabel(type)}`;
+  overlay.classList.add("is-duplicate");
+  overlay.hidden = false;
+  renderScannerStatus("이미 처리된 식권입니다. 다음 QR을 기다립니다.");
 };
 
 const handleDecodedToken = async (token) => {
@@ -538,10 +552,14 @@ const handleDecodedToken = async (token) => {
     const usage = await processUsage(profile);
     renderScannedProfile(profile, usage);
     await refreshDashboard();
-    return true;
+    return "success";
   } catch (error) {
+    if (isDuplicateMealUsageError(error)) {
+      renderDuplicateUsage();
+      return "duplicate";
+    }
     renderScannerStatus(error.message || "QR을 처리하지 못했습니다.", true);
-    return false;
+    return "error";
   }
 };
 
@@ -558,12 +576,12 @@ const startScanner = async () => {
       if (scanBusy) return;
       scanBusy = true;
       await stopScanner();
-      const succeeded = await handleDecodedToken(text);
+      const outcome = await handleDecodedToken(text);
       window.setTimeout(async () => {
         document.querySelector("#scan-success").hidden = true;
         scanBusy = false;
         if (location.hash === "#scanner") await startScanner();
-      }, succeeded ? 1600 : 1400);
+      }, outcome === "error" ? 1400 : 1600);
     }, () => {});
     document.body.classList.add("scanner-is-active");
     stop.disabled = false;
@@ -584,8 +602,8 @@ document.querySelector("#scan-use-current").addEventListener("click", setScanDef
 document.querySelector("#manual-token-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   await prepareScannerAudio();
-  const succeeded = await handleDecodedToken(new FormData(event.currentTarget).get("qr_token"));
-  if (succeeded) window.setTimeout(() => {
+  const outcome = await handleDecodedToken(new FormData(event.currentTarget).get("qr_token"));
+  if (outcome !== "error") window.setTimeout(() => {
     document.querySelector("#scan-success").hidden = true;
     renderScannerStatus("스캔을 기다리고 있어요.");
   }, 1600);

@@ -1021,7 +1021,7 @@
   padding: 30px;
   place-content: center;
   justify-items: center;
-  background: #16a34a;
+  background: var(--primary);
   color: white;
   text-align: center;
   animation: success-in 180ms ease-out;
@@ -1057,8 +1057,12 @@
 }
 
 .scan-success > span {
-  color: #dcfce7;
+  color: #ffedd5;
   font-size: 14px;
+}
+
+.scan-success.is-duplicate {
+  background: #c2410c;
 }
 
 @keyframes success-in {

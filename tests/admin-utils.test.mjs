@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildDashboardSummary, getAutomaticMealType, getManualMealState, normalizeKakaoShareStats, shouldShowClosureReason } from "../js/admin-utils.js";
+import { buildDashboardSummary, getAutomaticMealType, getManualMealState, isDuplicateMealUsageError, normalizeKakaoShareStats, shouldShowClosureReason } from "../js/admin-utils.js";
 
 const settings = {
   breakfastStart: "08:00",
@@ -37,6 +37,13 @@ test("휴무 사유는 휴무를 선택한 경우에만 표시한다", () => {
   assert.equal(shouldShowClosureReason("provided"), false);
   assert.equal(shouldShowClosureReason("unavailable"), false);
   assert.equal(shouldShowClosureReason("closed"), true);
+});
+
+test("이미 처리된 식권 오류를 중복 사용 상태로 구분한다", () => {
+  assert.equal(isDuplicateMealUsageError(new Error("이미 사용 처리된 식권입니다.")), true);
+  assert.equal(isDuplicateMealUsageError(new Error("이미 오늘 사용 처리된 식권입니다.")), true);
+  assert.equal(isDuplicateMealUsageError({ code: "23505", message: "duplicate key" }), true);
+  assert.equal(isDuplicateMealUsageError(new Error("유효한 사용자를 찾을 수 없습니다.")), false);
 });
 
 test("월간 대시보드 집계값과 식사 이용 비율을 계산한다", () => {

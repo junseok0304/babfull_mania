@@ -41,6 +41,11 @@ export const getManualMealState = (availability, menuItems = [], closureNote = "
 
 export const shouldShowClosureReason = (availability) => availability === "closed";
 
+export const isDuplicateMealUsageError = (error) => {
+  const message = String(error?.message ?? error ?? "");
+  return error?.code === "23505" || /이미\s*(?:오늘\s*)?사용\s*처리된\s*식권/.test(message);
+};
+
 export const buildDashboardSummary = (raw = {}) => {
   const breakfastCount = Number(raw.breakfast_count ?? raw.breakfastCount ?? 0);
   const lunchCount = Number(raw.lunch_count ?? raw.lunchCount ?? 0);
