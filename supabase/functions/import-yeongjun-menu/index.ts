@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { parseYeongjunMenu } from "../_shared/yeongjun-parser.js";
+import { parseYeongjunMenu, resolveExpectedImportMonday } from "../_shared/yeongjun-parser.js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,15 +8,6 @@ const corsHeaders = {
 const allowedSource = "https://yeongjun.com/babfullmenu";
 
 const jsonResponse = (body: unknown, status = 200) => Response.json(body, { status, headers: corsHeaders });
-
-const currentSeoulMonday = () => {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" })
-    .formatToParts(new Date());
-  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-  const date = new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day)));
-  date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
-  return date.toISOString().slice(0, 10);
-};
 
 const requireCaller = async (request: Request, db: any, trigger: string) => {
   if (trigger === "cron") {
@@ -72,7 +63,8 @@ Deno.serve(async (request) => {
     const html = await response.text();
     if (html.length > 2_000_000) throw new Error("식단 페이지가 허용 크기를 초과했습니다.");
     const parsed = parseYeongjunMenu(html);
-    if (parsed.dates[0] !== currentSeoulMonday()) {
+    const expectedMonday = resolveExpectedImportMonday();
+    if (parsed.dates[0] !== expectedMonday) {
       throw new Error(`원본 식단이 이번 주 기준으로 갱신되지 않았습니다: ${parsed.dates[0]}`);
     }
 

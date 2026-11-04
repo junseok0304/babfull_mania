@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseYeongjunMenu } from "../supabase/functions/_shared/yeongjun-parser.js";
+import { parseYeongjunMenu, resolveExpectedImportMonday } from "../supabase/functions/_shared/yeongjun-parser.js";
 
 const cell = (value) => `<td><div class="menu-name">${value}</div></td>`;
 const row = (className, values) => `<tr class="${className}">${values.map(cell).join("")}</tr>`;
@@ -27,4 +27,9 @@ test("연말과 연초 사이의 연도를 올바르게 결정한다", () => {
   </tbody></table>`;
   const result = parseYeongjunMenu(html, new Date("2025-12-31T00:00:00Z"));
   assert.deepEqual(result.dates, ["2025-12-29", "2025-12-30", "2025-12-31", "2026-01-01", "2026-01-02"]);
+});
+
+test("일요일에는 다음 날 월요일을 식단 수집 대상 주차로 선택한다", () => {
+  assert.equal(resolveExpectedImportMonday(new Date("2026-11-01T12:00:00Z")), "2026-11-02");
+  assert.equal(resolveExpectedImportMonday(new Date("2026-11-02T00:00:00Z")), "2026-11-02");
 });

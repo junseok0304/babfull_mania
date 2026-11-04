@@ -36,6 +36,19 @@ const extractMenuText = (cellHtml) => {
 const formatDate = (date) => date.toISOString().slice(0, 10);
 const utcDate = (year, month, day) => new Date(Date.UTC(year, month - 1, day));
 
+export const resolveExpectedImportMonday = (now = new Date()) => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  const seoulDate = utcDate(Number(values.year), Number(values.month), Number(values.day));
+  const day = seoulDate.getUTCDay();
+
+  // 일요일 21시 사전 수집은 다음 날부터 시작하는 새 주차를 대상으로 한다.
+  seoulDate.setUTCDate(seoulDate.getUTCDate() + (day === 0 ? 1 : -((day + 6) % 7)));
+  return formatDate(seoulDate);
+};
+
 const resolveDates = (headers, now) => {
   const monthDays = headers.map((header) => {
     const match = header.match(/(\d{1,2})\s*[-./]\s*(\d{1,2})/);
