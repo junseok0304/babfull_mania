@@ -1,5 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+/**
+ * 식약처·공공데이터 영양정보를 메뉴명과 매칭해 기준 제공량의 예상 열량으로 저장합니다.
+ * 조합 메뉴는 항목 단위로 나누고, 외부 API 실패 시 보수적인 유형별 추정값으로 대체합니다.
+ */
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -84,6 +88,7 @@ const fallbackCalories = (name: string, servingGrams: number) => {
 };
 
 const mapConcurrent = async <T, R>(values: T[], concurrency: number, work: (value: T) => Promise<R>) => {
+  // 외부 API와 DB에 순간적으로 요청이 몰리지 않도록 고정 개수의 worker만 병렬 실행합니다.
   const results = new Array<R>(values.length);
   let cursor = 0;
   await Promise.all(Array.from({ length: Math.min(concurrency, values.length) }, async () => {

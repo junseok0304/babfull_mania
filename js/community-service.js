@@ -1,6 +1,10 @@
 import { getSupabaseClient } from "./supabase-client.js";
 import { clampLikeCount, isOwnedSuggestion, selectFeaturedNotice, validateSuggestion } from "./community-utils.js";
 
+/**
+ * 공지·건의 기능의 데이터 접근 계층입니다.
+ * localhost에서는 localStorage 기반 데모 저장소를, 운영에서는 Supabase와 RLS를 사용하되 동일한 화면 모델을 반환합니다.
+ */
 const NOTICE_KEY = "babfull:demo-notices";
 const SUGGESTION_KEY = "babfull:demo-suggestions";
 const LIKE_KEY = "babfull:demo-notice-likes";
@@ -97,6 +101,7 @@ const mapSuggestion = (record) => ({
 });
 
 const loadSessionProfile = async (client) => {
+  // 글 작성·삭제 권한은 화면 상태가 아니라 현재 Auth 세션과 프로필의 활성 상태로 판단합니다.
   const { data: sessionData } = await client.auth.getSession();
   const userId = sessionData.session?.user?.id;
   if (!userId) return { session: null, profile: null };

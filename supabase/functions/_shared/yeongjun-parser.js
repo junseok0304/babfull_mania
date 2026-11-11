@@ -1,3 +1,7 @@
+/**
+ * 식단 원본 HTML을 외부 DOM 라이브러리 없이 제한된 표 구조로 해석합니다.
+ * 평일 5일의 연속성까지 검증해 오류 페이지나 오래된 표가 운영 DB에 저장되는 것을 막습니다.
+ */
 const decodeEntities = (value) => value
   .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
   .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(Number.parseInt(code, 16)))

@@ -1,3 +1,7 @@
+/**
+ * 브라우저에서 사용할 공개 Supabase 설정만 읽어 단일 클라이언스를 생성합니다.
+ * service role key 같은 서버 비밀값은 이 모듈이 받거나 반환하지 않습니다.
+ */
 let clientPromise;
 
 const loadLocalConfig = async () => {

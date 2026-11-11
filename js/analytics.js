@@ -1,3 +1,7 @@
+/**
+ * GA4 화면 조회와 검색 이벤트를 수집하는 얇은 어댑터입니다.
+ * SPA 해시 경로를 일반 URL 경로로 정규화하며 같은 화면의 연속 중복 전송을 억제합니다.
+ */
 export const GA_MEASUREMENT_ID = "G-DTRPCFHW7Q";
 
 const routeTitles = {

@@ -1,3 +1,7 @@
+/**
+ * 카카오 '나에게 보내기' PoC용 서버리스 어댑터입니다.
+ * 허용 템플릿과 이미지 호스트를 검증한 뒤 사용자 OAuth 토큰을 카카오 API에 전달하며 토큰은 저장하지 않습니다.
+ */
 const TEMPLATE_ID = 138483;
 const IMAGE_HOST = "uupatosmuueifsssdkev.supabase.co";
 

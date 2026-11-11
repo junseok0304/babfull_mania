@@ -6,6 +6,10 @@ import { initAnalytics, trackPageView } from "./analytics.js?v=20261026-1";
 import { initCommunity } from "./community.js?v=20261103-1";
 import { initLocalAdPreview } from "./ad-preview.js?v=20261103-1";
 
+/**
+ * 사용자 SPA의 시작점입니다. 해시 라우팅을 정규화하고 식단 데이터를 한 번 초기화한 뒤,
+ * 각 화면 모듈에 렌더링을 위임합니다. OAuth 콜백 해시는 토큰을 URL에 남기지 않도록 즉시 정리합니다.
+ */
 const validRoutes = new Set(["home", "weekly", "calendar", "search", "community", "mypage", "developer", "terms", "privacy"]);
 const malformedOAuthPrefix = "#mypage#access_token=";
 

@@ -1,6 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { parseYeongjunMenu, resolveExpectedImportMonday } from "../_shared/yeongjun-parser.js";
 
+/**
+ * 허용된 식단 원본을 수집해 파싱 결과를 DB RPC로 넘기는 Edge Function입니다.
+ * Cron secret 또는 활성 관리자 세션을 요구하고, 출처·형식·크기·대상 주차를 저장 전에 검증합니다.
+ */
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
@@ -45,6 +49,7 @@ Deno.serve(async (request) => {
       throw new Error("허용되지 않은 식단 원본 주소입니다.");
     }
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    // 예약 실행과 수동 실행이 겹쳐 같은 주차를 동시에 갱신하지 않도록 최근 실행 잠금을 확인합니다.
     const { data: running } = await db.from("meal_import_logs").select("id").eq("status", "running").gte("started_at", tenMinutesAgo).limit(1);
     if (running?.length) return jsonResponse({ error: "이미 식단 최신화가 진행 중입니다." }, 409);
 

@@ -1,6 +1,10 @@
 import { buildKakaoTemplateArgs } from "./kakao-message.js?v=20261101-1";
 import { getAuthState } from "./auth.js?v=20261101-1";
 
+/**
+ * 카카오 JavaScript SDK를 지연 로드하고 공식 공유 선택창을 엽니다.
+ * JavaScript 키는 등록 도메인에서만 동작하는 공개 플랫폼 키이며 사용자 액세스 토큰이나 Admin 키와 다릅니다.
+ */
 // JavaScript 키는 브라우저에 공개되는 플랫폼 키이며 등록 도메인에서만 사용할 수 있다.
 const KAKAO_JAVASCRIPT_KEY = "38a2a6d37a352a1a567f10ee8d1a0cec";
 const TEMPLATE_ID = 138483;
@@ -45,6 +49,7 @@ const getKakaoSdk = (methodName) => {
 };
 
 const recordAuthenticatedPickerOpen = async (meal) => {
+  // 공유 선택창을 연 횟수만 집계하며 상대방·채팅방 정보는 수집하지 않습니다.
   try {
     const { session, client } = await getAuthState();
     if (!session?.user || !client) return;

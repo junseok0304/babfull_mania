@@ -1,3 +1,4 @@
+// 관리자 권한이 없는 직접 접근에 동일한 400 안내 화면을 반환하는 Vercel 서버리스 엔드포인트입니다.
 module.exports = function handler(_request, response) {
   response.setHeader("Cache-Control", "no-store, max-age=0");
   response.setHeader("Content-Type", "text/html; charset=utf-8");

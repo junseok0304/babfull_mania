@@ -1,3 +1,7 @@
+/**
+ * 관리자 화면에서 사용하는 순수 계산·검증 함수 모음입니다.
+ * DOM이나 Supabase에 의존하지 않아 QR 시간 경계, 수동 식단 상태와 통계 계산을 단위 테스트할 수 있습니다.
+ */
 export const defaultOperationalSettings = Object.freeze({
   breakfastStart: "08:00",
   breakfastEnd: "09:30",
@@ -15,6 +19,7 @@ const toMinutes = (value) => {
 };
 
 export const getAutomaticMealType = (now = new Date(), settings = defaultOperationalSettings) => {
+  // 서버/브라우저의 시스템 시간대와 무관하게 식당 기준인 Asia/Seoul 시각으로 판정합니다.
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
   }).formatToParts(now);
@@ -29,6 +34,7 @@ export const getAutomaticMealType = (now = new Date(), settings = defaultOperati
 };
 
 export const getManualMealState = (availability, menuItems = [], closureNote = "") => {
+  // 제공 상태에는 메뉴가 필수지만, 미제공·휴무는 메뉴를 비워 이전 데이터가 노출되지 않게 합니다.
   const items = menuItems.map((item) => String(item ?? "").trim()).filter(Boolean);
   if (availability === "provided") {
     if (!items.length) throw new Error("제공 식단의 메뉴를 입력해주세요.");

@@ -1,6 +1,10 @@
 import { appSettings, sampleMeals } from "./sample-data.js";
 import { getSupabaseClient } from "./supabase-client.js";
 
+/**
+ * Supabase의 관계형 식단 응답을 화면 공통 모델로 변환하고 메모리에 캐시합니다.
+ * 연결 실패나 지연 시에는 사용자 화면을 비우지 않고 sampleMeals로 안전하게 대체합니다.
+ */
 let cachedMeals = sampleMeals;
 let dataMode = "preview";
 
@@ -11,6 +15,7 @@ const withTimeout = (promise, timeoutMs, message) => Promise.race([
   new Promise((_, reject) => window.setTimeout(() => reject(new Error(message)), timeoutMs)),
 ]);
 
+// DB 컬럼명과 조인 결과를 UI가 이해하는 camelCase 구조로 한 곳에서 정규화합니다.
 const mapMeal = (record) => ({
   id: record.id,
   date: record.meal_date,

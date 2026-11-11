@@ -1,3 +1,7 @@
+/**
+ * 식단 데이터를 카카오 커스텀 템플릿 인자로 변환합니다.
+ * 메뉴명은 중간에서 자르지 않고 사용자에게 보이는 Unicode 글자 단위로 24자 제한을 검증합니다.
+ */
 const MAX_LINE_LENGTH = 24;
 const segmenter = typeof Intl.Segmenter === "function"
   ? new Intl.Segmenter("ko", { granularity: "grapheme" })
@@ -33,6 +37,7 @@ export const formatKakaoMenuText = (items) => {
 };
 
 export const formatKakaoMenuVariables = (items) => {
+  // 템플릿의 두 본문 변수에 모든 메뉴가 유지되도록 완성된 줄 단위로 균형 분배합니다.
   const menus = normalizeMenus(items);
   if (!menus.length) throw new Error("공유할 메뉴가 없습니다.");
   if (menus.length === 1) return { menuText2: menus[0], menuText: "" };

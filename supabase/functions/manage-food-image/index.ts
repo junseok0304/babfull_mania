@@ -1,5 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+/**
+ * 관리자의 메뉴 대표 사진 검색·선택·크롭 설정을 처리합니다.
+ * 검색 후보는 서명된 단기 토큰으로 다시 검증해 클라이언트가 임의 이미지 URL을 저장하지 못하게 합니다.
+ */
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -57,6 +61,7 @@ const importSigningKey = (secret: string) => crypto.subtle.importKey(
 );
 
 const createCandidateToken = async (secret: string, foodId: number, candidate: ImageCandidate) => {
+  // 후보 URL과 만료 시각에 HMAC 서명을 붙여 검색 결과가 저장 요청 사이에 바뀌지 않게 합니다.
   const payload: CandidateTokenPayload = { ...candidate, foodId, expiresAt: Date.now() + 15 * 60 * 1000 };
   const encodedPayload = toBase64Url(textEncoder.encode(JSON.stringify(payload)));
   const key = await importSigningKey(secret);

@@ -1,3 +1,4 @@
+/** 외부 서비스 없이도 화면과 관리자 데모를 확인할 수 있도록 서울 날짜 기준의 예시 식단·운영 설정을 생성합니다. */
 const formatDateKey = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");

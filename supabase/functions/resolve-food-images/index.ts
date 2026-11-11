@@ -1,5 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+/**
+ * 사용자 화면에 필요한 메뉴 대표 사진을 일괄 조회하고, 없는 항목만 제한된 동시성으로 검색합니다.
+ * 검수·저장된 사진을 우선 사용하므로 같은 메뉴가 표시될 때 결과가 매번 바뀌지 않습니다.
+ */
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -83,6 +87,7 @@ const curatedImages: Record<string, SearchDocument> = {
 };
 
 const mapConcurrent = async <T, R>(values: T[], concurrency: number, work: (value: T) => Promise<R>) => {
+  // 대량 식단에서도 이미지 검색 API의 호출량과 응답 지연을 제한합니다.
   const results = new Array<R>(values.length);
   let cursor = 0;
   await Promise.all(Array.from({ length: Math.min(concurrency, values.length) }, async () => {

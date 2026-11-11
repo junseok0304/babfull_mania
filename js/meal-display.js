@@ -5,6 +5,10 @@ import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-ima
 import { bindMealKakaoSharePicker } from "./kakao-share.js?v=20261101-4";
 import { getHorizontalSwipeDirection } from "./swipe-utils.js";
 
+/**
+ * 홈 화면의 주차 선택, 식사 카드, 식판 이미지와 열림 상태를 담당합니다.
+ * 날짜·배치·대체 화면 결정 함수는 export하여 브라우저 없이도 회귀 테스트할 수 있게 구성했습니다.
+ */
 const labels = { breakfast: "조식", lunch: "중식" };
 const icons = { breakfast: "☀️", lunch: "🍚" };
 const manualOpenState = new Map();
@@ -23,6 +27,7 @@ const getMonday = (date) => addDays(date, -((date.getDay() + 6) % 7));
 const getCurrentWeekdayIndex = (date) => Math.min((date.getDay() + 6) % 7, 4);
 
 export const resolveHomeWeek = (today, meals) => {
+  // 주말에는 다음 주 메뉴가 실제 등록된 경우에만 다음 주로 이동하고, 없으면 이번 주를 유지합니다.
   const currentMonday = getMonday(today);
   const isWeekend = [0, 6].includes(today.getDay());
   const nextMonday = addDays(currentMonday, 7);
@@ -107,6 +112,7 @@ const classifyMenu = (name) => {
 };
 
 export const arrangeTray = (items) => {
+  // 김치·장류를 별도 취급하지 않고 메뉴 순서와 식판의 사용 가능한 칸을 함께 고려합니다.
   const result = [];
   const remaining = [];
 
@@ -155,6 +161,7 @@ export const resolveHomeAvailability = (dateMeals, selectedDate) => {
 };
 
 export const resolveTrayPresentation = (displayMode, trayImage) => {
+  // 완성 식판이 없는 AI 모드에서도 빈 도형 대신 메뉴명 식판을 보여주는 대체 정책입니다.
   if (displayMode !== "ai") return "menu-images";
   return trayImage?.imageUrl ? "generated" : "menu-text";
 };
@@ -303,6 +310,7 @@ const bindCardToggles = (meals) => {
 };
 
 export const renderHomeMeals = async () => {
+  // 비동기 이미지/열량 조회 중 날짜가 바뀌면 이전 렌더 결과가 덮어쓰지 않도록 renderId를 비교합니다.
   const renderId = ++homeRenderId;
   const list = document.querySelector("#meal-list");
   const empty = document.querySelector("#meal-empty");

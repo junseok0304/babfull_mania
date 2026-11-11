@@ -1,6 +1,7 @@
 import { signInWithKakao } from "./auth.js";
 import { createCommunitySuggestion, loadCommunity, toggleCommunityNoticeLike } from "./community-service.js";
 
+/** 공지 배너·목록과 사용자 건의 폼을 렌더링하는 화면 모듈입니다. 모든 사용자 문자열은 출력 전에 이스케이프합니다. */
 const escapeHtml = (value) => String(value ?? "")
   .replaceAll("&", "&amp;")
   .replaceAll("<", "&lt;")

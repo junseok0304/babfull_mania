@@ -1,3 +1,4 @@
+/** 공지·건의 입력 검증과 공개 범위 판단을 모은 순수 함수 모듈입니다. */
 export const normalizeCommunityText = (value) => String(value ?? "").trim().replace(/\s+/gu, " ");
 
 export const validateSuggestion = ({ title, body, authorName }) => {

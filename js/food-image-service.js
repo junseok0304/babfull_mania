@@ -1,5 +1,9 @@
 import { getSupabaseClient } from "./supabase-client.js";
 
+/**
+ * 식단 메뉴의 검수된 대표 사진을 묶음 조회하고 이름 기준으로 캐시합니다.
+ * 운영 문구나 미제공 상태는 음식 검색에서 제외하며, 실패한 이미지는 다음 렌더에서 다시 조회할 수 있습니다.
+ */
 const imageCache = new Map();
 const pendingNames = new Set();
 

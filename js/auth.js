@@ -1,5 +1,9 @@
 import { getSupabaseClient } from "./supabase-client.js";
 
+/**
+ * Supabase Auth와 카카오 OAuth 사이의 최소 인증 어댑터입니다.
+ * 카카오 provider token은 공유 기능에 필요할 때만 현재 탭의 sessionStorage에 보관하며 영구 저장하지 않습니다.
+ */
 const KAKAO_PROVIDER_TOKEN_KEY = "babfull:kakao-provider-token";
 
 const rememberProviderToken = (session) => {
@@ -26,6 +30,7 @@ export const getAuthState = async () => {
 };
 
 export const signInWithKakao = async ({ returnRoute = "mypage", scopes } = {}) => {
+  // 인증 완료 뒤 원래 화면으로 돌아오기 위해 내부 라우트만 세션에 기억합니다.
   const client = await getSupabaseClient();
   if (!client) throw new Error("Supabase 설정이 필요합니다.");
   sessionStorage.setItem("babfull:post-auth-route", returnRoute);

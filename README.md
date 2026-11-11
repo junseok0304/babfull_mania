@@ -43,53 +43,60 @@
 
 ## 로컬에서 실행하기
 
-### 1. 준비물
+화면만 확인하려면 **1·2·6번**만 진행하면 됩니다. 카카오 로그인과 실제 데이터 저장까지 연결하려는 개발자는 전체 순서를 진행하세요.
 
-- Git
-- Node.js 20 이상과 npm
-- Python 3(정적 개발 서버 실행용)
+### 1. 코드 내려받기
 
-Supabase 계정 없이도 데모 모드로 주요 사용자·관리자 화면을 확인할 수 있습니다.
-
-### 2. 저장소 복제
+준비물은 Git, Node.js 20 이상, npm과 Python 3입니다.
 
 ```bash
 git clone https://github.com/junseok0304/babfull_mania.git
 cd babfull_mania
-```
-
-### 3. 카카오 검증 모듈 의존성 설치
-
-```bash
 npm --prefix babfull-kakao-link ci
 ```
 
-### 4. 개발 서버 실행
+### 2. 데모 화면 먼저 확인하기
 
 ```bash
 npm run dev
 ```
 
-브라우저에서 다음 주소를 엽니다.
-
 - 사용자 화면: `http://localhost:4173/?demo=1#home`
 - 관리자 데모: `http://localhost:4173/admin/?demo=1`
 
-`demo=1`은 외부 데이터베이스 없이 저장소의 시연 데이터로 UI와 주요 동작을 확인하는 모드입니다. 종료할 때는 실행 중인 터미널에서 `Ctrl+C`를 누릅니다.
-
-> `npm run dev`는 Python 3의 정적 서버를 사용합니다. Windows에서 `python3` 명령을 찾지 못하면 저장소 루트에서 `py -m http.server 4173`을 실행할 수 있습니다.
+`demo=1`은 외부 계정이나 데이터베이스 없이 시연 데이터로 UI를 확인하는 모드입니다. Windows에서 `python3` 명령을 찾지 못하면 저장소 루트에서 `py -m http.server 4173`을 실행하세요.
 
 ## 환경변수와 외부 서비스 연결
 
-실제 로그인, 데이터 저장, 식단 수집과 외부 API를 사용하려는 운영자만 아래 설정이 필요합니다. 데모 모드 이용자는 건너뛰어도 됩니다.
+아래 3~5번은 실제 로그인과 데이터 저장을 연결하는 운영자용 절차입니다. 데모 화면만 확인한다면 건너뛰어도 됩니다.
 
-### 브라우저용 Supabase 공개 설정
+### 3. 카카오 개발자 콘솔 설정하기
+
+1. 카카오 디벨로퍼스에서 애플리케이션을 만들고 **카카오 로그인**을 활성화합니다.
+2. 로컬 주소와 실제 서비스 주소를 웹 도메인 및 Redirect URI에 등록합니다.
+3. 필요한 동의항목을 설정하고, 카카오톡 메시지 기능을 시험한다면 `talk_message` 권한과 메시지 템플릿을 준비합니다.
+4. 브라우저 공유에는 **JavaScript 키**, 서버의 OAuth 교환에는 **REST API 키**를 용도에 맞게 사용합니다.
+
+로그인 사용자 액세스 토큰은 정상적인 OAuth 흐름으로 발급받아야 하며 REST API 키를 사용자 토큰처럼 사용하면 안 됩니다. 이 프로젝트의 일반 공유 기능은 카카오 공식 공유창을 사용하므로 **카카오 Admin 키가 필요하지 않습니다.** Admin 키를 HTML, JavaScript 또는 공개 저장소에 입력하지 마세요.
+
+### 4. 카카오 로컬 검증 모듈 설정하기
+
+```bash
+cp babfull-kakao-link/.env.example babfull-kakao-link/.env
+```
+
+예시 파일에 설명된 공개 앱 정보와 로컬 Redirect URI를 자신의 앱 설정에 맞게 작성합니다. 토큰은 로그에 출력하거나 Git에 커밋하지 않습니다. `babfull-kakao-link`는 공식 '나에게 보내기'와 공유 템플릿을 로컬에서 검증하기 위한 별도 모듈입니다.
+
+### 5. Supabase 프로젝트 연결하기
+
+1. Supabase 프로젝트를 만든 뒤 프로젝트 URL과 공개용 anon key를 확인합니다.
+2. 공개 설정 예시를 복사합니다.
 
 ```bash
 cp js/config.example.json js/config.local.json
 ```
 
-`js/config.local.json`에 본인의 Supabase 프로젝트 URL과 공개용 anon key를 입력합니다.
+3. `js/config.local.json`에 자신의 공개 설정만 입력합니다.
 
 ```json
 {
@@ -98,18 +105,30 @@ cp js/config.example.json js/config.local.json
 }
 ```
 
-anon key는 브라우저 사용을 전제로 한 공개 키이지만, 데이터 보호는 반드시 Supabase RLS 정책으로 보장해야 합니다. service role key는 이 파일이나 프론트엔드 코드에 넣으면 안 됩니다.
+4. 새 프로젝트라면 `supabase/migrations/`을 번호순으로 검토·적용하고 Auth의 카카오 공급자를 연결합니다.
+5. Edge Function을 사용할 때만 service role key와 외부 API 키를 Supabase 서버 비밀값으로 등록합니다.
 
-### 서버·Edge Function 비밀값
+anon key는 브라우저 사용을 전제로 하지만 접근 권한은 반드시 RLS 정책으로 제한해야 합니다. **service role key, 카카오 Client Secret, OAuth 토큰은 `js/config.local.json`이나 프론트엔드 코드에 넣지 마세요.**
+
+### 6. 로컬 서비스 실행하기
+
+설정 후 다시 개발 서버를 실행하고 `http://localhost:4173/#home`을 엽니다.
+
+```bash
+npm run dev
+```
+
+Supabase 공개 설정을 읽지 못하거나 응답이 지연되면 사용자 화면은 예시 데이터로 대체됩니다. 종료할 때는 실행 중인 터미널에서 `Ctrl+C`를 누릅니다.
+
+### 7. 비밀값과 배포 설정 확인하기
+
+서버 환경변수가 필요하면 예시 파일을 복사해 자신의 로컬 환경이나 배포 서비스의 환경변수 화면에서만 관리합니다.
 
 ```bash
 cp .env.example .env
-cp babfull-kakao-link/.env.example babfull-kakao-link/.env
 ```
 
-각 예시 파일의 설명에 따라 본인이 발급받은 키를 입력합니다. `.env`, `js/config.local.json`, 토큰과 비밀번호는 Git 추적 대상에서 제외되어 있습니다. 외부 서비스의 Redirect URI와 웹 도메인도 자신의 로컬·배포 주소에 맞게 등록해야 합니다.
-
-Supabase를 새로 구성하는 경우 `supabase/migrations/`을 시간순으로 적용하고, 필요한 Edge Function을 자신의 프로젝트에 배포해야 합니다. 운영 데이터나 기존 프로젝트에 적용하기 전에는 SQL과 RLS 정책을 반드시 검토하세요.
+`.env`, `js/config.local.json`, 토큰과 비밀번호는 Git 추적 대상에서 제외되어 있습니다. 배포 전에는 Redirect URI, 허용 도메인, Supabase RLS와 Edge Function 비밀값을 다시 확인하세요. 실제 운영 DB에 마이그레이션을 적용하기 전에는 SQL 내용을 먼저 검토해야 합니다.
 
 ## 테스트
 
@@ -169,6 +188,17 @@ npm run test:assignment # 과제 캡처용 PASSED 배너 포함 테스트
 3. 영양성분 데이터를 메뉴별 기준 제공량으로 환산해 예상 열량을 함께 저장합니다.
 4. 관리자가 검수한 메뉴 사진 또는 완성 식판 이미지를 연결합니다.
 5. 사용자 화면이 공개 식단, 이미지, 공지 데이터를 조회해 반응형 UI로 표시합니다.
+
+## 주간 식판 이미지 생성 스킬
+
+저장소의 `skills/babfull-weekly-trays/`에는 등록된 주간 메뉴만 사용해 완성 식판 이미지를 만드는 작업 지침이 포함돼 있습니다.
+
+1. 해당 주차의 조식·중식이 정확히 등록됐는지 먼저 확인합니다.
+2. GitHub Copilot 채팅에서 `babfull-weekly-trays` 스킬을 지정해 주간 식판 이미지 생성을 요청합니다.
+3. 생성 결과에 누락된 음식이나 메뉴에 없는 음식이 없는지 사람이 검수합니다.
+4. 검수를 통과한 이미지만 날짜·식사에 연결해 업로드합니다.
+
+이미지는 화면 요청마다 생성하지 않고 로컬에서 미리 제작한 뒤 업로드합니다. 이를 통해 이미지 생성 API 비용과 사용자 대기시간을 줄이고, 운영 전에 결과 품질을 확인할 수 있습니다. 구체적인 생성·검수 규칙은 스킬 문서를 따르며 인증정보는 프롬프트에 입력하지 않습니다.
 
 ## 운영 및 보안 유의사항
 

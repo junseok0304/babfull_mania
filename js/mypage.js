@@ -1,6 +1,10 @@
 import { getAuthState, loadMyPageData, signInWithKakao, signOut } from "./auth.js";
 import { deleteOwnCommunitySuggestion, loadOwnCommunitySuggestions } from "./community-service.js";
 
+/**
+ * 로그인 상태에 따라 마이페이지의 QR, 이용 기록과 본인 건의사항을 렌더링합니다.
+ * 데모 데이터와 운영 데이터를 같은 템플릿에 전달해 두 모드의 UI 동작을 일치시킵니다.
+ */
 const demoData = {
   profile: {
     id: "demo-user",
@@ -95,6 +99,7 @@ const dashboardTemplate = ({ profile, usages, suggestions = [], suggestionsUnava
 };
 
 const renderQr = async (token) => {
+  // QR에는 이름·카카오 계정 대신 서버가 발급한 식별 토큰만 인코딩합니다.
   const target = document.querySelector("#qr-code");
   try {
     const QRCode = await import("https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm");

@@ -1,5 +1,9 @@
 import { getSupabaseClient } from "./supabase-client.js";
 
+/**
+ * 식사별 예상 열량을 저장값 → 원격 계산값 → 로컬 예시값 순으로 제공합니다.
+ * 원격 조회 실패가 식단 전체 렌더링을 막지 않도록 결과를 캐시하고 단계적으로 대체합니다.
+ */
 const mealCache = new Map();
 
 // API 키가 없는 로컬 시연에서도 레이아웃을 확인할 수 있는 1회 제공량 기준 예시값입니다.
@@ -21,6 +25,7 @@ const localCalories = {
 const itemName = (item) => typeof item === "string" ? item : item.name;
 
 const persistedEstimate = (meal) => {
+  // 관리 시점에 저장된 메뉴별 열량이 있으면 외부 API를 다시 호출하지 않습니다.
   const items = meal.menuItems ?? [];
   const matched = items.filter((item) => Number.isFinite(item.estimatedCalories));
   if (!matched.length) return null;

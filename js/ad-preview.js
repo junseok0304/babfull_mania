@@ -1,3 +1,4 @@
+/** 로컬에서만 광고 영역의 반응형 크기와 겹침을 확인하는 시각적 미리보기입니다. 실제 광고 요청은 보내지 않습니다. */
 const isLocalhost = () => ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
 export const initLocalAdPreview = () => {

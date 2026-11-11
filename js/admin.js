@@ -3,6 +3,13 @@ import { getSupabaseClient } from "./supabase-client.js";
 import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState, isDuplicateMealUsageError, normalizeKakaoShareStats, shouldShowClosureReason } from "./admin-utils.js?v=20261104-1";
 import { initAdminCommunity } from "./admin-community.js?v=20261103-1";
 
+/**
+ * 관리자 콘솔의 화면 전환과 운영 작업을 연결하는 진입 모듈입니다.
+ * 계산·검증처럼 DOM과 무관한 규칙은 admin-utils.js에 두고, 이 파일은
+ * Supabase 조회, 폼 이벤트, QR 스캐너와 화면 렌더링을 조정합니다.
+ */
+
+// 현재 관리 화면에서 공유하는 세션·운영 상태입니다. 데모 모드에서는 원격 DB를 변경하지 않습니다.
 const titles = { dashboard: "대시보드", meals: "식단 관리", community: "공지·건의 관리", scanner: "QR 스캐너", users: "사용자 관리", usages: "이용 내역", settings: "운영 설정" };
 let adminMode = "demo";
 let meals = [...sampleMeals];
@@ -30,6 +37,7 @@ const demoQrToken = "00000000-0000-4000-8000-000000000001";
 let dashboardStats = buildDashboardSummary();
 let dashboardKakaoShares = [];
 
+// 사용자 입력이나 DB 문자열을 innerHTML에 넣기 전에 이 함수를 거쳐 XSS를 방지합니다.
 const escapeHtml = (value) => String(value ?? "")
   .replaceAll("&", "&amp;")
   .replaceAll("<", "&lt;")
@@ -53,6 +61,7 @@ const route = (nextRoute) => {
 
 const mealLabel = (type) => type === "breakfast" ? "조식" : "중식";
 
+// ── 대시보드·식단·대표 이미지 관리 ──────────────────────────────────────
 const updateFoodImageMenuNavigator = () => {
   const count = foodImageMenuNames.length;
   foodImageMenuIndex = count ? (foodImageMenuIndex + count) % count : 0;
@@ -436,6 +445,8 @@ const initializeAdmin = async () => {
   return true;
 };
 
+// ── QR 스캐너와 식권 이용 처리 ──────────────────────────────────────────
+// 스캔 성공 직후 scanBusy를 유지해 동일 QR이 연속 프레임에서 중복 처리되는 것을 막습니다.
 const loadScannerLibrary = () => new Promise((resolve, reject) => {
   if (window.Html5Qrcode) return resolve(window.Html5Qrcode);
   const script = document.createElement("script");
@@ -609,6 +620,7 @@ document.querySelector("#manual-token-form").addEventListener("submit", async (e
   }, 1600);
 });
 
+// ── 사용자·운영 설정·이용 기록 관리 ─────────────────────────────────────
 const userTypeLabel = (type) => ({ student: "학생", faculty: "교원", staff: "직원", other: "기타" })[type] || "기타";
 
 const renderUsers = async () => {
@@ -834,6 +846,8 @@ document.querySelector("#menu-sync").addEventListener("click", async (event) => 
   }
 });
 
+// ── 관리자 이벤트 바인딩과 식단 저장 ────────────────────────────────────
+// 저장 전 getManualMealState에서 제공/미제공/휴무 상태를 정규화해 빈 제공 식단을 차단합니다.
 const saveMeal = async (payload) => {
   if (adminMode === "demo") {
     const id = `${payload.mealDate}-${payload.mealType}`;

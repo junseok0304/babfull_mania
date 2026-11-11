@@ -5,6 +5,7 @@ import {
   loadCommunity,
 } from "./community-service.js";
 
+/** 관리자 공지·건의 탭의 목록 렌더링과 등록·삭제 이벤트를 연결합니다. 권한 검증과 저장은 서비스/DB 계층이 담당합니다. */
 const escapeHtml = (value) => String(value ?? "")
   .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
   .replaceAll('"', "&quot;").replaceAll("'", "&#039;");

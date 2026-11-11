@@ -2,6 +2,10 @@ import { formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
 import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
 
+/**
+ * 주간 식단, 월간 달력과 메뉴 검색 화면을 렌더링합니다.
+ * 세 화면은 동일한 식단 캐시와 열량 캐시를 사용해 화면마다 결과가 달라지는 것을 방지합니다.
+ */
 const mealLabels = { breakfast: "조식", lunch: "중식" };
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 let weekOffset = 0;
@@ -139,6 +143,7 @@ const renderCalendar = () => {
 const normalizeSearch = (value) => value.toLocaleLowerCase("ko-KR").replaceAll(/\s+/g, "").replaceAll("까스", "가스");
 
 const highlightSearchMatch = (value, query) => {
+  // 원문을 HTML 이스케이프한 뒤 일치 구간만 mark로 감싸 검색어가 태그로 해석되지 않게 합니다.
   const source = String(value);
   const normalizedQuery = normalizeSearch(query.trim());
   if (!normalizedQuery) return escapeHtml(source);
