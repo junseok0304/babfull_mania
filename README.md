@@ -30,13 +30,36 @@
 - **관리자 콘솔**: 식단, 제공 여부, 가격, 메뉴 사진, 공지, 사용자와 이용 기록을 관리합니다.
 - **QR 정기권 실험 기능**: 개인 QR 인식과 이용 기록 흐름을 운영 테스트할 수 있습니다.
 
+## 실행 화면
 
-<img width="1123" height="723" alt="스크린샷 2026-11-11 오후 4 48 32" src="https://github.com/user-attachments/assets/ae80849c-fe81-4d3e-9759-1ac212e5d0a4" />
-<img width="1187" height="831" alt="스크린샷 2026-11-11 오후 4 48 18" src="https://github.com/user-attachments/assets/9a49d607-aea6-4813-94f2-31d6cf5b7c39" />
-<img width="498" height="773" alt="스크린샷 2026-11-11 오후 4 48 05" src="https://github.com/user-attachments/assets/9ecc3a27-a7fb-4b7e-8641-d4ce75a4cc97" />
-<img width="497" height="833" alt="스크린샷 2026-11-11 오후 4 47 42" src="https://github.com/user-attachments/assets/947f7253-8293-4bc4-8e65-d163a8bfef72" />
-<img width="342" height="335" alt="스크린샷 2026-11-11 오후 4 47 30" src="https://github.com/user-attachments/assets/b13fd38d-6483-49f0-bea3-46a016123a2d" />
-
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img width="100%" alt="PC 주간 식단 화면" src="https://github.com/user-attachments/assets/ae80849c-fe81-4d3e-9759-1ac212e5d0a4" /><br />
+      <sub><b>주간 식단과 예상 열량</b></sub>
+    </td>
+    <td width="50%" align="center">
+      <img width="100%" alt="PC 월간 메뉴 화면" src="https://github.com/user-attachments/assets/9a49d607-aea6-4813-94f2-31d6cf5b7c39" /><br />
+      <sub><b>월간 메뉴 탐색</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img width="100%" alt="모바일 메뉴 검색 화면" src="https://github.com/user-attachments/assets/9ecc3a27-a7fb-4b7e-8641-d4ce75a4cc97" /><br />
+      <sub><b>모바일 메뉴 검색</b></sub>
+    </td>
+    <td width="50%" align="center">
+      <img width="100%" alt="모바일 오늘의 식단 화면" src="https://github.com/user-attachments/assets/947f7253-8293-4bc4-8e65-d163a8bfef72" /><br />
+      <sub><b>모바일 식판 이미지</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img width="420" alt="카카오톡 식단 공유 결과" src="https://github.com/user-attachments/assets/b13fd38d-6483-49f0-bea3-46a016123a2d" /><br />
+      <sub><b>카카오톡 식단 카드 공유</b></sub>
+    </td>
+  </tr>
+</table>
 
 ## 기술 구성
 
