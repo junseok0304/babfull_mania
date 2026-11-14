@@ -1,7 +1,7 @@
 import { formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
 import { getSupabaseClient } from "./supabase-client.js";
 import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState, isDuplicateMealUsageError, normalizeKakaoShareStats, shouldShowClosureReason } from "./admin-utils.js?v=20261104-1";
-import { initAdminCommunity } from "./admin-community.js?v=20261114-1";
+import { initAdminCommunity } from "./admin-community.js?v=20261115-1";
 
 /**
  * 관리자 콘솔의 화면 전환과 운영 작업을 연결하는 진입 모듈입니다.
@@ -1299,6 +1299,10 @@ document.querySelector("#admin-menu-button").addEventListener("click", () => {
   const open = !sidebar.classList.contains("is-open");
   sidebar.classList.toggle("is-open", open);
   document.querySelector("#admin-menu-button").setAttribute("aria-expanded", String(open));
+});
+document.querySelector("#admin-menu-close").addEventListener("click", () => {
+  document.querySelector(".admin-sidebar").classList.remove("is-open");
+  document.querySelector("#admin-menu-button").setAttribute("aria-expanded", "false");
 });
 
 document.querySelector("#tray-image-meal").addEventListener("change", () => {

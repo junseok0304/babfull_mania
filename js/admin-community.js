@@ -20,6 +20,8 @@ let notices = [];
 let suggestions = [];
 let noticePage = 1;
 const noticePageSize = 5;
+let suggestionPage = 1;
+const suggestionPageSize = 6;
 
 const renderNotices = () => {
   const target = document.querySelector("#admin-notice-list");
@@ -40,11 +42,22 @@ const renderNotices = () => {
 
 const renderSuggestions = () => {
   const target = document.querySelector("#admin-suggestion-list");
-  target.innerHTML = suggestions.length ? suggestions.map((suggestion) => `<article class="admin-suggestion-item${suggestion.isPrivate ? " is-private" : ""}">
+  const summary = document.querySelector("#admin-suggestion-summary");
+  const pagination = document.querySelector("#admin-suggestion-pagination");
+  const pageCount = Math.max(1, Math.ceil(suggestions.length / suggestionPageSize));
+  suggestionPage = Math.min(suggestionPage, pageCount);
+  const pageSuggestions = suggestions.slice((suggestionPage - 1) * suggestionPageSize, suggestionPage * suggestionPageSize);
+  const privateCount = suggestions.filter((suggestion) => suggestion.isPrivate).length;
+  summary.innerHTML = `<span><strong>${suggestions.length}</strong> 전체 접수</span><span><strong>${privateCount}</strong> 운영진 전용</span><span><strong>${suggestions.length - privateCount}</strong> 공개</span>`;
+  target.innerHTML = pageSuggestions.length ? pageSuggestions.map((suggestion) => `<article class="admin-suggestion-item${suggestion.isPrivate ? " is-private" : ""}">
     <div class="admin-suggestion-item__top"><span>${suggestion.isPrivate ? "운영진 전용" : "공개 건의"}</span><time>${escapeHtml(formatDateTime(suggestion.createdAt))}</time></div>
     <h3>${escapeHtml(suggestion.title)}</h3><p>${escapeHtml(suggestion.body)}</p>
     <footer><strong>${escapeHtml(suggestion.authorName)}</strong><div class="admin-suggestion-actions"><button class="secondary-button" type="button" data-toggle-suggestion-privacy="${suggestion.id}" aria-label="${suggestion.isPrivate ? "공개 건의로 전환" : "운영진 전용으로 전환"}">${suggestion.isPrivate ? "공개로 전환" : "비공개로 전환"}</button><button class="secondary-button" type="button" data-delete-suggestion="${suggestion.id}">삭제</button></div></footer>
   </article>`).join("") : '<div class="admin-community-empty">접수된 건의사항이 없습니다.</div>';
+  pagination.innerHTML = suggestions.length > suggestionPageSize ? `
+    <button type="button" data-suggestion-page="${suggestionPage - 1}"${suggestionPage === 1 ? " disabled" : ""}>이전</button>
+    <span>${suggestionPage} / ${pageCount}</span>
+    <button type="button" data-suggestion-page="${suggestionPage + 1}"${suggestionPage === pageCount ? " disabled" : ""}>다음</button>` : "";
 };
 
 const refresh = async () => {
@@ -135,6 +148,14 @@ export const initAdminCommunity = async (options) => {
     button.disabled = true;
     await deleteCommunitySuggestion({ ...context, suggestionId: Number(button.dataset.deleteSuggestion) });
     await refresh();
+  });
+
+  document.querySelector("#admin-suggestion-pagination").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-suggestion-page]");
+    if (!button || button.disabled) return;
+    suggestionPage = Number(button.dataset.suggestionPage);
+    renderSuggestions();
+    document.querySelector("#admin-suggestion-summary")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   await refresh();

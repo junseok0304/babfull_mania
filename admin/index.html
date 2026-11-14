@@ -8,16 +8,16 @@
     <title>밥풀매니아 관리자</title>
     <link rel="icon" type="image/png" href="../asset/밥풀매니아_로고.png?v=20261026" />
     <link rel="stylesheet" href="../css/global.css?v=20261023-3" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261114-7" />
-    <script type="module" src="../js/admin.js?v=20261114-7"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261115-1" />
+    <script type="module" src="../js/admin.js?v=20261115-1"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
       <aside class="admin-sidebar">
-        <a class="admin-brand" href="../index.html">
+        <div class="admin-sidebar__top"><a class="admin-brand" href="../index.html">
           <img src="../asset/밥풀매니아_로고_긴버전.png" alt="밥풀매니아" />
           <span>관리자</span>
-        </a>
+        </a><button id="admin-menu-close" type="button" aria-label="관리자 메뉴 닫기">×</button></div>
         <nav class="admin-nav" aria-label="관리자 메뉴">
           <a href="#dashboard" class="is-active" data-admin-route="dashboard">대시보드</a>
           <a href="#meals" data-admin-route="meals">식단 관리</a>
@@ -153,13 +153,15 @@
           <section class="admin-card admin-suggestion-card">
             <div class="admin-card__heading"><div><p class="section-kicker">학생 의견</p><h2>건의사항 접수함</h2></div></div>
             <p class="usage-admin-help">공개 건의와 비밀 건의를 함께 확인합니다. 운영진은 접수된 글을 공개 또는 운영진 전용으로 전환할 수 있습니다.</p>
+            <div class="admin-suggestion-summary" id="admin-suggestion-summary" aria-live="polite"></div>
             <div class="admin-suggestion-list" id="admin-suggestion-list"><div class="admin-community-empty">건의사항을 불러오고 있어요.</div></div>
+            <nav class="admin-community-pagination" id="admin-suggestion-pagination" aria-label="건의사항 목록 페이지"></nav>
           </section>
         </section>
 
         <section class="admin-view" data-admin-view="scanner">
           <section class="scanner-kiosk">
-              <header class="scanner-kiosk__header"><h2>정기권 인증</h2><div class="scanner-server-status"><span></span>서버 연결됨</div><button class="scanner-kiosk__detail" id="scanner-details-open" type="button">운영 상세</button><button class="scanner-kiosk__exit" id="scanner-exit-open" type="button">운영 화면으로</button></header>
+              <header class="scanner-kiosk__header"><div class="scanner-kiosk__brand"><img src="../asset/밥풀매니아_로고_긴버전.png" alt="밥풀매니아" /><h2>밥풀 정기권 사용</h2></div><div class="scanner-server-status"><span></span>서버 연결됨</div><button class="scanner-kiosk__detail" id="scanner-details-open" type="button">운영 상세</button><button class="scanner-kiosk__exit" id="scanner-exit-open" type="button">운영 화면으로</button></header>
               <div class="scanner-workspace">
                 <section class="scanner-camera-column">
                   <div class="scanner-camera-heading"><span>QR 스캔</span><strong>QR을 네모 안에 맞춰 주세요</strong></div>
