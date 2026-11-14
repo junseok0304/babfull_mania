@@ -666,11 +666,14 @@
 
 .search-results {
   display: grid;
+  min-width: 0;
   gap: 9px;
 }
 
 .search-result {
   display: grid;
+  min-width: 0;
+  max-width: 100%;
   padding: 15px 16px;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -679,6 +682,11 @@
   border-radius: 15px;
   background: var(--surface);
   box-shadow: var(--shadow-sm);
+}
+
+/* nowrap 메뉴 문자열이 그리드의 최소 너비를 키워 모바일 화면을 밀어내지 않게 한다. */
+.search-result > div:first-child {
+  min-width: 0;
 }
 
 .search-result strong {
@@ -723,7 +731,13 @@
 .search-result__meta .calorie-badge { white-space: nowrap; }
 
 @media (max-width: 520px) {
-  .search-result { grid-template-columns: 1fr; }
+  .search-result { grid-template-columns: minmax(0, 1fr); }
+  .search-result p {
+    overflow-wrap: anywhere;
+    line-height: 1.55;
+    text-overflow: clip;
+    white-space: normal;
+  }
   .search-result__meta { justify-content: flex-start; }
 }
 
