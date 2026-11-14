@@ -61,7 +61,7 @@ export const initializeData = async () => {
       .select("id, meal_date, meal_type, is_published, is_operating, admin_note, meal_tray_images(image_url, alt_text), meal_items(display_order, original_menu_text, serving_grams, estimated_calories, nutrition_matched_name, nutrition_source, nutrition_updated_at, foods(original_name))")
       .eq("is_published", true)
       .order("meal_date", { ascending: true }),
-    client.from("app_settings").select("setting_key, setting_value").in("setting_key", ["meal_hours", "meal_prices", "tray_display_mode"]),
+    client.from("app_settings").select("setting_key, setting_value").in("setting_key", ["meal_hours", "meal_prices"]),
     ]), 7000, "식단 조회 시간을 초과했습니다.");
   } catch (error) {
     console.warn("공개 식단 조회가 지연되어 예시 데이터를 사용합니다.");
@@ -86,8 +86,9 @@ export const initializeData = async () => {
       breakfastPrice: Number(value.breakfast ?? 1000),
       lunchPrice: Number(value.lunch ?? 5300),
     });
-    if (key === "tray_display_mode") appSettings.trayDisplayMode = value.mode === "ai" ? "ai" : "search";
   });
+  // 식판 제공 방식은 AI 이미지로 고정하며, 이미지가 없으면 meal-display가 텍스트 식판을 렌더링합니다.
+  appSettings.trayDisplayMode = "ai";
   dataMode = "supabase";
   return { mode: dataMode, meals: cachedMeals };
 };

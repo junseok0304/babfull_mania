@@ -3,6 +3,7 @@ import {
   deleteCommunityNotice,
   deleteCommunitySuggestion,
   loadCommunity,
+  updateCommunitySuggestionPrivacy,
 } from "./community-service.js";
 
 /** 관리자 공지·건의 탭의 목록 렌더링과 등록·삭제 이벤트를 연결합니다. 권한 검증과 저장은 서비스/DB 계층이 담당합니다. */
@@ -17,14 +18,24 @@ const formatDateTime = (value) => new Intl.DateTimeFormat("ko-KR", {
 let context = { client: null, mode: "demo", currentUserId: null };
 let notices = [];
 let suggestions = [];
+let noticePage = 1;
+const noticePageSize = 5;
 
 const renderNotices = () => {
   const target = document.querySelector("#admin-notice-list");
-  target.innerHTML = notices.length ? notices.map((notice) => `<article class="admin-community-item">
+  const pagination = document.querySelector("#admin-notice-pagination");
+  const pageCount = Math.max(1, Math.ceil(notices.length / noticePageSize));
+  noticePage = Math.min(noticePage, pageCount);
+  const pageNotices = notices.slice((noticePage - 1) * noticePageSize, noticePage * noticePageSize);
+  target.innerHTML = pageNotices.length ? pageNotices.map((notice) => `<article class="admin-community-item">
     ${notice.imageUrl ? `<img src="${escapeHtml(notice.imageUrl)}" alt="" />` : '<div class="admin-community-item__image">공지</div>'}
     <div><span>${notice.isFeatured ? "대표 배너" : "일반 공지"} · 좋아요 ${notice.likeCount}개</span><strong>${escapeHtml(notice.title)}</strong><p>${escapeHtml(notice.body)}</p><small>${escapeHtml(formatDateTime(notice.publishedAt))}</small></div>
     <button class="secondary-button" type="button" data-delete-notice="${notice.id}">삭제</button>
   </article>`).join("") : '<div class="admin-community-empty">등록한 공지사항이 없습니다.</div>';
+  pagination.innerHTML = notices.length > noticePageSize ? `
+    <button type="button" data-notice-page="${noticePage - 1}"${noticePage === 1 ? " disabled" : ""}>이전</button>
+    <span>${noticePage} / ${pageCount}</span>
+    <button type="button" data-notice-page="${noticePage + 1}"${noticePage === pageCount ? " disabled" : ""}>다음</button>` : "";
 };
 
 const renderSuggestions = () => {
@@ -32,7 +43,7 @@ const renderSuggestions = () => {
   target.innerHTML = suggestions.length ? suggestions.map((suggestion) => `<article class="admin-suggestion-item${suggestion.isPrivate ? " is-private" : ""}">
     <div class="admin-suggestion-item__top"><span>${suggestion.isPrivate ? "운영진 전용" : "공개 건의"}</span><time>${escapeHtml(formatDateTime(suggestion.createdAt))}</time></div>
     <h3>${escapeHtml(suggestion.title)}</h3><p>${escapeHtml(suggestion.body)}</p>
-    <footer><strong>${escapeHtml(suggestion.authorName)}</strong><button class="secondary-button" type="button" data-delete-suggestion="${suggestion.id}">삭제</button></footer>
+    <footer><strong>${escapeHtml(suggestion.authorName)}</strong><div class="admin-suggestion-actions"><button class="secondary-button" type="button" data-toggle-suggestion-privacy="${suggestion.id}" aria-label="${suggestion.isPrivate ? "공개 건의로 전환" : "운영진 전용으로 전환"}">${suggestion.isPrivate ? "공개로 전환" : "비공개로 전환"}</button><button class="secondary-button" type="button" data-delete-suggestion="${suggestion.id}">삭제</button></div></footer>
   </article>`).join("") : '<div class="admin-community-empty">접수된 건의사항이 없습니다.</div>';
 };
 
@@ -42,6 +53,7 @@ const refresh = async () => {
   suggestions = state.suggestions;
   renderNotices();
   renderSuggestions();
+  context.onSuggestionsChange?.(suggestions);
 };
 
 export const initAdminCommunity = async (options) => {
@@ -80,6 +92,7 @@ export const initAdminCommunity = async (options) => {
         title: values.get("title"), body: values.get("body"), isFeatured: values.get("is_featured") === "on", imageFile,
       });
       form.reset();
+      noticePage = 1;
       preview.innerHTML = "<span>사진을 선택하면 배너 미리보기가 표시됩니다.</span>";
       await refresh();
       message.textContent = "공지사항을 등록했습니다.";
@@ -100,7 +113,23 @@ export const initAdminCommunity = async (options) => {
     await refresh();
   });
 
+  document.querySelector("#admin-notice-pagination").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-notice-page]");
+    if (!button || button.disabled) return;
+    noticePage = Number(button.dataset.noticePage);
+    renderNotices();
+  });
+
   document.querySelector("#admin-suggestion-list").addEventListener("click", async (event) => {
+    const privacyButton = event.target.closest("[data-toggle-suggestion-privacy]");
+    if (privacyButton) {
+      const suggestion = suggestions.find((item) => item.id === Number(privacyButton.dataset.toggleSuggestionPrivacy));
+      if (!suggestion) return;
+      privacyButton.disabled = true;
+      await updateCommunitySuggestionPrivacy({ ...context, suggestionId: suggestion.id, isPrivate: !suggestion.isPrivate });
+      await refresh();
+      return;
+    }
     const button = event.target.closest("[data-delete-suggestion]");
     if (!button) return;
     button.disabled = true;

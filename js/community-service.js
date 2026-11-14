@@ -291,3 +291,16 @@ export const deleteCommunitySuggestion = async ({ client, mode, suggestionId }) 
   const { error } = await client.from("suggestions").delete().eq("id", suggestionId);
   if (error) throw error;
 };
+
+/** 관리자가 건의 공개 범위를 변경합니다. 공개 글은 전체 이용자에게, 비밀 글은 작성자와 운영진에게만 보입니다. */
+export const updateCommunitySuggestionPrivacy = async ({ client, mode, suggestionId, isPrivate }) => {
+  if (mode === "demo") {
+    const suggestions = parseStored(SUGGESTION_KEY, demoSuggestions).map((item) => (
+      item.id === suggestionId ? { ...item, isPrivate: Boolean(isPrivate) } : item
+    ));
+    saveStored(SUGGESTION_KEY, suggestions);
+    return;
+  }
+  const { error } = await client.from("suggestions").update({ is_private: Boolean(isPrivate) }).eq("id", suggestionId);
+  if (error) throw error;
+};

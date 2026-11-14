@@ -1,7 +1,7 @@
 import { formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
 import { getSupabaseClient } from "./supabase-client.js";
 import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState, isDuplicateMealUsageError, normalizeKakaoShareStats, shouldShowClosureReason } from "./admin-utils.js?v=20261104-1";
-import { initAdminCommunity } from "./admin-community.js?v=20261103-1";
+import { initAdminCommunity } from "./admin-community.js?v=20261114-1";
 
 /**
  * 관리자 콘솔의 화면 전환과 운영 작업을 연결하는 진입 모듈입니다.
@@ -10,7 +10,7 @@ import { initAdminCommunity } from "./admin-community.js?v=20261103-1";
  */
 
 // 현재 관리 화면에서 공유하는 세션·운영 상태입니다. 데모 모드에서는 원격 DB를 변경하지 않습니다.
-const titles = { dashboard: "대시보드", meals: "식단 관리", community: "공지·건의 관리", scanner: "QR 스캐너", users: "사용자 관리", usages: "이용 내역", settings: "운영 설정" };
+const titles = { dashboard: "대시보드", meals: "식단 관리", notices: "공지사항 관리", suggestions: "건의사항 관리", scanner: "QR 스캐너", users: "사용자 관리", usages: "이용 내역", settings: "운영 설정" };
 let adminMode = "demo";
 let meals = [...sampleMeals];
 let client = null;
@@ -36,6 +36,7 @@ const demoUsages = [];
 const demoQrToken = "00000000-0000-4000-8000-000000000001";
 let dashboardStats = buildDashboardSummary();
 let dashboardKakaoShares = [];
+let dashboardSuggestions = [];
 
 // 사용자 입력이나 DB 문자열을 innerHTML에 넣기 전에 이 함수를 거쳐 XSS를 방지합니다.
 const escapeHtml = (value) => String(value ?? "")
@@ -46,7 +47,9 @@ const escapeHtml = (value) => String(value ?? "")
   .replaceAll("'", "&#039;");
 
 const route = (nextRoute) => {
-  const safe = titles[nextRoute] ? nextRoute : "dashboard";
+  // 기존 #community 링크는 분리된 공지사항 관리 화면으로 안전하게 연결합니다.
+  const candidate = nextRoute === "community" ? "notices" : nextRoute;
+  const safe = titles[candidate] ? candidate : "dashboard";
   document.body.classList.toggle("is-scanner-mode", safe === "scanner");
   if (safe !== "scanner" && qrScanner?.isScanning) stopScanner();
   document.querySelectorAll("[data-admin-view]").forEach((view) => view.classList.toggle("is-active", view.dataset.adminView === safe));
@@ -129,6 +132,12 @@ const renderStats = () => {
       return `<div class="dashboard-share-row"><div><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.affiliation)} · 최근 ${escapeHtml(lastShared)}</span></div><b>${item.count.toLocaleString("ko-KR")}회</b></div>`;
     }).join("")}</div>`
     : '<p class="dashboard-empty">이번 달 카카오 공유창 실행 기록이 없습니다.</p>';
+
+  const suggestionTarget = document.querySelector("#dashboard-suggestions");
+  suggestionTarget.innerHTML = dashboardSuggestions.length ? dashboardSuggestions.slice(0, 5).map((item) => `<a href="#suggestions" data-admin-route="suggestions" class="dashboard-suggestion-row">
+    <div><span>${item.isPrivate ? "운영진 전용" : "공개 건의"}</span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.authorName)}</small></div>
+    <time>${escapeHtml(new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "short", day: "numeric" }).format(new Date(item.createdAt)))}</time>
+  </a>`).join("") : '<p class="dashboard-empty">최근 접수된 건의사항이 없습니다.</p>';
 };
 
 const loadDashboardStats = async () => {
@@ -157,7 +166,8 @@ const refreshDashboard = async () => {
 
 const syncFoodImageManagerVisibility = () => {
   const manager = document.querySelector("#food-image-manager");
-  if (manager) manager.hidden = operationalSettings.trayDisplayMode === "ai";
+  // 운영 화면은 AI 식판 이미지만 사용하므로 메뉴별 외부 사진 관리 도구는 노출하지 않습니다.
+  if (manager) manager.hidden = true;
 };
 
 const sortedMeals = () => [...meals].sort((a, b) => b.date.localeCompare(a.date) || a.type.localeCompare(b.type));
@@ -362,10 +372,9 @@ const loadSavedFoodImageNames = async () => {
 
 const loadOperationalSettings = async () => {
   if (!client) return;
-  const [{ data: hours }, { data: prices }, { data: trayMode }] = await Promise.all([
+  const [{ data: hours }, { data: prices }] = await Promise.all([
     client.from("app_settings").select("setting_value").eq("setting_key", "meal_hours").single(),
     client.from("app_settings").select("setting_value").eq("setting_key", "meal_prices").single(),
-    client.from("app_settings").select("setting_value").eq("setting_key", "tray_display_mode").maybeSingle(),
   ]);
   const value = hours?.setting_value ?? {};
   const priceValue = prices?.setting_value ?? {};
@@ -377,7 +386,7 @@ const loadOperationalSettings = async () => {
     scanBufferMinutes: Number(value.scan_buffer_minutes ?? defaultOperationalSettings.scanBufferMinutes),
     breakfastPrice: Number(priceValue.breakfast ?? defaultOperationalSettings.breakfastPrice),
     lunchPrice: Number(priceValue.lunch ?? defaultOperationalSettings.lunchPrice),
-    trayDisplayMode: trayMode?.setting_value?.mode === "ai" ? "ai" : "search",
+    trayDisplayMode: "ai",
   };
 };
 
@@ -625,8 +634,10 @@ const userTypeLabel = (type) => ({ student: "학생", faculty: "교원", staff: 
 
 const renderUsers = async () => {
   const target = document.querySelector("#user-admin-list");
+  const summary = document.querySelector("#user-admin-summary");
   if (!target) return;
   if (adminMode !== "supabase") {
+    summary.innerHTML = "";
     target.innerHTML = '<div class="scan-empty"><span>운영 데이터 연결이 필요합니다.</span></div>';
     return;
   }
@@ -638,13 +649,18 @@ const renderUsers = async () => {
     active_filter: status === "all" ? null : status === "active",
   });
   if (error) {
+    summary.innerHTML = "";
     target.innerHTML = `<p class="usage-admin-loading is-error">${escapeHtml(error.message)}</p>`;
     return;
   }
   if (!data?.length) {
+    summary.innerHTML = '<span><strong>0</strong>검색 결과</span>';
     target.innerHTML = '<div class="scan-empty"><span>조건에 맞는 사용자가 없습니다.</span></div>';
     return;
   }
+  const activeCount = data.filter((profile) => profile.is_active).length;
+  const adminCount = data.filter((profile) => profile.role === "admin").length;
+  summary.innerHTML = `<span><strong>${data.length.toLocaleString("ko-KR")}</strong>검색 결과</span><span><strong>${activeCount.toLocaleString("ko-KR")}</strong>활성 계정</span><span><strong>${adminCount.toLocaleString("ko-KR")}</strong>관리자</span>`;
   target.innerHTML = data.map((profile) => {
     const isSelf = profile.id === currentUserId;
     return `<form class="user-admin-item" data-user-id="${escapeHtml(profile.id)}">
@@ -696,8 +712,6 @@ const renderSettings = () => {
   form.elements.scan_buffer_minutes.value = operationalSettings.scanBufferMinutes;
   form.elements.breakfast_price.value = operationalSettings.breakfastPrice;
   form.elements.lunch_price.value = operationalSettings.lunchPrice;
-  const trayMode = form.querySelector(`input[name="tray_display_mode"][value="${operationalSettings.trayDisplayMode}"]`);
-  if (trayMode) trayMode.checked = true;
   form.querySelector("button[type=submit]").disabled = adminMode !== "supabase";
   syncFoodImageManagerVisibility();
 };
@@ -731,19 +745,24 @@ const updateUsage = async (usageId, date, type, status, note) => {
 
 const renderUsages = async () => {
   const target = document.querySelector("#usage-admin-list");
+  const selectedDate = document.querySelector("#usage-filter-form").elements.date.value;
+  const summary = document.querySelector("#usage-filter-summary");
   if (!target) return;
   target.innerHTML = '<p class="usage-admin-loading">이용 내역을 불러오고 있어요.</p>';
-  let records = demoUsages.map(normalizeUsage);
+  let records = demoUsages.map(normalizeUsage).filter((usage) => !selectedDate || usage.date === selectedDate);
   if (adminMode === "supabase") {
-    const { data, error } = await client.from("meal_usages")
+    let query = client.from("meal_usages")
       .select("id, user_id, meal_date, meal_type, price, status, correction_note, created_at, profiles!meal_usages_user_id_fkey(name, affiliation)")
       .order("created_at", { ascending: false }).limit(100);
+    if (selectedDate) query = query.eq("meal_date", selectedDate);
+    const { data, error } = await query;
     if (error) {
       target.innerHTML = `<p class="usage-admin-loading is-error">${escapeHtml(error.message)}</p>`;
       return;
     }
     records = (data ?? []).map(normalizeUsage);
   }
+  summary.textContent = selectedDate ? `${selectedDate} 이용 기록 ${records.length}건` : `최근 이용 기록 ${records.length}건`;
   if (!records.length) {
     target.innerHTML = '<div class="scan-empty"><span>아직 이용 기록이 없습니다.</span><p>QR을 인식하면 바로 이곳에 표시됩니다.</p></div>';
     return;
@@ -779,6 +798,14 @@ const renderUsages = async () => {
 };
 
 document.querySelector("#usage-refresh").addEventListener("click", renderUsages);
+document.querySelector("#usage-filter-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  renderUsages();
+});
+document.querySelector("#usage-filter-clear").addEventListener("click", () => {
+  document.querySelector("#usage-filter-form").reset();
+  renderUsages();
+});
 document.querySelector("#user-refresh").addEventListener("click", renderUsers);
 document.querySelector("#user-search-form").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -807,10 +834,6 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
       lunch_price: Number(values.get("lunch_price")),
     });
     if (priceError) throw priceError;
-    const { error: trayModeError } = await client.rpc("admin_update_tray_display_mode", {
-      target_mode: values.get("tray_display_mode"),
-    });
-    if (trayModeError) throw trayModeError;
     await loadOperationalSettings();
     syncFoodImageManagerVisibility();
     setScanDefaults();
@@ -1152,7 +1175,15 @@ document.querySelector("#food-image-workspace").addEventListener("click", async 
 document.querySelector("#meal-form").elements.meal_date.value = formatDateKey(getSeoulDate());
 const accessAllowed = await initializeAdmin();
 if (accessAllowed !== false) {
-  await initAdminCommunity({ client, mode: adminMode, currentUserId });
+  await initAdminCommunity({
+    client,
+    mode: adminMode,
+    currentUserId,
+    onSuggestionsChange: (items) => {
+      dashboardSuggestions = items;
+      renderStats();
+    },
+  });
   setScanDefaults();
   route(location.hash.slice(1));
   await refreshDashboard();
