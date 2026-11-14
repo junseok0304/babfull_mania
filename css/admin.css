@@ -1385,6 +1385,16 @@
   font-size: 11px;
 }
 
+.usage-admin-price {
+  display: grid;
+  min-width: 92px;
+  gap: 3px;
+}
+
+.usage-admin-price span { color: var(--secondary); font-size: 10px; font-weight: 750; }
+.usage-admin-price strong { color: var(--primary-dark); font-size: 15px; }
+.usage-admin-price.is-cancelled strong { color: #99908c; text-decoration: line-through; }
+
 .usage-admin-item input {
   width: 100%;
   min-width: 0;
@@ -1687,13 +1697,29 @@
 .usage-filter {
   display: grid;
   margin: 14px 0 16px;
-  grid-template-columns: minmax(180px, 260px) auto auto minmax(180px, 1fr);
+  grid-template-columns: 160px minmax(240px, 310px) auto auto minmax(180px, 1fr);
   align-items: end;
   gap: 9px;
 }
 
-.usage-filter label { display: grid; gap: 7px; color: #3f3f46; font-size: 15px; font-weight: 850; }
-.usage-filter input { width: 100%; height: 40px; padding: 0 10px; border: 1px solid var(--border); border-radius: 9px; background: white; font: inherit; }
+.usage-filter-mode {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 3px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f4f4f5;
+}
+
+.usage-filter-mode legend { margin-bottom: 7px; color: #3f3f46; font-size: 15px; font-weight: 850; }
+.usage-filter-mode label { display: block; }
+.usage-filter-mode input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.usage-filter-mode span { display: grid; min-height: 42px; place-items: center; border-radius: 9px; color: var(--secondary); font-size: 14px; font-weight: 850; cursor: pointer; }
+.usage-filter-mode input:checked + span { background: white; color: var(--primary-dark); box-shadow: 0 2px 8px rgb(75 48 38 / .12); }
+.usage-filter > label { display: grid; gap: 7px; color: #3f3f46; font-size: 15px; font-weight: 850; }
+.usage-filter > label > input { width: 100%; height: 40px; padding: 0 10px; border: 1px solid var(--border); border-radius: 9px; background: white; font: inherit; }
 .usage-filter > button { min-width: 94px; min-height: 46px; padding: 0 14px; }
 .usage-filter p { margin: 0 0 10px; justify-self: end; color: var(--secondary); font-size: 12px; font-weight: 700; }
 
@@ -1704,6 +1730,9 @@
 .admin-date-picker.is-open .admin-date-picker__button { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(190 83 45 / .12); }
 .admin-date-picker__calendar { position: absolute; z-index: 140; top: calc(100% + 8px); left: 0; display: none; width: min(480px, calc(100vw - 48px)); padding: 18px; border: 1px solid #ded2cc; border-radius: 18px; background: white; box-shadow: 0 22px 55px rgb(64 39 30 / .2); }
 .admin-date-picker.is-open .admin-date-picker__calendar { display: block; }
+.admin-calendar__modes { display: grid; margin-bottom: 12px; padding: 3px; grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: 11px; background: #f4f4f5; }
+.admin-calendar__modes button { min-width: 0; min-height: 40px; border: 0; border-radius: 9px; background: transparent; color: var(--secondary); font: inherit; font-size: 14px; font-weight: 850; cursor: pointer; }
+.admin-calendar__modes button.is-active { background: white; color: var(--primary-dark); box-shadow: 0 2px 8px rgb(75 48 38 / .12); }
 .admin-calendar__header { display: grid; margin-bottom: 12px; grid-template-columns: 48px 1fr 48px; align-items: center; }
 .admin-calendar__header strong { font-size: 20px; text-align: center; }
 .admin-calendar__header button { width: 44px; min-width: 44px; height: 44px; padding: 0; border: 0; border-radius: 11px; background: #fff3ed; color: var(--primary-dark); font-size: 30px; cursor: pointer; }
@@ -1715,8 +1744,19 @@
 .admin-calendar__days .is-outside { color: #bbb4b0; }
 .admin-calendar__days .is-today { box-shadow: inset 0 0 0 2px #e9a187; color: var(--primary-dark); }
 .admin-calendar__days .is-selected { background: var(--primary); box-shadow: none; color: white; }
+.admin-calendar__months { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.admin-calendar__months button { min-width: 0; min-height: 58px; border: 0; border-radius: 12px; background: #faf8f7; color: var(--text); font: inherit; font-size: 16px; font-weight: 850; cursor: pointer; }
+.admin-calendar__months button:hover { background: #fff1eb; color: var(--primary-dark); }
+.admin-calendar__months .is-today { box-shadow: inset 0 0 0 2px #e9a187; color: var(--primary-dark); }
+.admin-calendar__months .is-selected { background: var(--primary); box-shadow: none; color: white; }
 .admin-calendar__footer { display: flex; margin-top: 12px; justify-content: space-between; }
 .admin-calendar__footer button { min-width: 0; padding: 10px 12px; border: 0; border-radius: 9px; background: transparent; color: var(--primary-dark); font: inherit; font-size: 15px; font-weight: 900; cursor: pointer; }
+
+.usage-finance-summary { display: grid; margin: 0 0 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.usage-finance-summary > div { display: grid; min-height: 96px; padding: 15px 17px; align-content: center; gap: 3px; border: 1px solid #eaded8; border-radius: 14px; background: linear-gradient(145deg, #fff, #fff8f4); }
+.usage-finance-summary span { color: var(--secondary); font-size: 12px; font-weight: 800; }
+.usage-finance-summary strong { color: var(--primary-dark); font-size: 22px; letter-spacing: -.03em; }
+.usage-finance-summary small { color: #948680; font-size: 10px; }
 
 .user-admin-person strong,
 .user-admin-person span {
@@ -2141,7 +2181,7 @@
   }
 
   .usage-admin-item {
-    grid-template-columns: minmax(145px, 1fr) 132px 144px 120px minmax(135px, 1fr) auto;
+    grid-template-columns: minmax(145px, 1fr) 105px 132px 144px 120px minmax(135px, 1fr) auto;
     padding: 13px 15px;
   }
 
@@ -2428,9 +2468,11 @@
   .admin-community-item__image { width: 74px; height: 64px; }
   .admin-community-item .secondary-button { grid-column: 1 / -1; width: 100%; }
   .usage-filter { grid-template-columns: 1fr 1fr; }
-  .usage-filter label,
+  .usage-filter-mode,
+  .usage-filter > label,
   .usage-filter p { grid-column: 1 / -1; }
   .usage-filter p { margin: 0; justify-self: start; }
+  .usage-finance-summary { grid-template-columns: 1fr; }
   .user-search .primary-button { width: 100%; }
   .dashboard-suggestion-row > div { grid-template-columns: 1fr; gap: 3px; }
 }

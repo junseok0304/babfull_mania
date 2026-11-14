@@ -103,9 +103,12 @@ const enhanceAdminSelect = (select) => {
 };
 
 const dateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+const monthKey = (date) => dateKey(date).slice(0, 7);
 const enhanceUsageDatePicker = () => {
-  const input = document.querySelector('#usage-filter-form input[name="date"]');
-  if (!input || input.dataset.adminEnhanced === "true") return;
+  const form = document.querySelector("#usage-filter-form");
+  const input = form?.elements.date;
+  const monthInput = form?.elements.month;
+  if (!input || !monthInput || input.dataset.adminEnhanced === "true") return;
   input.dataset.adminEnhanced = "true";
   const picker = document.createElement("div");
   picker.className = "admin-date-picker";
@@ -116,23 +119,35 @@ const enhanceUsageDatePicker = () => {
   const calendar = document.createElement("div");
   calendar.className = "admin-date-picker__calendar";
   calendar.setAttribute("role", "dialog");
-  calendar.setAttribute("aria-label", "이용 날짜 선택");
+  calendar.setAttribute("aria-label", "이용 기간 선택");
   input.before(picker);
-  picker.append(input, button, calendar);
+  picker.append(input, monthInput, button, calendar);
   let visibleMonth = getSeoulDate();
+  const selectedMode = () => form.elements.period_mode.value;
 
   const updateButton = () => {
-    button.innerHTML = input.value
-      ? `<span>${escapeHtml(new Intl.DateTimeFormat("ko-KR", { dateStyle: "long" }).format(new Date(`${input.value}T12:00:00`)))}</span><b aria-hidden="true">▣</b>`
-      : '<span>날짜를 선택하세요</span><b aria-hidden="true">▣</b>';
+    const isMonth = selectedMode() === "month";
+    const value = isMonth ? monthInput.value : input.value;
+    const label = value
+      ? (isMonth ? `${value.slice(0, 4)}년 ${Number(value.slice(5, 7))}월` : new Intl.DateTimeFormat("ko-KR", { dateStyle: "long" }).format(new Date(`${value}T12:00:00`)))
+      : (isMonth ? "조회할 월을 선택하세요" : "조회할 날짜를 선택하세요");
+    button.innerHTML = `<span>${escapeHtml(label)}</span><b aria-hidden="true">▣</b>`;
   };
   const renderCalendar = () => {
     const year = visibleMonth.getFullYear();
     const month = visibleMonth.getMonth();
+    const modeTabs = `<div class="admin-calendar__modes"><button type="button" data-calendar-mode="day" class="${selectedMode() === "day" ? "is-active" : ""}">일별 조회</button><button type="button" data-calendar-mode="month" class="${selectedMode() === "month" ? "is-active" : ""}">월별 조회</button></div>`;
+    if (selectedMode() === "month") {
+      calendar.innerHTML = `${modeTabs}<div class="admin-calendar__header"><button type="button" data-calendar-move="-1" aria-label="이전 연도">‹</button><strong>${year}년</strong><button type="button" data-calendar-move="1" aria-label="다음 연도">›</button></div><div class="admin-calendar__months">${Array.from({ length: 12 }, (_, index) => {
+        const key = `${year}-${String(index + 1).padStart(2, "0")}`;
+        return `<button type="button" data-calendar-month="${key}" class="${key === monthInput.value ? "is-selected " : ""}${key === monthKey(getSeoulDate()) ? "is-today" : ""}">${index + 1}월</button>`;
+      }).join("")}</div><div class="admin-calendar__footer"><button type="button" data-calendar-clear>선택 해제</button><button type="button" data-calendar-today>이번 달</button></div>`;
+      return;
+    }
     const first = new Date(year, month, 1);
     const start = new Date(year, month, 1 - first.getDay());
     const days = Array.from({ length: 42 }, (_, index) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + index));
-    calendar.innerHTML = `<div class="admin-calendar__header"><button type="button" data-calendar-move="-1" aria-label="이전 달">‹</button><strong>${year}년 ${month + 1}월</strong><button type="button" data-calendar-move="1" aria-label="다음 달">›</button></div><div class="admin-calendar__weekdays">${["일", "월", "화", "수", "목", "금", "토"].map((day) => `<span>${day}</span>`).join("")}</div><div class="admin-calendar__days">${days.map((day) => {
+    calendar.innerHTML = `${modeTabs}<div class="admin-calendar__header"><button type="button" data-calendar-move="-1" aria-label="이전 달">‹</button><strong>${year}년 ${month + 1}월</strong><button type="button" data-calendar-move="1" aria-label="다음 달">›</button></div><div class="admin-calendar__weekdays">${["일", "월", "화", "수", "목", "금", "토"].map((day) => `<span>${day}</span>`).join("")}</div><div class="admin-calendar__days">${days.map((day) => {
       const key = dateKey(day);
       return `<button type="button" data-calendar-date="${key}" class="${day.getMonth() !== month ? "is-outside " : ""}${key === input.value ? "is-selected " : ""}${key === dateKey(getSeoulDate()) ? "is-today" : ""}">${day.getDate()}</button>`;
     }).join("")}</div><div class="admin-calendar__footer"><button type="button" data-calendar-clear>선택 해제</button><button type="button" data-calendar-today>오늘</button></div>`;
@@ -141,7 +156,8 @@ const enhanceUsageDatePicker = () => {
   input._refreshAdminDate = updateButton;
   button.addEventListener("click", (event) => {
     event.stopPropagation();
-    if (input.value) visibleMonth = new Date(`${input.value}T12:00:00`);
+    const value = selectedMode() === "month" ? monthInput.value : input.value;
+    if (value) visibleMonth = new Date(`${value}${value.length === 7 ? "-01" : ""}T12:00:00`);
     renderCalendar();
     const opening = !picker.classList.contains("is-open");
     closeAdminPopovers(opening ? picker : null);
@@ -149,18 +165,33 @@ const enhanceUsageDatePicker = () => {
   });
   calendar.addEventListener("click", (event) => {
     event.stopPropagation();
-    const move = event.target.closest("[data-calendar-move]");
-    if (move) {
-      visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + Number(move.dataset.calendarMove), 1);
+    const mode = event.target.closest("[data-calendar-mode]");
+    if (mode) {
+      form.elements.period_mode.value = mode.dataset.calendarMode;
+      updateButton();
       renderCalendar();
       return;
     }
-    if (event.target.closest("[data-calendar-today]")) input.value = dateKey(getSeoulDate());
-    else if (event.target.closest("[data-calendar-clear]")) input.value = "";
+    const move = event.target.closest("[data-calendar-move]");
+    if (move) {
+      const amount = Number(move.dataset.calendarMove) * (selectedMode() === "month" ? 12 : 1);
+      visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + amount, 1);
+      renderCalendar();
+      return;
+    }
+    if (event.target.closest("[data-calendar-today]")) {
+      if (selectedMode() === "month") monthInput.value = monthKey(getSeoulDate());
+      else input.value = dateKey(getSeoulDate());
+    } else if (event.target.closest("[data-calendar-clear]")) {
+      if (selectedMode() === "month") monthInput.value = "";
+      else input.value = "";
+    }
     else {
+      const month = event.target.closest("[data-calendar-month]");
       const day = event.target.closest("[data-calendar-date]");
-      if (!day) return;
-      input.value = day.dataset.calendarDate;
+      if (month) monthInput.value = month.dataset.calendarMonth;
+      else if (day) input.value = day.dataset.calendarDate;
+      else return;
     }
     updateButton();
     picker.classList.remove("is-open");
@@ -168,6 +199,10 @@ const enhanceUsageDatePicker = () => {
     // 날짜를 고르는 즉시 필터 폼을 제출해 별도의 '날짜 조회' 클릭을 줄입니다.
     input.form?.requestSubmit();
   });
+  form.querySelectorAll('input[name="period_mode"]').forEach((radio) => radio.addEventListener("change", () => {
+    updateButton();
+    if (picker.classList.contains("is-open")) renderCalendar();
+  }));
 };
 
 document.addEventListener("click", () => closeAdminPopovers());
@@ -933,32 +968,71 @@ const updateUsage = async (usageId, date, type, status, note) => {
   if (error) throw new Error(error.message || "이용 기록을 수정하지 못했습니다.");
 };
 
+const getMonthRange = (month) => {
+  const start = `${month}-01`;
+  const next = new Date(`${start}T12:00:00`);
+  next.setMonth(next.getMonth() + 1, 1);
+  return { start, end: dateKey(next) };
+};
+
 const renderUsages = async () => {
   const target = document.querySelector("#usage-admin-list");
-  const selectedDate = document.querySelector("#usage-filter-form").elements.date.value;
+  const form = document.querySelector("#usage-filter-form");
+  const mode = form.elements.period_mode.value;
+  const selectedDate = mode === "day" ? form.elements.date.value : "";
+  const selectedMonth = mode === "month" ? form.elements.month.value : "";
   const summary = document.querySelector("#usage-filter-summary");
+  const financeSummary = document.querySelector("#usage-finance-summary");
   if (!target) return;
   target.innerHTML = '<p class="usage-admin-loading">이용 내역을 불러오고 있어요.</p>';
-  let records = demoUsages.map(normalizeUsage).filter((usage) => !selectedDate || usage.date === selectedDate);
+  const todayMonth = monthKey(getSeoulDate());
+  const currentRange = getMonthRange(todayMonth);
+  let allDemoRecords = demoUsages.map(normalizeUsage);
+  let records = allDemoRecords.filter((usage) => {
+    if (selectedDate) return usage.date === selectedDate;
+    if (selectedMonth) return usage.date.startsWith(selectedMonth);
+    return true;
+  });
+  let currentMonthTotal = allDemoRecords
+    .filter((usage) => usage.status === "active" && usage.date >= currentRange.start && usage.date < currentRange.end)
+    .reduce((sum, usage) => sum + usage.price, 0);
   if (adminMode === "supabase") {
     let query = client.from("meal_usages")
       .select("id, user_id, meal_date, meal_type, price, status, correction_note, created_at, profiles!meal_usages_user_id_fkey(name, affiliation)")
-      .order("created_at", { ascending: false }).limit(100);
+      .order("created_at", { ascending: false }).limit(500);
     if (selectedDate) query = query.eq("meal_date", selectedDate);
-    const { data, error } = await query;
-    if (error) {
+    if (selectedMonth) {
+      const range = getMonthRange(selectedMonth);
+      query = query.gte("meal_date", range.start).lt("meal_date", range.end);
+    }
+    const currentMonthQuery = client.from("meal_usages")
+      .select("price, status")
+      .gte("meal_date", currentRange.start)
+      .lt("meal_date", currentRange.end);
+    const [recordsResult, currentMonthResult] = await Promise.all([query, currentMonthQuery]);
+    if (recordsResult.error || currentMonthResult.error) {
+      const error = recordsResult.error || currentMonthResult.error;
       target.innerHTML = `<p class="usage-admin-loading is-error">${escapeHtml(error.message)}</p>`;
       return;
     }
-    records = (data ?? []).map(normalizeUsage);
+    records = (recordsResult.data ?? []).map(normalizeUsage);
+    currentMonthTotal = (currentMonthResult.data ?? [])
+      .filter((usage) => usage.status === "active")
+      .reduce((sum, usage) => sum + Number(usage.price || 0), 0);
   }
-  summary.textContent = selectedDate ? `${selectedDate} 이용 기록 ${records.length}건` : `최근 이용 기록 ${records.length}건`;
+  const activeRecords = records.filter((usage) => usage.status === "active");
+  const periodTotal = activeRecords.reduce((sum, usage) => sum + usage.price, 0);
+  const periodLabel = selectedDate || (selectedMonth ? `${selectedMonth.slice(0, 4)}년 ${Number(selectedMonth.slice(5, 7))}월` : "전체");
+  const periodRevenueLabel = selectedMonth ? `${Number(selectedMonth.slice(5, 7))}월 매출액 총계` : (selectedDate ? "선택일 이용금액" : "조회 이용금액");
+  summary.textContent = `${periodLabel} 이용 기록 ${records.length.toLocaleString("ko-KR")}건`;
+  financeSummary.innerHTML = `<div><span>조회 기록</span><strong>${records.length.toLocaleString("ko-KR")}건</strong><small>정상 ${activeRecords.length.toLocaleString("ko-KR")}건</small></div><div><span>${periodRevenueLabel}</span><strong>${periodTotal.toLocaleString("ko-KR")}원</strong><small>취소 기록 제외</small></div><div><span>${Number(todayMonth.slice(5, 7))}월 매출액</span><strong>${currentMonthTotal.toLocaleString("ko-KR")}원</strong><small>이번 달 정상 이용 합계</small></div>`;
   if (!records.length) {
     target.innerHTML = '<div class="scan-empty"><span>아직 이용 기록이 없습니다.</span><p>QR을 인식하면 바로 이곳에 표시됩니다.</p></div>';
     return;
   }
   target.innerHTML = records.map((usage) => `<form class="usage-admin-item" data-usage-id="${usage.id}">
     <div class="usage-admin-person"><strong>${escapeHtml(usage.userName)}</strong><span>${escapeHtml(usage.affiliation)} · ${escapeHtml(usage.date)}</span></div>
+    <div class="usage-admin-price${usage.status === "cancelled" ? " is-cancelled" : ""}"><span>이용금액</span><strong>${usage.price.toLocaleString("ko-KR")}원</strong></div>
     <label><span class="sr-only">이용 날짜</span><input name="meal_date" type="date" value="${escapeHtml(usage.date)}" required /></label>
     <fieldset class="usage-segmented"><legend class="sr-only">식사 구분</legend><label><input type="radio" name="meal_type" value="breakfast"${usage.type === "breakfast" ? " checked" : ""} /><span>조식</span></label><label><input type="radio" name="meal_type" value="lunch"${usage.type === "lunch" ? " checked" : ""} /><span>중식</span></label></fieldset>
     <fieldset class="usage-segmented usage-segmented--status"><legend class="sr-only">처리 상태</legend><label><input type="radio" name="status" value="active"${usage.status === "active" ? " checked" : ""} /><span>정상</span></label><label><input type="radio" name="status" value="cancelled"${usage.status === "cancelled" ? " checked" : ""} /><span>취소</span></label></fieldset>
@@ -978,6 +1052,7 @@ const renderUsages = async () => {
       await updateUsage(form.dataset.usageId, data.get("meal_date"), data.get("meal_type"), data.get("status"), data.get("note"));
       message.textContent = "수정됨";
       await refreshDashboard();
+      await renderUsages();
     } catch (error) {
       message.textContent = error.message;
       message.classList.add("is-error");
