@@ -266,11 +266,18 @@ QR 식권, 식단 조회, 관리자 기능 등을 구현할 때 Copilot Chat에 
   </tr>
 </table>
 
-<p align="center">
-  <img src="asset/screenshots/copilot-test-summary.png" width="520" alt="개발 중간 단계에서 전체 테스트 78개가 통과한 결과">
-  <br><b>스크린샷 2. 경계값 테스트 추가 단계의 78개 통과 기록</b><br>
-  <sub>이후 테스트를 확장하여 현재는 총 90개 테스트를 실행합니다.</sub>
-</p>
+과제 캡처용 명령어인 `npm run test:assignment`도 두 테스트 묶음을 실제로 실행한 후 다음과 같이 결과를 구분해 보여줍니다.
+
+```text
+실행 결과:
+
+• 웹 애플리케이션 테스트: 72개 통과
+• 카카오 관련 모듈 테스트: 18개 통과
+• 전체 테스트: 90개 통과
+• 실패: 0개
+
+PASSED - 90/90 TESTS
+```
 
 ### 3. 코드 리뷰 및 리팩토링
 
