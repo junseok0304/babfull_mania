@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseYeongjunMenu, resolveExpectedImportMonday } from "../supabase/functions/_shared/yeongjun-parser.js";
+import { isCalendarMenuMarker, parseYeongjunMenu, resolveExpectedImportMonday } from "../supabase/functions/_shared/yeongjun-parser.js";
 
 const cell = (value) => `<td><div class="menu-name">${value}</div></td>`;
 const row = (className, values) => `<tr class="${className}">${values.map(cell).join("")}</tr>`;
@@ -11,12 +11,19 @@ test("평일 조식·중식과 휴무 상태를 파싱한다", () => {
     ${row("breakfast-row", ["[천원의아침밥] 운영시간 8:00~9:00", "", "", "", ""])}
     ${row("breakfast-row", ["백미밥", "잡곡밥", "흑미밥", "문화체험 휴무", ""])}
     ${row("lunch-row", ["콩나물국", "미역국", "두부&amp;김치볶음", "", "육개장"])}
+    ${row("lunch-row", ["七夕(칠석)", "立春(입춘)", "동지팥죽", "", ""])}
   </tbody></table>`;
   const result = parseYeongjunMenu(html, new Date("2026-10-21T00:00:00Z"));
   assert.deepEqual(result.dates, ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23"]);
   assert.deepEqual(result.meals[0].items, ["백미밥"]);
-  assert.deepEqual(result.meals[5].items, ["두부&김치볶음"]);
+  assert.deepEqual(result.meals[1].items, ["콩나물국"]);
+  assert.deepEqual(result.meals[3].items, ["미역국"]);
+  assert.deepEqual(result.meals[5].items, ["두부&김치볶음", "동지팥죽"]);
   assert.deepEqual(result.meals[6], { date: "2026-10-22", type: "breakfast", items: [], operating: false, note: "문화체험 휴무" });
+  ["입춘", "雨水(우수)", "驚蟄(경칩)", "춘분", "七夕(칠석)"].forEach((marker) => {
+    assert.equal(isCalendarMenuMarker(marker), true);
+  });
+  assert.equal(isCalendarMenuMarker("동지팥죽"), false);
 });
 
 test("연말과 연초 사이의 연도를 올바르게 결정한다", () => {

@@ -26,6 +26,29 @@ const hasClass = (html, className) => {
   return classValue.split(/\s+/).includes(className);
 };
 
+// 원본 식단표에는 간혹 음식명이 아닌 절기·세시풍속 안내가 한 칸을 차지한다.
+// 완전히 같은 안내 문구만 제외하여, "동지팥죽"처럼 절기명이 포함된 실제 메뉴는 보존한다.
+const calendarMarkerPairs = [
+  ["입춘", "立春"], ["우수", "雨水"], ["경칩", "驚蟄"], ["춘분", "春分"],
+  ["청명", "清明"], ["곡우", "穀雨"], ["입하", "立夏"], ["소만", "小滿"],
+  ["망종", "芒種"], ["하지", "夏至"], ["소서", "小暑"], ["대서", "大暑"],
+  ["입추", "立秋"], ["처서", "處暑"], ["백로", "白露"], ["추분", "秋分"],
+  ["한로", "寒露"], ["상강", "霜降"], ["입동", "立冬"], ["소설", "小雪"],
+  ["대설", "大雪"], ["동지", "冬至"], ["소한", "小寒"], ["대한", "大寒"],
+  // 칠석은 24절기는 아니지만 원본 표에서 같은 형태의 달력 안내로 사용된다.
+  ["칠석", "七夕"],
+];
+
+const normalizeCalendarMarker = (value) => String(value ?? "")
+  .replace(/[\s()[\]{}·:：-]/gu, "")
+  .toLocaleLowerCase("ko-KR");
+
+const calendarMarkers = new Set(calendarMarkerPairs.flatMap(([korean, hanja]) => [
+  korean, hanja, `${korean}${hanja}`, `${hanja}${korean}`,
+]).map(normalizeCalendarMarker));
+
+export const isCalendarMenuMarker = (value) => calendarMarkers.has(normalizeCalendarMarker(value));
+
 const extractMenuText = (cellHtml) => {
   const menu = cellHtml.match(/<div\b[^>]*class\s*=\s*["'][^"']*\bmenu-name\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
   const text = cleanText(menu?.[1] ?? cellHtml)
@@ -34,6 +57,7 @@ const extractMenuText = (cellHtml) => {
     .trim();
   if (!text || text === "*" || text === "/" || /^\d+$/.test(text)) return "";
   if (/\[천원의아침밥\].*운영시간/u.test(text)) return "";
+  if (isCalendarMenuMarker(text)) return "";
   return text;
 };
 
