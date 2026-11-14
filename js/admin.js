@@ -164,6 +164,8 @@ const enhanceUsageDatePicker = () => {
     updateButton();
     picker.classList.remove("is-open");
     input.dispatchEvent(new Event("change", { bubbles: true }));
+    // 날짜를 고르는 즉시 필터 폼을 제출해 별도의 '날짜 조회' 클릭을 줄입니다.
+    input.form?.requestSubmit();
   });
 };
 
