@@ -689,6 +689,12 @@ const playDuplicateChime = () => {
   });
 };
 
+const playScannerFailureChime = () => {
+  // 장시간 운영 중 브라우저가 오디오를 일시 중지했어도 스캔 시작 때 허용된
+  // AudioContext를 다시 깨운 뒤 성공음과 다른 하강 경고음을 재생합니다.
+  prepareScannerAudio().then(playDuplicateChime).catch(() => {});
+};
+
 const renderScannerStatus = (message, isError = false) => {
   document.querySelector("#scan-result").innerHTML = `<div class="scan-kiosk-status${isError ? " is-error" : ""}"><span class="scan-kiosk-status__dot"></span><strong>${escapeHtml(message)}</strong></div>`;
 };
@@ -869,7 +875,7 @@ const renderDuplicateUsage = (profile, monthlyCount) => {
   notice.textContent = "관련 문의는 식당 내 관리자를 찾아주세요";
   syncScannerMetrics();
   addScannerRecentEntry({ status: "failure", name: profile?.name || "사용자", label: "인증 실패", detail: `${date} · ${mealLabel(type)}` });
-  playDuplicateChime();
+  playScannerFailureChime();
   renderScannerStatus("이미 처리된 식권입니다. 다음 QR을 기다립니다.");
 };
 
@@ -885,6 +891,7 @@ const renderScannerFailure = (message) => {
   notice.hidden = false;
   notice.textContent = "QR을 다시 스캔해 주세요";
   addScannerRecentEntry({ status: "failure", name: "인증되지 않음", label: "인증 실패", detail: message || "QR 확인 필요" });
+  playScannerFailureChime();
 };
 
 const handleDecodedToken = async (token) => {
