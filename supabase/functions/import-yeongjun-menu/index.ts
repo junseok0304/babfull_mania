@@ -48,10 +48,16 @@ Deno.serve(async (request) => {
     if (parsedUrl.protocol !== "https:" || parsedUrl.hostname !== "yeongjun.com" || parsedUrl.pathname !== "/babfullmenu") {
       throw new Error("허용되지 않은 식단 원본 주소입니다.");
     }
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const lockStartedAfter = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+    // 정상 실행은 1분 안에 끝나므로 3분이 지난 running 로그는 중단된 요청으로 정리합니다.
+    await db.from("meal_import_logs").update({
+      status: "failed",
+      completed_at: new Date().toISOString(),
+      error_message: "식단 최신화 실행 시간이 초과되어 잠금을 자동 해제했습니다.",
+    }).eq("status", "running").lt("started_at", lockStartedAfter);
     // 예약 실행과 수동 실행이 겹쳐 같은 주차를 동시에 갱신하지 않도록 최근 실행 잠금을 확인합니다.
-    const { data: running } = await db.from("meal_import_logs").select("id").eq("status", "running").gte("started_at", tenMinutesAgo).limit(1);
-    if (running?.length) return jsonResponse({ error: "이미 식단 최신화가 진행 중입니다." }, 409);
+    const { data: running } = await db.from("meal_import_logs").select("id, started_at").eq("status", "running").gte("started_at", lockStartedAfter).limit(1);
+    if (running?.length) return jsonResponse({ error: "이미 식단 최신화가 진행 중입니다. 잠시 후 다시 확인해주세요." }, 409);
 
     const { data: log, error: logError } = await db.from("meal_import_logs")
       .insert({ source_url: sourceUrl, trigger_type: trigger, status: "running" }).select("id").single();

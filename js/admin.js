@@ -46,6 +46,130 @@ const escapeHtml = (value) => String(value ?? "")
   .replaceAll('"', "&quot;")
   .replaceAll("'", "&#039;");
 
+// 브라우저 기본 select 팝업 대신 관리자 UI와 같은 색상·간격의 목록을 사용합니다.
+const closeAdminPopovers = (exception = null) => {
+  document.querySelectorAll(".admin-select.is-open, .admin-date-picker.is-open").forEach((control) => {
+    if (control !== exception) {
+      control.classList.remove("is-open");
+      control.querySelector('[aria-expanded="true"]')?.setAttribute("aria-expanded", "false");
+    }
+  });
+};
+
+const enhanceAdminSelect = (select) => {
+  if (select.dataset.adminEnhanced === "true") return;
+  select.dataset.adminEnhanced = "true";
+  const control = document.createElement("div");
+  control.className = "admin-select";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "admin-select__button";
+  button.setAttribute("aria-haspopup", "listbox");
+  button.setAttribute("aria-expanded", "false");
+  const list = document.createElement("div");
+  list.className = "admin-select__list";
+  list.setAttribute("role", "listbox");
+  select.before(control);
+  control.append(select, button, list);
+
+  const render = () => {
+    const options = [...select.options];
+    const selected = options.find((option) => option.selected) || options[0];
+    button.innerHTML = `<span>${escapeHtml(selected?.textContent || "선택")}</span><i aria-hidden="true"></i>`;
+    button.disabled = select.disabled;
+    list.innerHTML = options.map((option) => `<button type="button" role="option" data-value="${escapeHtml(option.value)}" aria-selected="${option.selected}">${escapeHtml(option.textContent)}</button>`).join("");
+  };
+  render();
+
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    render();
+    const opening = !control.classList.contains("is-open");
+    closeAdminPopovers(opening ? control : null);
+    control.classList.toggle("is-open", opening);
+    button.setAttribute("aria-expanded", String(opening));
+  });
+  list.addEventListener("click", (event) => {
+    const option = event.target.closest("[data-value]");
+    if (!option) return;
+    select.value = option.dataset.value;
+    render();
+    control.classList.remove("is-open");
+    button.setAttribute("aria-expanded", "false");
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  new MutationObserver(render).observe(select, { attributes: true, childList: true, subtree: true });
+};
+
+const dateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+const enhanceUsageDatePicker = () => {
+  const input = document.querySelector('#usage-filter-form input[name="date"]');
+  if (!input || input.dataset.adminEnhanced === "true") return;
+  input.dataset.adminEnhanced = "true";
+  const picker = document.createElement("div");
+  picker.className = "admin-date-picker";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "admin-date-picker__button";
+  button.setAttribute("aria-haspopup", "dialog");
+  const calendar = document.createElement("div");
+  calendar.className = "admin-date-picker__calendar";
+  calendar.setAttribute("role", "dialog");
+  calendar.setAttribute("aria-label", "이용 날짜 선택");
+  input.before(picker);
+  picker.append(input, button, calendar);
+  let visibleMonth = getSeoulDate();
+
+  const updateButton = () => {
+    button.innerHTML = input.value
+      ? `<span>${escapeHtml(new Intl.DateTimeFormat("ko-KR", { dateStyle: "long" }).format(new Date(`${input.value}T12:00:00`)))}</span><b aria-hidden="true">▣</b>`
+      : '<span>날짜를 선택하세요</span><b aria-hidden="true">▣</b>';
+  };
+  const renderCalendar = () => {
+    const year = visibleMonth.getFullYear();
+    const month = visibleMonth.getMonth();
+    const first = new Date(year, month, 1);
+    const start = new Date(year, month, 1 - first.getDay());
+    const days = Array.from({ length: 42 }, (_, index) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + index));
+    calendar.innerHTML = `<div class="admin-calendar__header"><button type="button" data-calendar-move="-1" aria-label="이전 달">‹</button><strong>${year}년 ${month + 1}월</strong><button type="button" data-calendar-move="1" aria-label="다음 달">›</button></div><div class="admin-calendar__weekdays">${["일", "월", "화", "수", "목", "금", "토"].map((day) => `<span>${day}</span>`).join("")}</div><div class="admin-calendar__days">${days.map((day) => {
+      const key = dateKey(day);
+      return `<button type="button" data-calendar-date="${key}" class="${day.getMonth() !== month ? "is-outside " : ""}${key === input.value ? "is-selected " : ""}${key === dateKey(getSeoulDate()) ? "is-today" : ""}">${day.getDate()}</button>`;
+    }).join("")}</div><div class="admin-calendar__footer"><button type="button" data-calendar-clear>선택 해제</button><button type="button" data-calendar-today>오늘</button></div>`;
+  };
+  updateButton();
+  input._refreshAdminDate = updateButton;
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (input.value) visibleMonth = new Date(`${input.value}T12:00:00`);
+    renderCalendar();
+    const opening = !picker.classList.contains("is-open");
+    closeAdminPopovers(opening ? picker : null);
+    picker.classList.toggle("is-open", opening);
+  });
+  calendar.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const move = event.target.closest("[data-calendar-move]");
+    if (move) {
+      visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + Number(move.dataset.calendarMove), 1);
+      renderCalendar();
+      return;
+    }
+    if (event.target.closest("[data-calendar-today]")) input.value = dateKey(getSeoulDate());
+    else if (event.target.closest("[data-calendar-clear]")) input.value = "";
+    else {
+      const day = event.target.closest("[data-calendar-date]");
+      if (!day) return;
+      input.value = day.dataset.calendarDate;
+    }
+    updateButton();
+    picker.classList.remove("is-open");
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+};
+
+document.addEventListener("click", () => closeAdminPopovers());
+document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeAdminPopovers(); });
+
 const route = (nextRoute) => {
   // 기존 #community 링크는 분리된 공지사항 관리 화면으로 안전하게 연결합니다.
   const candidate = nextRoute === "community" ? "notices" : nextRoute;
@@ -619,15 +743,6 @@ document.querySelector("#scanner-start").addEventListener("click", async () => {
 
 document.querySelector("#scanner-stop").addEventListener("click", stopScanner);
 document.querySelector("#scan-use-current").addEventListener("click", setScanDefaults);
-document.querySelector("#manual-token-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  await prepareScannerAudio();
-  const outcome = await handleDecodedToken(new FormData(event.currentTarget).get("qr_token"));
-  if (outcome !== "error") window.setTimeout(() => {
-    document.querySelector("#scan-success").hidden = true;
-    renderScannerStatus("스캔을 기다리고 있어요.");
-  }, 1600);
-});
 
 // ── 사용자·운영 설정·이용 기록 관리 ─────────────────────────────────────
 const userTypeLabel = (type) => ({ student: "학생", faculty: "교원", staff: "직원", other: "기타" })[type] || "기타";
@@ -673,11 +788,12 @@ const renderUsers = async () => {
       <p class="user-admin-message" role="status"></p>
     </form>`;
   }).join("");
+  target.querySelectorAll("select").forEach(enhanceAdminSelect);
 
   target.querySelectorAll(".user-admin-item").forEach((form) => form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const message = form.querySelector(".user-admin-message");
-    const button = form.querySelector("button");
+    const button = form.querySelector('button[type="submit"]');
     const values = new FormData(form);
     button.disabled = true;
     message.textContent = "저장 중…";
@@ -804,6 +920,7 @@ document.querySelector("#usage-filter-form").addEventListener("submit", (event) 
 });
 document.querySelector("#usage-filter-clear").addEventListener("click", () => {
   document.querySelector("#usage-filter-form").reset();
+  document.querySelector('#usage-filter-form input[name="date"]')._refreshAdminDate?.();
   renderUsages();
 });
 document.querySelector("#user-refresh").addEventListener("click", renderUsers);
@@ -855,14 +972,24 @@ document.querySelector("#menu-sync").addEventListener("click", async (event) => 
   target.innerHTML = "<p>이번 주 식단을 가져오고 있습니다.</p>";
   try {
     const { data, error } = await client.functions.invoke("import-yeongjun-menu", { body: { trigger: "manual" } });
-    if (error) throw new Error(data?.error || error.message);
+    if (error) throw new Error(await getFunctionErrorMessage(error, data, "식단 최신화 요청을 처리하지 못했습니다."));
     await loadDatabaseMeals();
     renderStats();
     renderMeals();
     target.innerHTML = `<p><strong>${escapeHtml(data.period.from)} ~ ${escapeHtml(data.period.to)} 최신화 완료</strong></p><div class="import-status__meta"><span>신규 ${data.insertedCount}건</span><span>변경 ${data.updatedCount}건</span><span>동일 ${data.unchangedCount}건</span><span>수동 보호 ${data.protectedCount}건</span></div>`;
   } catch (error) {
-    target.classList.add("is-error");
-    target.innerHTML = `<p><strong>최신화 실패</strong> · ${escapeHtml(error.message)}</p>`;
+    const message = String(error.message || "");
+    if (/이미 식단 최신화가 진행 중/.test(message)) {
+      target.innerHTML = '<p><strong>식단 최신화가 진행 중입니다.</strong> · 기존 요청이 완료된 뒤 새로고침해주세요.</p>';
+    } else {
+      target.classList.add("is-error");
+      const friendlyMessage = /이번 주 기준으로 갱신되지 않았|연속되지 않|평일 날짜/.test(message)
+        ? "원본 식단에 새로운 변경사항이 없어 최신 식단을 불러오지 못했습니다."
+        : /원본 식단 서버|fetch|시간을 초과/.test(message)
+          ? "식단 원본 서버에 연결하지 못했습니다. 잠시 후 다시 시도해주세요."
+          : message || "식단을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
+      target.innerHTML = `<p><strong>최신화 실패</strong> · ${escapeHtml(friendlyMessage)}</p>`;
+    }
   } finally {
     button.disabled = false;
     button.textContent = "지금 가져오기";
@@ -1173,6 +1300,8 @@ document.querySelector("#food-image-workspace").addEventListener("click", async 
 });
 
 document.querySelector("#meal-form").elements.meal_date.value = formatDateKey(getSeoulDate());
+document.querySelectorAll("#user-search-form select").forEach(enhanceAdminSelect);
+enhanceUsageDatePicker();
 const accessAllowed = await initializeAdmin();
 if (accessAllowed !== false) {
   await initAdminCommunity({

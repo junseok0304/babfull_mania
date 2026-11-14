@@ -8,8 +8,8 @@
     <title>밥풀매니아 관리자</title>
     <link rel="icon" type="image/png" href="../asset/밥풀매니아_로고.png?v=20261026" />
     <link rel="stylesheet" href="../css/global.css?v=20261023-3" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261114-1" />
-    <script type="module" src="../js/admin.js?v=20261114-1"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261114-2" />
+    <script type="module" src="../js/admin.js?v=20261114-2"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -47,7 +47,7 @@
           <div class="dashboard-insights">
             <section class="admin-card dashboard-insight"><div class="admin-card__heading"><div><p class="section-kicker">이번 달</p><h2>조식 vs 중식 이용 비율</h2></div></div><div id="dashboard-meal-ratio"></div></section>
             <section class="admin-card dashboard-insight"><div class="admin-card__heading"><div><p class="section-kicker">이번 달</p><h2>소속별 이용 현황</h2></div></div><div id="dashboard-affiliations"></div></section>
-            <section class="admin-card dashboard-insight dashboard-share-insight"><div class="admin-card__heading"><div><p class="section-kicker">이번 달</p><h2>사용자별 카카오 공유창 실행 횟수</h2></div></div><div id="dashboard-kakao-shares"></div></section>
+            <section class="admin-card dashboard-insight dashboard-suggestion-insight"><div class="admin-card__heading"><div><p class="section-kicker">최근 접수</p><h2>최근 건의사항</h2></div><a href="#suggestions" data-admin-route="suggestions">관리 →</a></div><div class="dashboard-suggestion-list" id="dashboard-suggestions"><p class="dashboard-empty">건의사항을 불러오고 있어요.</p></div></section>
           </div>
           <section class="admin-card">
             <div class="admin-card__heading">
@@ -56,10 +56,7 @@
             </div>
             <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>날짜</th><th>구분</th><th>메뉴</th><th>공개</th></tr></thead><tbody id="dashboard-meals"></tbody></table></div>
           </section>
-          <section class="admin-card dashboard-suggestion-insight">
-            <div class="admin-card__heading"><div><p class="section-kicker">최근 접수</p><h2>최근 건의사항</h2></div><a href="#suggestions" data-admin-route="suggestions">건의사항 관리 →</a></div>
-            <div class="dashboard-suggestion-list" id="dashboard-suggestions"><p class="dashboard-empty">건의사항을 불러오고 있어요.</p></div>
-          </section>
+          <section class="admin-card dashboard-share-insight dashboard-share-detail"><div class="admin-card__heading"><div><p class="section-kicker">이번 달</p><h2>사용자별 카카오 공유창 실행 횟수</h2></div></div><div id="dashboard-kakao-shares"></div></section>
         </section>
 
         <section class="admin-view" data-admin-view="meals">
@@ -163,7 +160,7 @@
         <section class="admin-view" data-admin-view="scanner">
           <section class="scanner-kiosk">
               <a class="scanner-kiosk__exit" href="#dashboard">운영 화면으로</a>
-              <div class="scanner-kiosk__intro"><h2>밥full 정기권 인식 스캐너</h2><p>정기권 이용자는 반드시 QR 스캔 후 식당 이용해주세요.</p></div>
+              <div class="scanner-kiosk__intro"><span>운영진 전용 · 실시간 QR 인식</span><h2>밥full 정기권 인식 스캐너</h2><p>QR을 화면 중앙에 맞추면 사용자와 식사 시간이 자동으로 확인됩니다.</p></div>
               <div class="qr-reader" id="qr-reader"><div class="scanner-placeholder"><span class="scanner-placeholder__icon">▦</span><strong>스캔 대기 중</strong><p>아래 버튼을 눌러 카메라를 켜주세요.</p></div></div>
               <div class="scanner-controls">
                 <button class="primary-button" id="scanner-start" type="button">카메라 켜고 운영 시작</button>
@@ -180,10 +177,6 @@
                   </div>
                   <p id="scan-auto-hint">현재 제공시간을 기준으로 자동 선택됩니다. 인식 전에 관리자가 변경할 수 있습니다.</p>
                 </div>
-                <details class="manual-token">
-                  <summary>개발용 토큰 직접 입력</summary>
-                  <form id="manual-token-form"><label>QR 토큰<input name="qr_token" value="00000000-0000-4000-8000-000000000001" required /></label><button type="submit">조회</button></form>
-                </details>
               </details>
               <div class="scan-success" id="scan-success" hidden><div class="scan-success__check" id="scan-success-icon">✓</div><h2 id="scan-success-title">정기권 이용 처리가<br />완료되었습니다.</h2><p id="scan-success-detail"></p><span>다음 QR 스캔이 자동으로 시작됩니다.</span></div>
           </section>
@@ -222,8 +215,10 @@
               <fieldset><legend>중식 제공시간</legend><label>시작<input name="lunch_start" type="time" required /></label><label>종료<input name="lunch_end" type="time" required /></label></fieldset>
               <label>QR 자동 분류 여유 시간(QR스캐너 자동 인식 허용시간 여유시간 설정)<input name="scan_buffer_minutes" type="number" min="0" max="120" step="5" required /><small>조식·중식 제공 시작 전과 종료 후에도 해당 식사로 자동 기록할 분 수입니다.</small></label>
               <fieldset><legend>식권 가격</legend><label>조식 가격<input name="breakfast_price" type="number" min="0" max="100000" step="100" required /></label><label>중식 가격<input name="lunch_price" type="number" min="0" max="100000" step="100" required /></label></fieldset>
-              <p class="settings-price-note">가격 변경 전 이용 기록은 기존 금액을 유지하고, 저장 이후 생성되는 이용 기록부터 새 가격이 적용됩니다.</p>
-              <p class="settings-price-note">식판은 AI 생성 이미지를 기본으로 표시합니다. 이미지가 아직 등록되지 않은 식단은 식판 위에 메뉴명을 표시해 누락 없이 안내합니다.</p>
+              <div class="settings-guidance">
+                <div><span aria-hidden="true">₩</span><p><strong>가격 적용 기준</strong>가격 변경 전 이용 기록은 기존 금액을 유지하고, 저장 이후 생성되는 이용 기록부터 새 가격이 적용됩니다.</p></div>
+                <div><span aria-hidden="true">▦</span><p><strong>식판 표시 기준</strong>AI 생성 이미지를 기본으로 표시하며, 이미지가 아직 등록되지 않은 식단은 식판 위에 메뉴명을 표시합니다.</p></div>
+              </div>
               <button class="primary-button" type="submit">설정 저장</button>
               <p class="form-message" id="settings-message" role="status"></p>
             </form>
