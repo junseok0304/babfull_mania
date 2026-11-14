@@ -37,6 +37,7 @@ const demoQrToken = "00000000-0000-4000-8000-000000000001";
 let dashboardStats = buildDashboardSummary();
 let dashboardKakaoShares = [];
 let dashboardSuggestions = [];
+let todayScannerUsers = 0;
 
 // 사용자 입력이나 DB 문자열을 innerHTML에 넣기 전에 이 함수를 거쳐 XSS를 방지합니다.
 const escapeHtml = (value) => String(value ?? "")
@@ -271,23 +272,30 @@ const loadDashboardStats = async () => {
     const today = formatDateKey(getSeoulDate());
     const active = demoUsages.filter((usage) => usage.status === "active");
     dashboardStats = buildDashboardSummary({ today_usage_count: active.filter((usage) => usage.date === today).length, month_usage_count: active.length, month_revenue: active.reduce((sum, usage) => sum + usage.price, 0), breakfast_count: active.filter((usage) => usage.type === "breakfast").length, lunch_count: active.filter((usage) => usage.type === "lunch").length });
+    todayScannerUsers = new Set(active.filter((usage) => usage.date === today).map((usage) => usage.userId)).size;
     dashboardKakaoShares = [];
     return;
   }
   const month = `${formatDateKey(getSeoulDate()).slice(0, 7)}-01`;
-  const [usageResult, shareResult] = await Promise.all([
+  const today = formatDateKey(getSeoulDate());
+  const [usageResult, shareResult, todayResult] = await Promise.all([
     client.rpc("admin_dashboard_stats", { target_month: month }),
     client.rpc("admin_kakao_share_stats", { target_month: month }),
+    client.from("meal_usages").select("user_id").eq("meal_date", today).eq("status", "active"),
   ]);
   if (usageResult.error) throw usageResult.error;
   if (shareResult.error) throw shareResult.error;
+  if (todayResult.error) throw todayResult.error;
   dashboardStats = buildDashboardSummary(usageResult.data);
   dashboardKakaoShares = normalizeKakaoShareStats(shareResult.data);
+  todayScannerUsers = new Set((todayResult.data || []).map((usage) => usage.user_id)).size;
 };
 
 const refreshDashboard = async () => {
   try { await loadDashboardStats(); } catch (error) { console.error("대시보드 통계 조회 실패", error); }
   renderStats();
+  const scannerToday = document.querySelector("#scan-terminal-today");
+  if (scannerToday) scannerToday.textContent = todayScannerUsers.toLocaleString("ko-KR");
 };
 
 const syncFoodImageManagerVisibility = () => {
@@ -644,6 +652,34 @@ const setScanDefaults = () => {
   document.querySelector("#scan-auto-hint").textContent = `${date} · ${mealLabel(type)}으로 자동 선택했습니다. 인식 전에 변경할 수 있습니다.`;
   document.querySelector("#scan-breakfast-label").textContent = `조식 · ${operationalSettings.breakfastPrice.toLocaleString("ko-KR")}원`;
   document.querySelector("#scan-lunch-label").textContent = `중식 · ${operationalSettings.lunchPrice.toLocaleString("ko-KR")}원`;
+  syncScannerMetrics();
+};
+
+const getSelectedScannerPrice = () => (
+  document.querySelector('input[name="scan_meal_type"]:checked')?.value === "breakfast"
+    ? operationalSettings.breakfastPrice
+    : operationalSettings.lunchPrice
+);
+
+const syncScannerMetrics = () => {
+  const price = document.querySelector("#scan-terminal-price");
+  const today = document.querySelector("#scan-terminal-today");
+  if (price) price.textContent = `${getSelectedScannerPrice().toLocaleString("ko-KR")}원`;
+  if (today) today.textContent = todayScannerUsers.toLocaleString("ko-KR");
+};
+
+const renderScannerReady = () => {
+  const terminal = document.querySelector("#scan-terminal");
+  terminal.dataset.state = "ready";
+  document.querySelector("#scan-terminal-state").textContent = "READY";
+  document.querySelector("#scan-terminal-icon").textContent = "⌁";
+  document.querySelector("#scan-terminal-eyebrow").textContent = "QR SCAN READY";
+  document.querySelector("#scan-terminal-title").textContent = "QR을 스캔해 주세요.";
+  document.querySelector("#scan-terminal-english").textContent = "Please scan your meal pass.";
+  const profile = document.querySelector("#scan-terminal-profile");
+  profile.hidden = true;
+  profile.innerHTML = "";
+  syncScannerMetrics();
 };
 
 const getScanSelection = () => {
@@ -668,40 +704,76 @@ const processUsage = async (profile) => {
   return Array.isArray(data) ? data[0] : data;
 };
 
-const renderScannedProfile = (profile, usage) => {
-  const overlay = document.querySelector("#scan-success");
-  document.querySelector("#scan-success-icon").textContent = "✓";
-  document.querySelector("#scan-success-title").innerHTML = "정기권 이용 처리가<br />완료되었습니다.";
-  document.querySelector("#scan-success-detail").textContent = `${mealLabel(usage.meal_type || usage.type)} · ${Number(usage.price).toLocaleString("ko-KR")}원`;
-  overlay.classList.remove("is-duplicate");
-  overlay.hidden = false;
+const loadUserMonthlyUsageCount = async (profile, date) => {
+  const monthStart = `${date.slice(0, 7)}-01`;
+  const monthEndDate = new Date(`${monthStart}T12:00:00`);
+  monthEndDate.setMonth(monthEndDate.getMonth() + 1, 0);
+  const monthEnd = formatDateKey(monthEndDate);
+  if (adminMode === "demo") {
+    return demoUsages.filter((usage) => usage.userId === profile.id && usage.status === "active" && usage.date >= monthStart && usage.date <= monthEnd).length;
+  }
+  const { count, error } = await client.from("meal_usages")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", profile.id)
+    .eq("status", "active")
+    .gte("meal_date", monthStart)
+    .lte("meal_date", monthEnd);
+  if (error) throw error;
+  return count || 0;
+};
+
+const renderScannedProfile = (profile, usage, monthlyCount) => {
+  const terminal = document.querySelector("#scan-terminal");
+  const type = usage.meal_type || usage.type;
+  terminal.dataset.state = "success";
+  document.querySelector("#scan-terminal-state").textContent = "APPROVED";
+  document.querySelector("#scan-terminal-icon").textContent = "✓";
+  document.querySelector("#scan-terminal-eyebrow").textContent = "SCAN COMPLETE";
+  document.querySelector("#scan-terminal-title").innerHTML = `${escapeHtml(profile.name || "사용자")}님,<br />식사 맛있게 드세요.`;
+  document.querySelector("#scan-terminal-english").textContent = "Approved. Enjoy your meal!";
+  const detail = document.querySelector("#scan-terminal-profile");
+  detail.hidden = false;
+  detail.innerHTML = `<div><span>식사 / MEAL</span><strong>${mealLabel(type)} · ${Number(usage.price).toLocaleString("ko-KR")}원</strong></div><div><span>당월 식사 / MONTHLY</span><strong>${monthlyCount.toLocaleString("ko-KR")}회</strong></div><p>${escapeHtml(profile.affiliation || "소속 미등록")}</p>`;
+  document.querySelector("#scan-terminal-price").textContent = `${Number(usage.price).toLocaleString("ko-KR")}원`;
+  document.querySelector("#scan-terminal-today").textContent = todayScannerUsers.toLocaleString("ko-KR");
   playSuccessChime();
   renderScannerStatus("처리가 완료되었습니다. 다음 QR을 기다립니다.");
 };
 
-const renderDuplicateUsage = () => {
+const renderDuplicateUsage = (profile, monthlyCount) => {
   const { date, type } = getScanSelection();
-  const overlay = document.querySelector("#scan-success");
-  document.querySelector("#scan-success-icon").textContent = "!";
-  document.querySelector("#scan-success-title").innerHTML = "이미 오늘 사용 처리된<br />식권입니다.";
-  document.querySelector("#scan-success-detail").textContent = `${date} · ${mealLabel(type)}`;
-  overlay.classList.add("is-duplicate");
-  overlay.hidden = false;
+  const terminal = document.querySelector("#scan-terminal");
+  terminal.dataset.state = "duplicate";
+  document.querySelector("#scan-terminal-state").textContent = "ALREADY USED";
+  document.querySelector("#scan-terminal-icon").textContent = "!";
+  document.querySelector("#scan-terminal-eyebrow").textContent = "DUPLICATE PASS";
+  document.querySelector("#scan-terminal-title").innerHTML = `${escapeHtml(profile?.name || "사용자")}님,<br />금일 식권이 이미 사용되었어요.`;
+  document.querySelector("#scan-terminal-english").textContent = "This meal pass has already been used today.";
+  const detail = document.querySelector("#scan-terminal-profile");
+  detail.hidden = false;
+  detail.innerHTML = `<div><span>확인 정보 / DETAILS</span><strong>${escapeHtml(date)} · ${mealLabel(type)}</strong></div><div><span>당월 식사 / MONTHLY</span><strong>${monthlyCount.toLocaleString("ko-KR")}회</strong></div><p>관련 문의는 식당 내 관리자를 찾아주세요.<br /><small>Please ask the cafeteria staff for assistance.</small></p>`;
+  syncScannerMetrics();
   renderScannerStatus("이미 처리된 식권입니다. 다음 QR을 기다립니다.");
 };
 
 const handleDecodedToken = async (token) => {
   renderScannerStatus("QR을 확인하고 있어요.");
+  let profile = null;
   try {
-    const profile = await findProfileByToken(token.trim());
+    profile = await findProfileByToken(token.trim());
     renderScannerStatus("정기권 이용 기록을 저장하고 있어요.");
+    const { date } = getScanSelection();
     const usage = await processUsage(profile);
-    renderScannedProfile(profile, usage);
-    await refreshDashboard();
+    const [, monthlyCount] = await Promise.all([
+      refreshDashboard(),
+      loadUserMonthlyUsageCount(profile, date),
+    ]);
+    renderScannedProfile(profile, usage, monthlyCount);
     return "success";
   } catch (error) {
     if (isDuplicateMealUsageError(error)) {
-      renderDuplicateUsage();
+      const monthlyCount = profile ? await loadUserMonthlyUsageCount(profile, getScanSelection().date).catch(() => 0) : 0;
+      renderDuplicateUsage(profile, monthlyCount);
       return "duplicate";
     }
     renderScannerStatus(error.message || "QR을 처리하지 못했습니다.", true);
@@ -721,13 +793,12 @@ const startScanner = async () => {
     await qrScanner.start({ facingMode: "environment" }, { fps: 12, qrbox: { width: boxSize, height: boxSize } }, async (text) => {
       if (scanBusy) return;
       scanBusy = true;
-      await stopScanner();
       const outcome = await handleDecodedToken(text);
-      window.setTimeout(async () => {
-        document.querySelector("#scan-success").hidden = true;
+      window.setTimeout(() => {
+        renderScannerReady();
+        renderScannerStatus("QR 인식을 기다리고 있어요.");
         scanBusy = false;
-        if (location.hash === "#scanner") await startScanner();
-      }, outcome === "error" ? 1400 : 1600);
+      }, outcome === "error" ? 1800 : outcome === "duplicate" ? 5000 : 4000);
     }, () => {});
     document.body.classList.add("scanner-is-active");
     stop.disabled = false;
@@ -745,6 +816,7 @@ document.querySelector("#scanner-start").addEventListener("click", async () => {
 
 document.querySelector("#scanner-stop").addEventListener("click", stopScanner);
 document.querySelector("#scan-use-current").addEventListener("click", setScanDefaults);
+document.querySelectorAll('input[name="scan_meal_type"]').forEach((input) => input.addEventListener("change", syncScannerMetrics));
 
 // ── 사용자·운영 설정·이용 기록 관리 ─────────────────────────────────────
 const userTypeLabel = (type) => ({ student: "학생", faculty: "교원", staff: "직원", other: "기타" })[type] || "기타";
