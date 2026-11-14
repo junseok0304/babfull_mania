@@ -66,6 +66,7 @@ const refresh = async () => {
   suggestions = state.suggestions;
   renderNotices();
   renderSuggestions();
+  context.onNoticesChange?.(notices);
   context.onSuggestionsChange?.(suggestions);
 };
 

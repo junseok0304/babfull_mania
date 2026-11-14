@@ -1,7 +1,7 @@
 import { formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
 import { getSupabaseClient } from "./supabase-client.js";
 import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState, isDuplicateMealUsageError, normalizeKakaoShareStats, shouldShowClosureReason } from "./admin-utils.js?v=20261104-1";
-import { initAdminCommunity } from "./admin-community.js?v=20261115-1";
+import { initAdminCommunity } from "./admin-community.js?v=20261115-2";
 
 /**
  * 관리자 콘솔의 화면 전환과 운영 작업을 연결하는 진입 모듈입니다.
@@ -41,6 +41,11 @@ let dashboardSuggestions = [];
 let todayScannerUsers = 0;
 let todayScannerRevenue = 0;
 const scannerRecentEntries = [];
+const scannerRecentPageSize = 5;
+let scannerRecentPage = 1;
+let scannerPrivacyEnabled = true;
+let scannerPrivacyStrength = 1.2;
+let scannerNotices = [];
 
 // 사용자 입력이나 DB 문자열을 innerHTML에 넣기 전에 이 함수를 거쳐 XSS를 방지합니다.
 const escapeHtml = (value) => String(value ?? "")
@@ -742,7 +747,10 @@ const syncScannerMetrics = () => {
   const timeRange = type === "breakfast"
     ? `${operationalSettings.breakfastStart}–${operationalSettings.breakfastEnd}`
     : `${operationalSettings.lunchStart}–${operationalSettings.lunchEnd}`;
-  document.querySelector("#scanner-standard-date").textContent = date || "-";
+  const weekday = date
+    ? new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", weekday: "short" }).format(new Date(`${date}T12:00:00+09:00`))
+    : "";
+  document.querySelector("#scanner-standard-date").textContent = date ? `${date} (${weekday})` : "-";
   document.querySelector("#scanner-standard-meal").textContent = `${mealLabel(type)} · ${selectedPrice.toLocaleString("ko-KR")}원`;
   document.querySelector("#scanner-standard-time").textContent = timeRange;
 };
@@ -800,10 +808,20 @@ const renderScannerReady = () => {
 
 const renderScannerRecentEntries = () => {
   const target = document.querySelector("#scanner-recent-list");
+  const count = document.querySelector("#scanner-recent-count");
+  const pagination = document.querySelector("#scanner-recent-pagination");
   if (!target) return;
-  target.innerHTML = scannerRecentEntries.length
-    ? scannerRecentEntries.map((entry) => `<div class="scanner-recent-item is-${entry.status}"><span>${escapeHtml(entry.time)}</span><strong>${escapeHtml(entry.name)}</strong><b>${escapeHtml(entry.label)}</b><em>${escapeHtml(entry.detail)}</em></div>`).join("")
+  const pageCount = Math.max(1, Math.ceil(scannerRecentEntries.length / scannerRecentPageSize));
+  scannerRecentPage = Math.min(Math.max(scannerRecentPage, 1), pageCount);
+  const pageEntries = scannerRecentEntries.slice((scannerRecentPage - 1) * scannerRecentPageSize, scannerRecentPage * scannerRecentPageSize);
+  if (count) count.textContent = `${scannerRecentEntries.length}건`;
+  target.innerHTML = pageEntries.length
+    ? pageEntries.map((entry) => `<div class="scanner-recent-item is-${entry.status}"><span>${escapeHtml(entry.time)}</span><strong>${escapeHtml(entry.name)}</strong><b>${escapeHtml(entry.label)}</b><em>${escapeHtml(entry.detail)}</em></div>`).join("")
     : "<p>아직 인증 내역이 없어요</p>";
+  if (pagination) pagination.innerHTML = scannerRecentEntries.length > scannerRecentPageSize ? `
+    <button type="button" data-scanner-recent-page="${scannerRecentPage - 1}"${scannerRecentPage === 1 ? " disabled" : ""}>이전</button>
+    <span>${scannerRecentPage} / ${pageCount}</span>
+    <button type="button" data-scanner-recent-page="${scannerRecentPage + 1}"${scannerRecentPage === pageCount ? " disabled" : ""}>다음</button>` : "";
 };
 
 const addScannerRecentEntry = ({ status, name, label, detail }) => {
@@ -814,8 +832,32 @@ const addScannerRecentEntry = ({ status, name, label, detail }) => {
     detail,
     time: new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" }).format(new Date()),
   });
-  scannerRecentEntries.splice(5);
+  scannerRecentEntries.splice(30);
+  scannerRecentPage = 1;
   renderScannerRecentEntries();
+};
+
+const renderScannerNoticeBanner = () => {
+  const banner = document.querySelector("#scanner-notice-banner");
+  const title = document.querySelector("#scanner-notice-title");
+  if (!banner || !title) return;
+  const notice = scannerNotices.find((item) => item.isFeatured) || scannerNotices[0];
+  banner.hidden = !notice;
+  title.textContent = notice?.title || "";
+};
+
+// 개인정보 보호 효과는 영상 위의 시각 레이어에만 적용합니다. QR 디코더가 읽는 video 픽셀은 흐리지 않습니다.
+const applyScannerPrivacy = () => {
+  const reader = document.querySelector("#qr-reader");
+  const range = document.querySelector("#scanner-blur-strength");
+  const output = document.querySelector("#scanner-blur-output");
+  const status = document.querySelector("#scanner-privacy-status");
+  if (!reader) return;
+  reader.dataset.privacyBlur = scannerPrivacyEnabled ? "on" : "off";
+  reader.style.setProperty("--scanner-privacy-blur", `${scannerPrivacyStrength}px`);
+  if (range) range.disabled = !scannerPrivacyEnabled;
+  if (output) output.textContent = scannerPrivacyEnabled ? `${scannerPrivacyStrength.toFixed(1)}px` : "꺼짐";
+  if (status) status.textContent = scannerPrivacyEnabled ? "카메라 화면 개인정보 보호 켜짐" : "카메라 화면 개인정보 보호 꺼짐";
 };
 
 const getScanSelection = () => {
@@ -954,12 +996,10 @@ const startScanner = async () => {
     const Html5Qrcode = await loadScannerLibrary();
     document.querySelector("#qr-reader").innerHTML = "";
     qrScanner = new Html5Qrcode("qr-reader");
-    // 작아진 카메라 카드 안에서도 가이드가 잘리지 않도록 실제 표시 영역에 맞춥니다.
-    const responsiveQrBox = (viewfinderWidth, viewfinderHeight) => {
-      const boxSize = Math.max(104, Math.min(170, Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.58)));
-      return { width: boxSize, height: boxSize };
-    };
-    await qrScanner.start({ facingMode: "environment" }, { fps: 12, qrbox: responsiveQrBox }, async (text) => {
+    // 라이브러리 버전별 콜백형 qrbox 차이를 피하고 실제 카드 크기로 고정해 인식 안정성을 높입니다.
+    const reader = document.querySelector("#qr-reader");
+    const boxSize = Math.max(104, Math.min(158, Math.floor(Math.min(reader.clientWidth, reader.clientHeight) * 0.6)));
+    await qrScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: boxSize, height: boxSize } }, async (text) => {
       if (scanBusy) return;
       scanBusy = true;
       const outcome = await handleDecodedToken(text);
@@ -998,6 +1038,20 @@ document.querySelector("#scanner-test-mode").addEventListener("change", (event) 
   renderScannerStatus(scannerTestMode
     ? "테스트 모드가 켜졌어요. 반복 인식 결과는 실제 내역에 저장되지 않습니다."
     : "운영 모드로 돌아왔어요. QR 인식을 기다리고 있어요.");
+});
+document.querySelector("#scanner-privacy-enabled").addEventListener("change", (event) => {
+  scannerPrivacyEnabled = event.currentTarget.checked;
+  applyScannerPrivacy();
+});
+document.querySelector("#scanner-blur-strength").addEventListener("input", (event) => {
+  scannerPrivacyStrength = Number(event.currentTarget.value) || 1.2;
+  applyScannerPrivacy();
+});
+document.querySelector("#scanner-recent-pagination").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-scanner-recent-page]");
+  if (!button || button.disabled) return;
+  scannerRecentPage = Number(button.dataset.scannerRecentPage) || 1;
+  renderScannerRecentEntries();
 });
 
 const scannerOperationsDialog = document.querySelector("#scanner-operations-dialog");
@@ -1632,11 +1686,17 @@ if (accessAllowed !== false) {
     client,
     mode: adminMode,
     currentUserId,
+    onNoticesChange: (items) => {
+      scannerNotices = items;
+      renderScannerNoticeBanner();
+    },
     onSuggestionsChange: (items) => {
       dashboardSuggestions = items;
       renderStats();
     },
   });
+  applyScannerPrivacy();
+  renderScannerRecentEntries();
   setScanDefaults();
   route(location.hash.slice(1));
   await refreshDashboard();
