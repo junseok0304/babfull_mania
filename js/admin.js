@@ -19,6 +19,7 @@ let currentUserId = null;
 let operationalSettings = { ...defaultOperationalSettings };
 let scannerAudioContext = null;
 let scanBusy = false;
+let scannerTestMode = false;
 let foodImageCandidates = [];
 let foodImageMenuNames = [];
 let allFoodImageMenuNames = [];
@@ -735,6 +736,15 @@ const syncScannerMetrics = () => {
   if (price) price.textContent = `${getSelectedScannerPrice().toLocaleString("ko-KR")}원`;
   if (today) today.textContent = todayScannerUsers.toLocaleString("ko-KR");
   if (revenue) revenue.textContent = `${todayScannerRevenue.toLocaleString("ko-KR")}원`;
+  const date = document.querySelector("#scan-meal-date")?.value;
+  const type = document.querySelector('input[name="scan_meal_type"]:checked')?.value || "lunch";
+  const selectedPrice = getSelectedScannerPrice();
+  const timeRange = type === "breakfast"
+    ? `${operationalSettings.breakfastStart}–${operationalSettings.breakfastEnd}`
+    : `${operationalSettings.lunchStart}–${operationalSettings.lunchEnd}`;
+  document.querySelector("#scanner-standard-date").textContent = date || "-";
+  document.querySelector("#scanner-standard-meal").textContent = `${mealLabel(type)} · ${selectedPrice.toLocaleString("ko-KR")}원`;
+  document.querySelector("#scanner-standard-time").textContent = timeRange;
 };
 
 // 선택한 이용 날짜·식사 구분의 식단을 스캐너 화면에 함께 표시합니다.
@@ -751,7 +761,13 @@ const renderScannerMeal = () => {
   kicker.textContent = isToday ? "오늘 식단" : "선택한 날짜의 식단";
   title.textContent = `${date} · ${mealLabel(type)}`;
   if (!meal?.items?.length) {
-    target.innerHTML = '<div class="scanner-meal-empty"><strong>등록된 식단이 없어요</strong><p>운영 상세에서 날짜나 식사 구분을 확인해 주세요.</p></div>';
+    const selectedDate = new Date(`${date}T12:00:00`);
+    const isWeekend = selectedDate.getDay() === 0 || selectedDate.getDay() === 6;
+    const emptyTitle = isToday && isWeekend ? "오늘은 운영 식단이 없어요" : "등록된 식단이 없어요";
+    const emptyDescription = isToday && isWeekend
+      ? "주말에는 정기 식단을 운영하지 않습니다. 다음 운영일 식단은 사용자 화면에서 확인할 수 있어요."
+      : "운영 상세에서 날짜나 식사 구분을 확인해 주세요.";
+    target.innerHTML = `<div class="scanner-meal-empty"><strong>${emptyTitle}</strong><p>${emptyDescription}</p></div>`;
     return;
   }
   const menuList = `<ul>${meal.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
@@ -810,6 +826,10 @@ const getScanSelection = () => {
 
 const processUsage = async (profile) => {
   const { date, type } = getScanSelection();
+  // 테스트 모드는 운영 DB에 기록하지 않아 중복 제약과 매출 집계에 영향을 주지 않습니다.
+  if (scannerTestMode) {
+    return { id: `test-${Date.now()}`, userId: profile.id, meal_type: type, type, price: getSelectedScannerPrice(), test_mode: true };
+  }
   if (adminMode === "demo") {
     if (demoUsages.some((usage) => usage.userId === profile.id && usage.date === date && usage.type === type)) {
       throw new Error("이미 오늘 사용 처리된 식권입니다.");
@@ -855,8 +875,10 @@ const renderScannedProfile = (profile, usage, monthlyCount) => {
   document.querySelector("#scan-today-revenue").textContent = `${todayScannerRevenue.toLocaleString("ko-KR")}원`;
   const notice = document.querySelector("#scan-terminal-notice");
   notice.hidden = false;
-  notice.textContent = `${profile.affiliation || "소속 미등록"} · ${mealLabel(type)}`;
-  addScannerRecentEntry({ status: "success", name: profile.name || "사용자", label: "인증 완료", detail: `${mealLabel(type)} · ${Number(usage.price).toLocaleString("ko-KR")}원` });
+  notice.textContent = usage.test_mode
+    ? `${profile.affiliation || "소속 미등록"} · 테스트 인증 · 실제 내역 미저장`
+    : `${profile.affiliation || "소속 미등록"} · ${mealLabel(type)}`;
+  addScannerRecentEntry({ status: "success", name: profile.name || "사용자", label: usage.test_mode ? "테스트 완료" : "인증 완료", detail: `${mealLabel(type)} · ${Number(usage.price).toLocaleString("ko-KR")}원${usage.test_mode ? " · 미저장" : ""}` });
   playSuccessChime();
   renderScannerStatus("처리가 완료되었습니다. 다음 QR을 기다립니다.");
 };
@@ -903,7 +925,7 @@ const handleDecodedToken = async (token) => {
     const { date } = getScanSelection();
     const usage = await processUsage(profile);
     const [, monthlyCount] = await Promise.all([
-      refreshDashboard(),
+      usage.test_mode ? Promise.resolve() : refreshDashboard(),
       loadUserMonthlyUsageCount(profile, date),
     ]);
     renderScannedProfile(profile, usage, monthlyCount);
@@ -962,6 +984,15 @@ document.querySelectorAll('input[name="scan_meal_type"]').forEach((input) => inp
   syncScannerMetrics();
   renderScannerMeal();
 }));
+document.querySelector("#scanner-test-mode").addEventListener("change", (event) => {
+  scannerTestMode = event.currentTarget.checked;
+  document.querySelector(".scanner-kiosk").classList.toggle("is-test-mode", scannerTestMode);
+  document.querySelector("#scanner-test-indicator").hidden = !scannerTestMode;
+  renderScannerReady();
+  renderScannerStatus(scannerTestMode
+    ? "테스트 모드가 켜졌어요. 반복 인식 결과는 실제 내역에 저장되지 않습니다."
+    : "운영 모드로 돌아왔어요. QR 인식을 기다리고 있어요.");
+});
 
 const scannerOperationsDialog = document.querySelector("#scanner-operations-dialog");
 const scannerExitDialog = document.querySelector("#scanner-exit-dialog");

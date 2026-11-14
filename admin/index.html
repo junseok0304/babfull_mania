@@ -8,8 +8,8 @@
     <title>밥풀매니아 관리자</title>
     <link rel="icon" type="image/png" href="../asset/밥풀매니아_로고.png?v=20261026" />
     <link rel="stylesheet" href="../css/global.css?v=20261023-3" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261115-2" />
-    <script type="module" src="../js/admin.js?v=20261115-2"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261115-3" />
+    <script type="module" src="../js/admin.js?v=20261115-3"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -161,7 +161,7 @@
 
         <section class="admin-view" data-admin-view="scanner">
           <section class="scanner-kiosk">
-              <header class="scanner-kiosk__header"><div class="scanner-kiosk__brand"><img src="../asset/밥풀매니아_로고_긴버전.png" alt="밥풀매니아" /><h2>밥풀 정기권 사용</h2></div><div class="scanner-server-status"><span></span>서버 연결됨</div><button class="scanner-kiosk__detail" id="scanner-details-open" type="button">운영 상세</button><button class="scanner-kiosk__exit" id="scanner-exit-open" type="button">운영 화면으로</button></header>
+              <header class="scanner-kiosk__header"><div class="scanner-kiosk__brand"><img src="../asset/밥풀매니아_로고_긴버전.png" alt="밥풀매니아" /><h2>밥풀 정기권 사용</h2><b class="scanner-test-indicator" id="scanner-test-indicator" hidden>테스트 모드</b></div><div class="scanner-server-status"><span></span>서버 연결됨</div><button class="scanner-kiosk__detail" id="scanner-details-open" type="button">운영 상세</button><button class="scanner-kiosk__exit" id="scanner-exit-open" type="button">운영 화면으로</button></header>
               <div class="scanner-workspace">
                 <section class="scanner-camera-column">
                   <div class="scanner-camera-heading"><span>QR 스캔</span><strong>QR을 네모 안에 맞춰 주세요</strong></div>
@@ -190,6 +190,20 @@
                   <div id="scanner-today-meal" class="scanner-today-meal" aria-live="polite"></div>
                 </section>
               </div>
+              <section class="scanner-info-strip" aria-label="정기권 이용 및 운영 안내">
+                <article class="scanner-info-card scanner-info-card--steps">
+                  <header><span>이용 절차</span><h3>빠르게 인증하고 입장하세요</h3></header>
+                  <ol><li><b>1</b><span><strong>정기권 QR 준비</strong>마이페이지의 QR을 열어주세요.</span></li><li><b>2</b><span><strong>카메라에 맞추기</strong>QR 전체가 네모 안에 보이게 해주세요.</span></li><li><b>3</b><span><strong>결과 확인</strong>인증 완료 안내 후 입장해주세요.</span></li></ol>
+                </article>
+                <article class="scanner-info-card scanner-info-card--standard">
+                  <header><span>현재 적용 기준</span><h3 id="scanner-standard-title">오늘 식사 기준</h3></header>
+                  <dl><div><dt>이용일</dt><dd id="scanner-standard-date">-</dd></div><div><dt>식사·금액</dt><dd id="scanner-standard-meal">-</dd></div><div><dt>제공시간</dt><dd id="scanner-standard-time">-</dd></div></dl>
+                </article>
+                <article class="scanner-info-card scanner-info-card--safety">
+                  <header><span>안전 운영</span><h3>정확하고 안전하게 확인해요</h3></header>
+                  <ul><li><span></span>동일 식권 중복 사용 자동 차단</li><li><span></span>QR에 이름·전화번호 미포함</li><li><span></span>카메라 화면 개인정보 보호 블러 적용</li></ul>
+                </article>
+              </section>
               <dialog class="scanner-operations-dialog" id="scanner-operations-dialog">
                 <header><div><span>운영 상세</span><h3>인증 현황과 기록 기준</h3></div><button id="scanner-details-close" type="button" aria-label="운영 상세 닫기">닫기</button></header>
                 <div class="scanner-daily-metrics"><section><span>오늘 이용</span><strong><b id="scan-terminal-today">0</b>명</strong></section><section><span>오늘 매출</span><strong id="scan-today-revenue">0원</strong></section></div>
@@ -197,6 +211,7 @@
                 <section class="kiosk-admin-options">
                   <h3>운영진 설정</h3>
                 <div class="scan-options" id="scan-options">
+                  <label class="scanner-test-toggle"><span><strong>QR 테스트 모드</strong><small>동일 QR을 반복 인식하며, 실제 이용 내역과 매출에는 저장하지 않습니다.</small></span><input id="scanner-test-mode" type="checkbox" role="switch" /><i aria-hidden="true"></i></label>
                   <div class="scan-options__heading"><strong>이번 인식의 기록 기준</strong><button id="scan-use-current" type="button">현재 기준으로 재설정</button></div>
                   <div class="scan-options__fields">
                     <label>이용 날짜<input id="scan-meal-date" type="date" required /></label>
