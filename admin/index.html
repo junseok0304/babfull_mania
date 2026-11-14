@@ -8,8 +8,8 @@
     <title>밥풀매니아 관리자</title>
     <link rel="icon" type="image/png" href="../asset/밥풀매니아_로고.png?v=20261026" />
     <link rel="stylesheet" href="../css/global.css?v=20261023-3" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261114-5" />
-    <script type="module" src="../js/admin.js?v=20261114-5"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261114-6" />
+    <script type="module" src="../js/admin.js?v=20261114-6"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -159,33 +159,33 @@
 
         <section class="admin-view" data-admin-view="scanner">
           <section class="scanner-kiosk">
-              <a class="scanner-kiosk__exit" href="#dashboard">운영 화면으로</a>
-              <div class="scanner-kiosk__intro"><h2>밥full 정기권 인식 스캐너</h2><p>Meal Pass Verification Terminal · QR을 카메라 중앙에 맞춰주세요.</p></div>
+              <header class="scanner-kiosk__header"><h2>정기권 인증</h2><div class="scanner-server-status"><span></span>서버 연결됨</div><a class="scanner-kiosk__exit" href="#dashboard">운영 화면으로</a></header>
               <div class="scanner-workspace">
-                <div class="scanner-camera-column">
-                  <div class="scanner-camera-heading"><span>LIVE CAMERA</span><strong>QR 코드 인식</strong></div>
-                  <div class="qr-reader" id="qr-reader"><div class="scanner-placeholder"><span class="scanner-placeholder__icon">▦</span><strong>스캔 대기 중</strong><p>아래 버튼을 눌러 카메라를 켜주세요.</p></div></div>
+                <section class="scanner-camera-column">
+                  <div class="scanner-camera-heading"><span>QR 스캔</span><strong>QR을 네모 안에 맞춰 주세요</strong></div>
+                  <div class="qr-reader" id="qr-reader"><div class="scanner-placeholder"><span class="scanner-placeholder__icon">▦</span><strong>스캔 대기 중</strong><p>스캔 시작하기를 눌러주세요.</p></div></div>
                   <div class="scanner-controls">
-                    <button class="primary-button" id="scanner-start" type="button">카메라 켜고 운영 시작</button>
-                    <button class="secondary-button" id="scanner-stop" type="button" disabled>카메라 종료</button>
+                    <button class="primary-button" id="scanner-start" type="button">스캔 시작하기</button>
+                    <button class="secondary-button" id="scanner-stop" type="button" disabled>카메라 끄기</button>
                   </div>
                   <div id="scan-result" aria-live="polite"><div class="scan-kiosk-status"><span class="scan-kiosk-status__dot"></span><strong>스캔을 기다리고 있어요</strong></div></div>
-                </div>
+                </section>
                 <section class="scan-terminal" id="scan-terminal" aria-live="polite" data-state="ready">
-                  <header><div><span>BABFULL MANIA</span><strong>MEAL PASS</strong></div><b id="scan-terminal-state">READY</b></header>
+                  <header><b id="scan-terminal-state">대기 중</b></header>
                   <div class="scan-terminal__main">
-                    <div class="scan-terminal__icon" id="scan-terminal-icon">⌁</div>
-                    <span class="scan-terminal__eyebrow" id="scan-terminal-eyebrow">QR SCAN READY</span>
-                    <h3 id="scan-terminal-title">QR을 스캔해 주세요.</h3>
-                    <p id="scan-terminal-english">Please scan your meal pass.</p>
-                    <div class="scan-terminal__profile" id="scan-terminal-profile" hidden></div>
-                  </div>
-                  <div class="scan-terminal__metrics">
-                    <div><span>이용 금액 <small>PRICE</small></span><strong id="scan-terminal-price">5,300원</strong></div>
-                    <div><span>금일 이용 <small>TODAY</small></span><strong><b id="scan-terminal-today">0</b>명</strong></div>
+                    <h3 id="scan-terminal-title">정기권 QR을<br />스캔해 주세요</h3>
+                    <p id="scan-terminal-description">인증되면 이용 정보가 여기에 표시돼요</p>
+                    <dl class="scan-terminal__profile" id="scan-terminal-profile">
+                      <div><dt>이용자</dt><dd id="scan-terminal-user">-</dd></div>
+                      <div><dt>당월 이용 횟수</dt><dd id="scan-terminal-monthly">-</dd></div>
+                      <div><dt>이용 금액</dt><dd id="scan-terminal-price">5,300원</dd></div>
+                    </dl>
+                    <p class="scan-terminal__notice" id="scan-terminal-notice" hidden></p>
                   </div>
                 </section>
               </div>
+              <div class="scanner-daily-metrics"><section><span>오늘 이용</span><strong><b id="scan-terminal-today">0</b>명</strong></section><section><span>오늘 매출</span><strong id="scan-today-revenue">0원</strong></section></div>
+              <section class="scanner-recent-card"><h3>최근 인증 내역</h3><div id="scanner-recent-list"><p>아직 인증 내역이 없어요</p></div></section>
               <details class="kiosk-admin-options">
                 <summary>운영진 설정</summary>
                 <div class="scan-options" id="scan-options">
