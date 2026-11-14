@@ -671,6 +671,24 @@ const playSuccessChime = () => {
   });
 };
 
+// 중복 사용은 성공음과 혼동되지 않도록 낮아지는 두 음으로 즉시 알립니다.
+const playDuplicateChime = () => {
+  if (!scannerAudioContext) return;
+  const now = scannerAudioContext.currentTime;
+  [440, 293.66].forEach((frequency, index) => {
+    const oscillator = scannerAudioContext.createOscillator();
+    const gain = scannerAudioContext.createGain();
+    oscillator.frequency.value = frequency;
+    oscillator.type = "triangle";
+    gain.gain.setValueAtTime(0.0001, now + index * 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.16, now + index * 0.18 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.18 + 0.28);
+    oscillator.connect(gain).connect(scannerAudioContext.destination);
+    oscillator.start(now + index * 0.18);
+    oscillator.stop(now + index * 0.18 + 0.3);
+  });
+};
+
 const renderScannerStatus = (message, isError = false) => {
   document.querySelector("#scan-result").innerHTML = `<div class="scan-kiosk-status${isError ? " is-error" : ""}"><span class="scan-kiosk-status__dot"></span><strong>${escapeHtml(message)}</strong></div>`;
 };
@@ -695,6 +713,7 @@ const setScanDefaults = () => {
   document.querySelector("#scan-breakfast-label").textContent = `조식 · ${operationalSettings.breakfastPrice.toLocaleString("ko-KR")}원`;
   document.querySelector("#scan-lunch-label").textContent = `중식 · ${operationalSettings.lunchPrice.toLocaleString("ko-KR")}원`;
   syncScannerMetrics();
+  renderScannerMeal();
 };
 
 const getSelectedScannerPrice = () => (
@@ -710,6 +729,36 @@ const syncScannerMetrics = () => {
   if (price) price.textContent = `${getSelectedScannerPrice().toLocaleString("ko-KR")}원`;
   if (today) today.textContent = todayScannerUsers.toLocaleString("ko-KR");
   if (revenue) revenue.textContent = `${todayScannerRevenue.toLocaleString("ko-KR")}원`;
+};
+
+// 선택한 이용 날짜·식사 구분의 식단을 스캐너 화면에 함께 표시합니다.
+// 이미지가 아직 생성되지 않은 식단은 메뉴명을 식판 칸에 배치해 빈 화면을 방지합니다.
+const renderScannerMeal = () => {
+  const target = document.querySelector("#scanner-today-meal");
+  const title = document.querySelector("#scanner-meal-title");
+  const kicker = document.querySelector("#scanner-meal-kicker");
+  if (!target || !title || !kicker) return;
+  const date = document.querySelector("#scan-meal-date")?.value || formatDateKey(getSeoulDate());
+  const type = document.querySelector('input[name="scan_meal_type"]:checked')?.value || "lunch";
+  const meal = meals.find((item) => item.date === date && item.type === type);
+  const isToday = date === formatDateKey(getSeoulDate());
+  kicker.textContent = isToday ? "오늘 식단" : "선택한 날짜의 식단";
+  title.textContent = `${date} · ${mealLabel(type)}`;
+  if (!meal?.items?.length) {
+    target.innerHTML = '<div class="scanner-meal-empty"><strong>등록된 식단이 없어요</strong><p>운영 상세에서 날짜나 식사 구분을 확인해 주세요.</p></div>';
+    return;
+  }
+  const menuList = `<ul>${meal.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+  const fallbackMarkup = () => {
+    const slots = meal.items.slice(0, 6).map((item) => `<span>${escapeHtml(item)}</span>`).join("");
+    return `<figure class="scanner-meal-fallback" aria-label="식판 이미지 미제공, 메뉴명으로 표시">${slots}</figure><p class="scanner-meal-fallback-note">식판 이미지 준비 중</p>${menuList}`;
+  };
+  if (meal.trayImage?.imageUrl) {
+    target.innerHTML = `<figure class="scanner-meal-image"><img src="${escapeHtml(meal.trayImage.imageUrl)}" alt="${escapeHtml(meal.trayImage.altText || `${date} ${mealLabel(type)} 식판`)}" /><figcaption>등록된 식판 이미지</figcaption></figure>${menuList}`;
+    target.querySelector("img").addEventListener("error", () => { target.innerHTML = fallbackMarkup(); }, { once: true });
+    return;
+  }
+  target.innerHTML = fallbackMarkup();
 };
 
 const renderScannerReady = () => {
@@ -759,7 +808,7 @@ const processUsage = async (profile) => {
     if (demoUsages.some((usage) => usage.userId === profile.id && usage.date === date && usage.type === type)) {
       throw new Error("이미 오늘 사용 처리된 식권입니다.");
     }
-    const usage = { id: Date.now(), userId: profile.id, userName: profile.name, affiliation: profile.affiliation, date, type, status: "active", price: type === "breakfast" ? operationalSettings.breakfastPrice : operationalSettings.lunchPrice };
+    const usage = { id: Date.now(), userId: profile.id, userName: profile.name, affiliation: profile.affiliation, date, type, status: "active", price: type === "breakfast" ? operationalSettings.breakfastPrice : operationalSettings.lunchPrice, createdAt: new Date().toISOString() };
     demoUsages.unshift(usage);
     return usage;
   }
@@ -820,6 +869,7 @@ const renderDuplicateUsage = (profile, monthlyCount) => {
   notice.textContent = "관련 문의는 식당 내 관리자를 찾아주세요";
   syncScannerMetrics();
   addScannerRecentEntry({ status: "failure", name: profile?.name || "사용자", label: "인증 실패", detail: `${date} · ${mealLabel(type)}` });
+  playDuplicateChime();
   renderScannerStatus("이미 처리된 식권입니다. 다음 QR을 기다립니다.");
 };
 
@@ -871,7 +921,9 @@ const startScanner = async () => {
     const Html5Qrcode = await loadScannerLibrary();
     document.querySelector("#qr-reader").innerHTML = "";
     qrScanner = new Html5Qrcode("qr-reader");
-    const boxSize = Math.max(240, Math.min(420, window.innerWidth - 90));
+    // 작아진 카메라 카드 안에서도 가이드가 잘리지 않도록 실제 표시 영역에 맞춥니다.
+    const reader = document.querySelector("#qr-reader");
+    const boxSize = Math.max(130, Math.min(170, reader.clientWidth - 40, reader.clientHeight - 40));
     await qrScanner.start({ facingMode: "environment" }, { fps: 12, qrbox: { width: boxSize, height: boxSize } }, async (text) => {
       if (scanBusy) return;
       scanBusy = true;
@@ -898,7 +950,25 @@ document.querySelector("#scanner-start").addEventListener("click", async () => {
 
 document.querySelector("#scanner-stop").addEventListener("click", stopScanner);
 document.querySelector("#scan-use-current").addEventListener("click", setScanDefaults);
-document.querySelectorAll('input[name="scan_meal_type"]').forEach((input) => input.addEventListener("change", syncScannerMetrics));
+document.querySelector("#scan-meal-date").addEventListener("change", renderScannerMeal);
+document.querySelectorAll('input[name="scan_meal_type"]').forEach((input) => input.addEventListener("change", () => {
+  syncScannerMetrics();
+  renderScannerMeal();
+}));
+
+const scannerOperationsDialog = document.querySelector("#scanner-operations-dialog");
+const scannerExitDialog = document.querySelector("#scanner-exit-dialog");
+document.querySelector("#scanner-details-open").addEventListener("click", () => scannerOperationsDialog.showModal());
+document.querySelector("#scanner-details-close").addEventListener("click", () => scannerOperationsDialog.close());
+document.querySelector("#scanner-exit-open").addEventListener("click", () => scannerExitDialog.showModal());
+document.querySelector("#scanner-exit-cancel").addEventListener("click", () => scannerExitDialog.close());
+document.querySelector("#scanner-exit-confirm").addEventListener("click", () => {
+  scannerExitDialog.close();
+  location.hash = "#dashboard";
+});
+[scannerOperationsDialog, scannerExitDialog].forEach((dialog) => dialog.addEventListener("click", (event) => {
+  if (event.target === dialog) dialog.close();
+}));
 
 // ── 사용자·운영 설정·이용 기록 관리 ─────────────────────────────────────
 const userTypeLabel = (type) => ({ student: "학생", faculty: "교원", staff: "직원", other: "기타" })[type] || "기타";
@@ -998,7 +1068,17 @@ const normalizeUsage = (record) => ({
   price: Number(record.price),
   status: record.status || "active",
   note: record.correction_note || "",
+  createdAt: record.created_at || record.createdAt || null,
 });
+
+const formatUsageDateTime = (usage) => {
+  if (!usage.createdAt) return usage.date;
+  const parsed = new Date(usage.createdAt);
+  if (Number.isNaN(parsed.getTime())) return usage.date;
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
+  }).format(parsed);
+};
 
 const updateUsage = async (usageId, date, type, status, note) => {
   if (adminMode === "demo") {
@@ -1078,7 +1158,7 @@ const renderUsages = async () => {
     return;
   }
   target.innerHTML = records.map((usage) => `<form class="usage-admin-item" data-usage-id="${usage.id}">
-    <div class="usage-admin-person"><strong>${escapeHtml(usage.userName)}</strong><span>${escapeHtml(usage.affiliation)} · ${escapeHtml(usage.date)}</span></div>
+    <div class="usage-admin-person"><strong>${escapeHtml(usage.userName)}</strong><span>${escapeHtml(usage.affiliation)} · ${escapeHtml(formatUsageDateTime(usage))}</span></div>
     <div class="usage-admin-price${usage.status === "cancelled" ? " is-cancelled" : ""}"><span>이용금액</span><strong>${usage.price.toLocaleString("ko-KR")}원</strong></div>
     <label><span class="sr-only">이용 날짜</span><input name="meal_date" type="date" value="${escapeHtml(usage.date)}" required /></label>
     <fieldset class="usage-segmented"><legend class="sr-only">식사 구분</legend><label><input type="radio" name="meal_type" value="breakfast"${usage.type === "breakfast" ? " checked" : ""} /><span>조식</span></label><label><input type="radio" name="meal_type" value="lunch"${usage.type === "lunch" ? " checked" : ""} /><span>중식</span></label></fieldset>

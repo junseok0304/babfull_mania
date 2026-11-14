@@ -2798,3 +2798,151 @@
   .scanner-recent-item { grid-template-columns: 58px minmax(0, 1fr) auto; }
   .scanner-recent-item em { grid-column: 2 / -1; }
 }
+
+/* 스캐너 한 화면 운영 배치: 카메라·인증 결과·식단만 기본 화면에 둡니다. */
+.scanner-kiosk { width: min(100%, 1500px); min-height: calc(100dvh - 48px); }
+.scanner-kiosk__detail,
+.scanner-kiosk__exit {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.scanner-kiosk__detail { background: #fff0e9; color: var(--primary-dark); }
+.scanner-kiosk__exit { background: #e5e8eb; color: #4e5968; }
+.scanner-workspace {
+  display: grid;
+  grid-template-columns: minmax(290px, .9fr) minmax(330px, 1fr) minmax(300px, .9fr);
+  align-items: stretch;
+  gap: 16px;
+}
+.scanner-camera-column,
+.scan-terminal,
+.scanner-meal-card { min-width: 0; min-height: 0; }
+.scanner-camera-column { padding: 20px; }
+.scanner-camera-heading { padding-bottom: 15px; gap: 3px; }
+.scanner-camera-heading span { font-size: 15px; }
+.scanner-camera-heading strong { font-size: clamp(21px, 2vw, 25px); }
+.scanner-kiosk .qr-reader,
+.scanner-kiosk .scanner-placeholder {
+  height: 220px;
+  min-height: 220px;
+  max-height: 220px;
+  flex-basis: 220px;
+}
+.scanner-kiosk .qr-reader video {
+  filter: blur(1.2px);
+  transform: scale(1.012);
+}
+.scanner-kiosk .qr-reader::after { width: 136px; height: 136px; border-color: var(--primary); }
+.scanner-kiosk .scanner-placeholder span { width: 68px; height: 68px; font-size: 36px; }
+.scanner-controls { margin-top: 14px; grid-template-columns: 1fr 1fr; gap: 8px; }
+.scanner-controls #scanner-start,
+.scanner-controls #scanner-stop,
+.scanner-is-active #scanner-stop { min-height: 50px; font-size: 16px; }
+.scanner-kiosk .scan-kiosk-status { min-height: 46px; margin-top: 8px; font-size: 14px; }
+
+.scan-terminal > header { min-height: 64px; padding: 20px 22px 8px; }
+.scan-terminal__main { padding: 14px 22px 22px; }
+.scan-terminal h3 { margin-bottom: 9px; font-size: clamp(26px, 2.4vw, 34px); }
+.scan-terminal__main > p { font-size: 16px; }
+.scan-terminal__profile { margin-top: 18px; gap: 7px; }
+.scan-terminal__profile > div { min-height: 50px; padding: 12px 14px; }
+.scan-terminal__notice { min-height: 48px; margin-top: 8px !important; }
+
+.scanner-meal-card {
+  padding: 22px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #fff;
+}
+.scanner-meal-card > header span { color: var(--primary-dark); font-size: 15px; font-weight: 700; }
+.scanner-meal-card > header h3 { margin: 4px 0 15px; color: #191f28; font-size: 21px; font-weight: 700; }
+.scanner-today-meal { display: grid; gap: 12px; }
+.scanner-meal-image,
+.scanner-meal-fallback { position: relative; height: 178px; margin: 0; overflow: hidden; border-radius: 14px; background: #f2f4f6; }
+.scanner-meal-image img { width: 100%; height: 100%; object-fit: cover; }
+.scanner-meal-image figcaption { position: absolute; right: 10px; bottom: 10px; padding: 5px 8px; border-radius: 7px; background: rgb(25 31 40 / .76); color: #fff; font-size: 12px; }
+.scanner-meal-fallback {
+  display: grid;
+  padding: 9px;
+  grid-template-columns: 1.25fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 6px;
+  background: #ece8e5;
+}
+.scanner-meal-fallback span { display: grid; min-width: 0; padding: 7px; place-items: center; overflow-wrap: anywhere; border-radius: 13px; background: #fff; color: #333d4b; font-size: 12px; font-weight: 700; line-height: 1.25; text-align: center; }
+.scanner-meal-fallback span:first-child { grid-row: 1 / 3; }
+.scanner-meal-fallback-note { margin: -5px 0 0; color: #8b95a1; font-size: 13px; text-align: right; }
+.scanner-today-meal ul { display: grid; max-height: 170px; margin: 0; padding: 0; overflow: auto; gap: 7px; list-style: none; }
+.scanner-today-meal li { position: relative; padding-left: 13px; color: #4e5968; font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
+.scanner-today-meal li::before { position: absolute; top: .52em; left: 0; width: 5px; height: 5px; border-radius: 50%; background: var(--primary); content: ""; }
+.scanner-meal-empty { display: grid; min-height: 320px; padding: 24px; place-content: center; gap: 7px; border-radius: 14px; background: #f7f8fa; text-align: center; }
+.scanner-meal-empty strong { color: #333d4b; font-size: 18px; }
+.scanner-meal-empty p { margin: 0; color: #6b7684; font-size: 15px; line-height: 1.5; }
+
+.scanner-operations-dialog,
+.scanner-confirm-dialog {
+  max-width: calc(100vw - 40px);
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: #f7f8fa;
+  color: #191f28;
+}
+.scanner-operations-dialog { width: min(900px, calc(100vw - 40px)); max-height: calc(100dvh - 40px); overflow: auto; }
+.scanner-operations-dialog::backdrop,
+.scanner-confirm-dialog::backdrop { background: rgb(25 31 40 / .56); }
+.scanner-operations-dialog > header { display: flex; position: sticky; z-index: 2; top: 0; min-height: 82px; padding: 18px 22px; align-items: center; justify-content: space-between; background: #fff; }
+.scanner-operations-dialog > header span { color: var(--primary-dark); font-size: 14px; font-weight: 700; }
+.scanner-operations-dialog > header h3 { margin: 3px 0 0; font-size: 22px; }
+.scanner-operations-dialog > header button { min-width: 58px; min-height: 48px; border: 0; border-radius: 12px; background: #f2f4f6; color: #4e5968; font: inherit; font-weight: 700; cursor: pointer; }
+.scanner-operations-dialog .scanner-daily-metrics { margin: 18px 18px 0; width: auto; }
+.scanner-operations-dialog .scanner-recent-card,
+.scanner-operations-dialog .kiosk-admin-options { width: auto; margin: 16px 18px 0; padding: 22px; }
+.scanner-operations-dialog .kiosk-admin-options { margin-bottom: 18px; }
+.scanner-operations-dialog .kiosk-admin-options > h3 { margin: 0 0 16px; font-size: 19px; }
+.scanner-operations-dialog .scan-options { display: block; }
+.scanner-operations-dialog .scan-options__heading { font-size: 15px; }
+.scanner-operations-dialog .scan-options__heading button { min-height: 44px; padding: 0 10px; font-size: 14px; }
+.scanner-operations-dialog .scan-options__fields { grid-template-columns: minmax(220px, .8fr) minmax(360px, 1.2fr); align-items: end; }
+.scanner-operations-dialog .scan-options__fields > label,
+.scanner-operations-dialog .scan-options fieldset legend { font-size: 15px; }
+.scanner-operations-dialog .scan-options input[type="date"] { height: 52px; font-size: 16px; }
+.scanner-operations-dialog #scan-auto-hint { font-size: 14px; line-height: 1.5; }
+.scanner-confirm-dialog { width: min(430px, calc(100vw - 40px)); padding: 28px; background: #fff; }
+.scanner-confirm-dialog h3 { margin: 0 0 9px; font-size: 22px; }
+.scanner-confirm-dialog p { margin: 0; color: #6b7684; font-size: 16px; }
+.scanner-confirm-dialog > div { display: grid; margin-top: 24px; grid-template-columns: 1fr 1fr; gap: 9px; }
+.scanner-confirm-dialog button { min-height: 52px; }
+
+/* 조회 단위는 달력 안에서 선택하므로 바깥 필터는 조회 기간에 집중합니다. */
+.usage-filter { grid-template-columns: minmax(260px, 360px) auto auto minmax(180px, 1fr); }
+
+@media (max-width: 900px) {
+  .scanner-workspace { grid-template-columns: minmax(280px, .85fr) minmax(330px, 1fr); }
+  .scanner-meal-card { grid-column: 1 / -1; }
+  .scanner-today-meal { grid-template-columns: minmax(260px, .75fr) 1fr; align-items: start; }
+  .scanner-today-meal .scanner-meal-fallback-note { display: none; }
+}
+
+@media (max-width: 760px) {
+  .scanner-kiosk__header { gap: 8px; }
+  .scanner-server-status { order: 2; }
+  .scanner-kiosk__detail,
+  .scanner-kiosk__exit { padding: 0 12px; }
+  .scanner-workspace { grid-template-columns: 1fr; }
+  .scanner-meal-card { grid-column: auto; }
+  .scanner-today-meal { grid-template-columns: 1fr; }
+  .scanner-operations-dialog .scan-options__fields { grid-template-columns: 1fr; }
+  .scan-terminal { min-height: 0; }
+  .scanner-recent-item { grid-template-columns: 58px minmax(0, 1fr) auto; }
+  .scanner-recent-item em { grid-column: 2 / -1; }
+  .usage-filter { grid-template-columns: 1fr 1fr; }
+  .usage-filter-period,
+  .usage-filter p { grid-column: 1 / -1; }
+}
