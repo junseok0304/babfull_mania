@@ -3,7 +3,7 @@ import { initPublicViews } from "./public-views.js?v=20261023-1";
 import { initializeData } from "./data-service.js";
 import { renderMyPage } from "./mypage.js?v=20261103-1";
 import { initAnalytics, trackPageView } from "./analytics.js?v=20261026-1";
-import { initCommunity } from "./community.js?v=20261103-1";
+import { initCommunity } from "./community.js?v=20261114-1";
 import { initLocalAdPreview } from "./ad-preview.js?v=20261103-1";
 
 /**

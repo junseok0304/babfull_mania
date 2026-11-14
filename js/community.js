@@ -137,5 +137,29 @@ export const initCommunity = async () => {
     renderCommunity(state);
   });
 
+  window.addEventListener("babfull:auth-changed", async (event) => {
+    if (event.detail?.event !== "SIGNED_OUT") return;
+
+    // 네트워크 재조회보다 먼저 개인 프로필과 좋아요 여부를 지워 로그아웃 직후
+    // 이전 사용자 정보가 잠시라도 공지·건의 화면에 남지 않도록 한다.
+    state = {
+      ...state,
+      session: null,
+      profile: null,
+      notices: state.notices.map((notice) => ({ ...notice, liked: false })),
+    };
+    document.querySelector("#suggestion-form")?.reset();
+    document.querySelector("#suggestion-message").textContent = "";
+    renderCommunity(state);
+
+    try {
+      state = await loadCommunity();
+      renderCommunity(state);
+    } catch {
+      // 익명 상태 전환은 이미 완료됐으므로 공개 데이터 재조회 실패 시에도
+      // 로그아웃한 사용자의 프로필을 복원하지 않는다.
+    }
+  });
+
   setActivePanel("notices");
 };

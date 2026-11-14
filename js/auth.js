@@ -53,6 +53,10 @@ export const signOut = async () => {
   const { error } = await client.auth.signOut();
   if (error) throw error;
   sessionStorage.removeItem(KAKAO_PROVIDER_TOKEN_KEY);
+  // 화면 모듈이 시작 시 보관한 프로필을 즉시 폐기하도록 인증 변경을 알린다.
+  window.dispatchEvent(new CustomEvent("babfull:auth-changed", {
+    detail: { event: "SIGNED_OUT", session: null },
+  }));
 };
 
 export const loadMyPageData = async (userId) => {
