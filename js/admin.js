@@ -733,11 +733,11 @@ const syncScannerMetrics = () => {
   const price = document.querySelector("#scan-terminal-price");
   const today = document.querySelector("#scan-terminal-today");
   const revenue = document.querySelector("#scan-today-revenue");
-  if (price) price.textContent = `${getSelectedScannerPrice().toLocaleString("ko-KR")}원`;
+  const type = document.querySelector('input[name="scan_meal_type"]:checked')?.value || "lunch";
+  if (price) price.textContent = `${getSelectedScannerPrice().toLocaleString("ko-KR")}원 (${mealLabel(type)})`;
   if (today) today.textContent = todayScannerUsers.toLocaleString("ko-KR");
   if (revenue) revenue.textContent = `${todayScannerRevenue.toLocaleString("ko-KR")}원`;
   const date = document.querySelector("#scan-meal-date")?.value;
-  const type = document.querySelector('input[name="scan_meal_type"]:checked')?.value || "lunch";
   const selectedPrice = getSelectedScannerPrice();
   const timeRange = type === "breakfast"
     ? `${operationalSettings.breakfastStart}–${operationalSettings.breakfastEnd}`
@@ -791,6 +791,7 @@ const renderScannerReady = () => {
   document.querySelector("#scan-terminal-description").textContent = "인증되면 이용 정보가 여기에 표시돼요";
   document.querySelector("#scan-terminal-user").textContent = "-";
   document.querySelector("#scan-terminal-monthly").textContent = "-";
+  document.querySelector("#scan-terminal-total").textContent = "-";
   const notice = document.querySelector("#scan-terminal-notice");
   notice.hidden = true;
   notice.textContent = "";
@@ -843,25 +844,25 @@ const processUsage = async (profile) => {
   return Array.isArray(data) ? data[0] : data;
 };
 
-const loadUserMonthlyUsageCount = async (profile, date) => {
+const loadUserUsageCounts = async (profile, date) => {
   const monthStart = `${date.slice(0, 7)}-01`;
   const monthEndDate = new Date(`${monthStart}T12:00:00`);
   monthEndDate.setMonth(monthEndDate.getMonth() + 1, 0);
   const monthEnd = formatDateKey(monthEndDate);
   if (adminMode === "demo") {
-    return demoUsages.filter((usage) => usage.userId === profile.id && usage.status === "active" && usage.date >= monthStart && usage.date <= monthEnd).length;
+    const active = demoUsages.filter((usage) => usage.userId === profile.id && usage.status === "active");
+    return { monthly: active.filter((usage) => usage.date >= monthStart && usage.date <= monthEnd).length, total: active.length };
   }
-  const { count, error } = await client.from("meal_usages")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", profile.id)
-    .eq("status", "active")
-    .gte("meal_date", monthStart)
-    .lte("meal_date", monthEnd);
-  if (error) throw error;
-  return count || 0;
+  const baseCountQuery = () => client.from("meal_usages").select("id", { count: "exact", head: true }).eq("user_id", profile.id).eq("status", "active");
+  const [monthlyResult, totalResult] = await Promise.all([
+    baseCountQuery().gte("meal_date", monthStart).lte("meal_date", monthEnd),
+    baseCountQuery(),
+  ]);
+  if (monthlyResult.error || totalResult.error) throw monthlyResult.error || totalResult.error;
+  return { monthly: monthlyResult.count || 0, total: totalResult.count || 0 };
 };
 
-const renderScannedProfile = (profile, usage, monthlyCount) => {
+const renderScannedProfile = (profile, usage, usageCounts) => {
   const terminal = document.querySelector("#scan-terminal");
   const type = usage.meal_type || usage.type;
   terminal.dataset.state = "success";
@@ -869,8 +870,9 @@ const renderScannedProfile = (profile, usage, monthlyCount) => {
   document.querySelector("#scan-terminal-title").innerHTML = `${escapeHtml(profile.name || "사용자")}님,<br />이용이 확인됐어요`;
   document.querySelector("#scan-terminal-description").textContent = "식사 맛있게 드세요";
   document.querySelector("#scan-terminal-user").textContent = profile.name || "사용자";
-  document.querySelector("#scan-terminal-monthly").textContent = `${monthlyCount.toLocaleString("ko-KR")}회`;
-  document.querySelector("#scan-terminal-price").textContent = `${Number(usage.price).toLocaleString("ko-KR")}원`;
+  document.querySelector("#scan-terminal-monthly").textContent = `${usageCounts.monthly.toLocaleString("ko-KR")}회`;
+  document.querySelector("#scan-terminal-total").textContent = `${usageCounts.total.toLocaleString("ko-KR")}회`;
+  document.querySelector("#scan-terminal-price").textContent = `${Number(usage.price).toLocaleString("ko-KR")}원 (${mealLabel(type)})`;
   document.querySelector("#scan-terminal-today").textContent = todayScannerUsers.toLocaleString("ko-KR");
   document.querySelector("#scan-today-revenue").textContent = `${todayScannerRevenue.toLocaleString("ko-KR")}원`;
   const notice = document.querySelector("#scan-terminal-notice");
@@ -883,7 +885,7 @@ const renderScannedProfile = (profile, usage, monthlyCount) => {
   renderScannerStatus("처리가 완료되었습니다. 다음 QR을 기다립니다.");
 };
 
-const renderDuplicateUsage = (profile, monthlyCount) => {
+const renderDuplicateUsage = (profile, usageCounts) => {
   const { date, type } = getScanSelection();
   const terminal = document.querySelector("#scan-terminal");
   terminal.dataset.state = "duplicate";
@@ -891,7 +893,8 @@ const renderDuplicateUsage = (profile, monthlyCount) => {
   document.querySelector("#scan-terminal-title").innerHTML = `${escapeHtml(profile?.name || "사용자")}님,<br />금일 식권이 이미 사용되었어요`;
   document.querySelector("#scan-terminal-description").textContent = "이미 사용한 QR이에요";
   document.querySelector("#scan-terminal-user").textContent = profile?.name || "사용자";
-  document.querySelector("#scan-terminal-monthly").textContent = `${monthlyCount.toLocaleString("ko-KR")}회`;
+  document.querySelector("#scan-terminal-monthly").textContent = `${usageCounts.monthly.toLocaleString("ko-KR")}회`;
+  document.querySelector("#scan-terminal-total").textContent = `${usageCounts.total.toLocaleString("ko-KR")}회`;
   const notice = document.querySelector("#scan-terminal-notice");
   notice.hidden = false;
   notice.textContent = "관련 문의는 식당 내 관리자를 찾아주세요";
@@ -909,6 +912,7 @@ const renderScannerFailure = (message) => {
   document.querySelector("#scan-terminal-description").textContent = message || "QR을 다시 스캔해 주세요";
   document.querySelector("#scan-terminal-user").textContent = "-";
   document.querySelector("#scan-terminal-monthly").textContent = "-";
+  document.querySelector("#scan-terminal-total").textContent = "-";
   const notice = document.querySelector("#scan-terminal-notice");
   notice.hidden = false;
   notice.textContent = "QR을 다시 스캔해 주세요";
@@ -924,16 +928,16 @@ const handleDecodedToken = async (token) => {
     renderScannerStatus("정기권 이용 기록을 저장하고 있어요.");
     const { date } = getScanSelection();
     const usage = await processUsage(profile);
-    const [, monthlyCount] = await Promise.all([
+    const [, usageCounts] = await Promise.all([
       usage.test_mode ? Promise.resolve() : refreshDashboard(),
-      loadUserMonthlyUsageCount(profile, date),
+      loadUserUsageCounts(profile, date),
     ]);
-    renderScannedProfile(profile, usage, monthlyCount);
+    renderScannedProfile(profile, usage, usageCounts);
     return "success";
   } catch (error) {
     if (isDuplicateMealUsageError(error)) {
-      const monthlyCount = profile ? await loadUserMonthlyUsageCount(profile, getScanSelection().date).catch(() => 0) : 0;
-      renderDuplicateUsage(profile, monthlyCount);
+      const usageCounts = profile ? await loadUserUsageCounts(profile, getScanSelection().date).catch(() => ({ monthly: 0, total: 0 })) : { monthly: 0, total: 0 };
+      renderDuplicateUsage(profile, usageCounts);
       return "duplicate";
     }
     renderScannerFailure(error.message || "QR을 처리하지 못했습니다.");
@@ -951,9 +955,11 @@ const startScanner = async () => {
     document.querySelector("#qr-reader").innerHTML = "";
     qrScanner = new Html5Qrcode("qr-reader");
     // 작아진 카메라 카드 안에서도 가이드가 잘리지 않도록 실제 표시 영역에 맞춥니다.
-    const reader = document.querySelector("#qr-reader");
-    const boxSize = Math.max(130, Math.min(170, reader.clientWidth - 40, reader.clientHeight - 40));
-    await qrScanner.start({ facingMode: "environment" }, { fps: 12, qrbox: { width: boxSize, height: boxSize } }, async (text) => {
+    const responsiveQrBox = (viewfinderWidth, viewfinderHeight) => {
+      const boxSize = Math.max(104, Math.min(170, Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.58)));
+      return { width: boxSize, height: boxSize };
+    };
+    await qrScanner.start({ facingMode: "environment" }, { fps: 12, qrbox: responsiveQrBox }, async (text) => {
       if (scanBusy) return;
       scanBusy = true;
       const outcome = await handleDecodedToken(text);
