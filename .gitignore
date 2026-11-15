@@ -4,6 +4,9 @@
 !babfull-kakao-link/README.md
 !skills/**/SKILL.md
 
+# Local security review (may contain internal architecture and risk details)
+/보안_점검_보고서.md
+
 # Secrets and environment-specific configuration
 .env
 .env.*
