@@ -801,7 +801,7 @@ const renderScannerMeal = () => {
     return `<figure class="scanner-meal-fallback" aria-label="식판 이미지 미제공, 메뉴명으로 표시">${slots}</figure><p class="scanner-meal-fallback-note">식판 이미지 준비 중</p>${menuList}`;
   };
   if (meal.trayImage?.imageUrl) {
-    const imageCaption = isToday ? `오늘의 ${mealLabel(type)}` : `선택한 날짜의 ${mealLabel(type)}`;
+    const imageCaption = `오늘의 ${mealLabel(type)}`;
     target.innerHTML = `<figure class="scanner-meal-image"><img src="${escapeHtml(meal.trayImage.imageUrl)}" alt="${escapeHtml(meal.trayImage.altText || `${date} ${mealLabel(type)} 식판`)}" /><figcaption>${imageCaption}</figcaption></figure>${menuList}`;
     target.querySelector("img").addEventListener("error", () => { target.innerHTML = fallbackMarkup(); }, { once: true });
     return;
