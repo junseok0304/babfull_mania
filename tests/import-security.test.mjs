@@ -9,6 +9,7 @@ test("사용자 브라우저는 영양정보 Edge Function을 직접 호출하�
   const source = await read("../js/nutrition-service.js");
   assert.doesNotMatch(source, /functions\.invoke|estimate-meal-calories/);
   assert.match(source, /persistedEstimate\(meal\)/);
+  assert.match(source, /source: "pending"/);
 });
 
 test("식단 가져오기가 변경된 식단의 열량 저장을 서버 권한으로 실행한다", async () => {

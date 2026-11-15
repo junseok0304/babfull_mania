@@ -52,10 +52,20 @@ const localEstimate = (meal) => {
   };
 };
 
-export const getMealNutrition = (meal) => mealCache.get(String(meal.id)) || persistedEstimate(meal) || localEstimate(meal);
+const unresolvedEstimate = (meal) => ({
+  mealId: meal.id,
+  totalCalories: 0,
+  matchedItems: 0,
+  totalItems: (meal.menuItems ?? meal.items ?? []).length,
+  source: "pending",
+});
+
+const fallbackEstimate = (meal) => /^\d+$/.test(String(meal.id)) ? unresolvedEstimate(meal) : localEstimate(meal);
+
+export const getMealNutrition = (meal) => mealCache.get(String(meal.id)) || persistedEstimate(meal) || fallbackEstimate(meal);
 
 export const hydrateMealNutrition = async (meals) => {
   meals.forEach((meal) => {
-    mealCache.set(String(meal.id), persistedEstimate(meal) || localEstimate(meal));
+    mealCache.set(String(meal.id), persistedEstimate(meal) || fallbackEstimate(meal));
   });
 };
