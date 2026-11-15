@@ -996,10 +996,8 @@ const startScanner = async () => {
     const Html5Qrcode = await loadScannerLibrary();
     document.querySelector("#qr-reader").innerHTML = "";
     qrScanner = new Html5Qrcode("qr-reader");
-    // 라이브러리 버전별 콜백형 qrbox 차이를 피하고 실제 카드 크기로 고정해 인식 안정성을 높입니다.
-    const reader = document.querySelector("#qr-reader");
-    const boxSize = Math.max(104, Math.min(158, Math.floor(Math.min(reader.clientWidth, reader.clientHeight) * 0.6)));
-    await qrScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: boxSize, height: boxSize } }, async (text) => {
+    // 흰색 네모는 위치 안내용으로만 표시하고, 디코더는 카메라 프레임 전체에서 QR을 찾습니다.
+    await qrScanner.start({ facingMode: "environment" }, { fps: 15 }, async (text) => {
       if (scanBusy) return;
       scanBusy = true;
       const outcome = await handleDecodedToken(text);
