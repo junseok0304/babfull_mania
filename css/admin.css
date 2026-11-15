@@ -3237,7 +3237,7 @@
   padding: 8px 4px;
   align-items: baseline;
   justify-content: center;
-  gap: .22em;
+  gap: clamp(18px, 2.2vw, 34px);
   line-height: 1.1;
   letter-spacing: .015em;
   text-align: center;
@@ -3257,6 +3257,7 @@
 
 @media (max-width: 600px) {
   .scanner-camera-column .scanner-clock { width: 100%; max-width: none; }
+  .scanner-clock { gap: clamp(14px, 4vw, 22px); }
   .scanner-clock__date { font-size: clamp(28px, 8vw, 36px); }
   .scanner-clock__time { font-size: clamp(42px, 12vw, 54px); }
   .scanner-meal-image { height: 180px; aspect-ratio: auto; }
