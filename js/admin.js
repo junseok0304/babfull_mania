@@ -712,6 +712,7 @@ const updateScannerClock = () => {
   const now = new Date();
   const parts = Object.fromEntries(new Intl.DateTimeFormat("ko-KR", {
     timeZone: "Asia/Seoul",
+    year: "2-digit",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
@@ -719,7 +720,7 @@ const updateScannerClock = () => {
     hourCycle: "h23",
   }).formatToParts(now).map(({ type, value }) => [type, value]));
   target.dateTime = now.toISOString();
-  target.innerHTML = `<span class="scanner-clock__date">${parts.month}/${parts.day}</span><span class="scanner-clock__time"><span>${parts.hour}</span><span class="scanner-clock__separator" aria-hidden="true">:</span><span>${parts.minute}</span></span>`;
+  target.innerHTML = `<span class="scanner-clock__date">${parts.year}/${parts.month}/${parts.day}</span><span class="scanner-clock__time"><span>${parts.hour}</span><span class="scanner-clock__separator" aria-hidden="true">:</span><span>${parts.minute}</span></span>`;
 };
 
 const findProfileByToken = async (token) => {

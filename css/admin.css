@@ -3248,7 +3248,7 @@
   padding: 8px 4px;
   align-items: baseline;
   justify-content: center;
-  gap: clamp(18px, 2.2vw, 34px);
+  gap: clamp(10px, 1.2vw, 18px);
   line-height: 1.1;
   letter-spacing: .015em;
   text-align: center;
@@ -3270,7 +3270,7 @@
 
 .scanner-clock__separator {
   min-width: .42em;
-  color: var(--primary-dark);
+  color: #453b38;
   text-align: center;
   animation: scanner-clock-pulse 1s ease-in-out infinite;
 }
@@ -3286,7 +3286,7 @@
 
 @media (max-width: 600px) {
   .scanner-camera-column .scanner-clock { width: 100%; max-width: none; }
-  .scanner-clock { gap: clamp(14px, 4vw, 22px); }
+  .scanner-clock { gap: clamp(8px, 2.4vw, 12px); }
   .scanner-clock__date { font-size: clamp(28px, 8vw, 36px); }
   .scanner-clock__time { font-size: clamp(42px, 12vw, 54px); }
   .scanner-meal-image { height: 180px; aspect-ratio: auto; }
