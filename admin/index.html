@@ -8,8 +8,8 @@
     <title>밥풀매니아 관리자</title>
     <link rel="icon" type="image/png" href="../asset/밥풀매니아_로고.png?v=20261026" />
     <link rel="stylesheet" href="../css/global.css?v=20261023-3" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261115-11" />
-    <script type="module" src="../js/admin.js?v=20261115-11"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261115-12" />
+    <script type="module" src="../js/admin.js?v=20261115-12"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -134,7 +134,7 @@
               <p class="usage-admin-help">사진과 글을 등록하면 공지 목록에 게시됩니다. 대표 배너로 지정한 공지는 사용자 화면 최상단에 표시됩니다.</p>
               <form class="notice-form" id="notice-form">
                 <label>공지 제목<input name="title" type="text" minlength="2" maxlength="100" placeholder="예: 11월 특별 식단 안내" required /></label>
-                <label>공지 내용<textarea name="body" rows="6" minlength="5" maxlength="3000" placeholder="공지와 이벤트 내용을 입력하세요." required></textarea></label>
+                <label>공지 내용<textarea name="body" rows="3" minlength="5" maxlength="3000" placeholder="공지와 이벤트 내용을 입력하세요." required></textarea></label>
                 <label class="notice-file">배너 이미지<input name="image" type="file" accept="image/jpeg,image/png,image/webp" required /><small>JPG·PNG·WebP, 최대 10MB · 가로형 이미지를 권장합니다.</small></label>
                 <div class="notice-image-preview" id="notice-image-preview"><span>사진을 선택하면 배너 미리보기가 표시됩니다.</span></div>
                 <label class="notice-featured"><input name="is_featured" type="checkbox" checked /><span><strong>메인 대표 배너로 표시</strong><small>기존 대표 공지는 일반 공지로 전환됩니다.</small></span></label>
@@ -269,7 +269,7 @@
               <fieldset><legend>식권 가격</legend><label>조식 가격<input name="breakfast_price" type="number" min="0" max="100000" step="100" required /></label><label>중식 가격<input name="lunch_price" type="number" min="0" max="100000" step="100" required /></label></fieldset>
               <div class="settings-guidance">
                 <div><span aria-hidden="true">₩</span><p><strong>가격 적용 기준</strong>가격 변경 전 이용 기록은 기존 금액을 유지하고, 저장 이후 생성되는 이용 기록부터 새 가격이 적용됩니다.</p></div>
-                <div><span aria-hidden="true">▦</span><p><strong>식판 표시 기준</strong>AI 생성 이미지를 기본으로 표시하며, 이미지가 아직 등록되지 않은 식단은 식판 위에 메뉴명을 표시합니다.</p></div>
+                <div><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M3 11h18M10 11v9M15.5 4v7"></path></svg></span><p><strong>식판 표시 기준</strong>AI 생성 이미지를 기본으로 표시하며, 이미지가 아직 등록되지 않은 식단은 식판 위에 메뉴명을 표시합니다.</p></div>
               </div>
               <button class="primary-button" type="submit">설정 저장</button>
               <p class="form-message" id="settings-message" role="status"></p>
