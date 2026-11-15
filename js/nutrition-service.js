@@ -1,8 +1,7 @@
-import { getSupabaseClient } from "./supabase-client.js";
-
 /**
- * 식사별 예상 열량을 저장값 → 원격 계산값 → 로컬 예시값 순으로 제공합니다.
- * 원격 조회 실패가 식단 전체 렌더링을 막지 않도록 결과를 캐시하고 단계적으로 대체합니다.
+ * 식사별 예상 열량은 식단 가져오기 시 서버가 저장한 값을 우선 사용합니다.
+ * 브라우저는 영양정보 Edge Function을 직접 호출하지 않으며, 로컬 예시값은
+ * Supabase를 사용하지 않는 데모 화면의 레이아웃 확인에만 사용합니다.
  */
 const mealCache = new Map();
 
@@ -57,28 +56,6 @@ export const getMealNutrition = (meal) => mealCache.get(String(meal.id)) || pers
 
 export const hydrateMealNutrition = async (meals) => {
   meals.forEach((meal) => {
-    const persisted = persistedEstimate(meal);
-    if (persisted && persisted.matchedItems === persisted.totalItems) mealCache.set(String(meal.id), persisted);
-  });
-  const pending = meals.filter((meal) => !mealCache.has(String(meal.id)));
-  if (!pending.length) return;
-
-  const client = await getSupabaseClient();
-  const numericIds = pending.map((meal) => meal.id).filter((id) => /^\d+$/.test(String(id)));
-  if (client && numericIds.length) {
-    try {
-      const { data, error } = await client.functions.invoke("estimate-meal-calories", {
-        body: { mealIds: numericIds },
-      });
-      if (!error && Array.isArray(data?.estimates)) {
-        data.estimates.forEach((estimate) => mealCache.set(String(estimate.mealId), estimate));
-      }
-    } catch (error) {
-      console.warn("영양정보 서버를 불러오지 못해 로컬 예상치를 사용합니다.", error);
-    }
-  }
-
-  pending.forEach((meal) => {
-    if (!mealCache.has(String(meal.id))) mealCache.set(String(meal.id), localEstimate(meal));
+    mealCache.set(String(meal.id), persistedEstimate(meal) || localEstimate(meal));
   });
 };

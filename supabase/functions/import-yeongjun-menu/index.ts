@@ -85,7 +85,54 @@ Deno.serve(async (request) => {
       meal_payload: parsed.meals,
     });
     if (importError) throw importError;
-    return jsonResponse({ ok: true, period: { from: parsed.dates[0], to: parsed.dates.at(-1) }, ...result });
+    const { data: incompleteNutritionMeals, error: incompleteNutritionError } = await db.from("meals")
+      .select("id, meal_items(estimated_calories)")
+      .eq("source_type", "yeongjun")
+      .gte("meal_date", parsed.dates[0])
+      .lte("meal_date", parsed.dates.at(-1));
+    if (incompleteNutritionError) throw incompleteNutritionError;
+    const missingNutritionIds = (incompleteNutritionMeals ?? [])
+      .filter((meal) => (meal.meal_items ?? []).some((item: { estimated_calories?: number | null }) => item.estimated_calories === null))
+      .map((meal) => meal.id);
+    const nutritionMealIds = [...new Set([
+      ...(Array.isArray(result?.nutritionMealIds) ? result.nutritionMealIds : []),
+      ...missingNutritionIds,
+    ])];
+    let nutrition = { mealCount: 0, persistedItems: 0 };
+    if (nutritionMealIds.length) {
+      const nutritionResponse = await fetch(`${supabaseUrl}/functions/v1/estimate-meal-calories`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${serviceRoleKey}`,
+          apikey: serviceRoleKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mealIds: nutritionMealIds }),
+        signal: AbortSignal.timeout(60000),
+      });
+      const nutritionPayload = await nutritionResponse.json().catch(() => ({}));
+      if (!nutritionResponse.ok) throw new Error(nutritionPayload?.error || "변경된 식단의 열량 정보를 저장하지 못했습니다.");
+      nutrition = {
+        mealCount: Array.isArray(nutritionPayload?.estimates) ? nutritionPayload.estimates.length : 0,
+        persistedItems: Number(nutritionPayload?.persistedItems || 0),
+      };
+    }
+    const detailData = {
+      changes: Array.isArray(result?.changes) ? result.changes : [],
+      nutrition,
+      unchangedCount: Number(result?.unchangedCount || 0),
+      protectedCount: Number(result?.protectedCount || 0),
+    };
+    const { error: completionError } = await db.from("meal_import_logs").update({
+      status: "success",
+      completed_at: new Date().toISOString(),
+      inserted_count: Number(result?.insertedCount || 0),
+      updated_count: Number(result?.updatedCount || 0),
+      error_message: null,
+      detail_data: detailData,
+    }).eq("id", logId);
+    if (completionError) throw completionError;
+    return jsonResponse({ ok: true, period: { from: parsed.dates[0], to: parsed.dates.at(-1) }, ...result, nutrition });
   } catch (error) {
     const message = error instanceof Error ? error.message : "식단 최신화에 실패했습니다.";
     if (logId) await db.from("meal_import_logs").update({ status: "failed", completed_at: new Date().toISOString(), error_message: message.slice(0, 1000) }).eq("id", logId);

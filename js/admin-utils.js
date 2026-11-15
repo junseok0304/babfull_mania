@@ -79,3 +79,26 @@ export const normalizeKakaoShareStats = (rows = []) => rows.map((row) => ({
   count: Number(row.share_count || 0),
   lastSharedAt: row.last_shared_at || null,
 }));
+
+export const summarizeMealImportChange = (change = {}) => {
+  const beforeItems = Array.isArray(change.beforeItems) ? change.beforeItems.map(String) : [];
+  const afterItems = Array.isArray(change.afterItems) ? change.afterItems.map(String) : [];
+  return {
+    operation: change.operation === "inserted" ? "inserted" : "updated",
+    mealId: change.mealId,
+    date: String(change.date || ""),
+    mealType: change.mealType === "breakfast" ? "조식" : "중식",
+    beforeItems,
+    afterItems,
+    addedItems: afterItems.filter((item) => !beforeItems.includes(item)),
+    removedItems: beforeItems.filter((item) => !afterItems.includes(item)),
+    operatingChanged: change.beforeOperating !== null
+      && change.beforeOperating !== undefined
+      && Boolean(change.beforeOperating) !== Boolean(change.afterOperating),
+    beforeOperating: Boolean(change.beforeOperating),
+    afterOperating: Boolean(change.afterOperating),
+    noteChanged: String(change.beforeNote || "") !== String(change.afterNote || ""),
+    beforeNote: String(change.beforeNote || ""),
+    afterNote: String(change.afterNote || ""),
+  };
+};

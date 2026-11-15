@@ -15,9 +15,3 @@ verify_jwt = false
 
 [functions.estimate-meal-calories]
 verify_jwt = true
-
-[functions.resolve-food-images]
-verify_jwt = false
-
-[functions.manage-food-image]
-verify_jwt = true

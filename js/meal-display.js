@@ -1,7 +1,6 @@
 import { appSettings, formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
-import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
-import { getFoodImage, hydrateMealImages, markFoodImageFailed } from "./food-image-service.js";
+import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js?v=20261115-1";
 import { bindMealKakaoSharePicker } from "./kakao-share.js?v=20261101-4";
 import { getHorizontalSwipeDirection } from "./swipe-utils.js";
 
@@ -177,31 +176,11 @@ export const formatTrayLabel = (value) => escapeHtml(value)
   .replaceAll("&amp;", "&amp;<wbr>")
   .replaceAll("/", "/<wbr>");
 
-const cropStyle = (image) => {
-  const zoom = Number(image.cropZoom) || 1.08;
-  const focalX = Number(image.focalX ?? 50);
-  const focalY = Number(image.focalY ?? 50);
-  const maxShift = zoom > 1 ? ((zoom - 1) * 50) / zoom : 0;
-  const shiftX = ((50 - focalX) / 100) * maxShift;
-  const shiftY = ((50 - focalY) / 100) * maxShift;
-  return `--food-zoom:${zoom};--food-shift-x:${shiftX}%;--food-shift-y:${shiftY}%`;
-};
-
 const trayTemplate = (meal, { textOnly = false } = {}) => {
   const slots = arrangeTray(meal.items)
-    .map(({ name, slot }) => {
-      const image = textOnly ? null : getFoodImage(name);
-      const sourceUrl = image?.documentUrl || image?.imageUrl || image?.fallbackUrl;
-      const imageElement = image ? `<img src="${escapeHtml(image.imageUrl || image.fallbackUrl)}"
-        data-fallback-src="${escapeHtml(image.fallbackUrl || "")}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
-        style="${cropStyle(image)}" />` : "";
-      const imageMarkup = imageElement && sourceUrl
-        ? `<a class="tray-slot__source" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(name)} 사진 원본 출처 열기" title="사진 원본 출처 보기">${imageElement}</a>`
-        : imageElement;
-      return `<div class="tray-slot tray-slot--${slot}${image ? " has-image" : ""}" data-food-name="${escapeHtml(name)}">
-        ${imageMarkup}<span>${formatTrayLabel(name)}</span>
-      </div>`;
-    })
+    .map(({ name, slot }) => `<div class="tray-slot tray-slot--${slot}" data-food-name="${escapeHtml(name)}">
+        <span>${formatTrayLabel(name)}</span>
+      </div>`)
     .join("");
   return `<div class="meal-tray${textOnly ? " meal-tray--text-only" : ""}" aria-label="${labels[meal.type]} 메뉴 참고 식판">${slots}</div>
     <p class="tray-caption">메뉴별 음식 사진은 실제 제공 모습과 다를 수 있어요.</p>`;
@@ -283,19 +262,6 @@ const bindCardToggles = (meals) => {
       manualOpenState.set(card.dataset.mealId, nextOpen);
     });
   });
-  document.querySelectorAll(".tray-slot img").forEach((image) => {
-    image.addEventListener("error", () => {
-      const fallback = image.dataset.fallbackSrc;
-      if (fallback && image.src !== fallback) {
-        image.src = fallback;
-        return;
-      }
-      const slot = image.closest(".tray-slot");
-      markFoodImageFailed(slot?.dataset.foodName);
-      slot?.classList.remove("has-image");
-      image.remove();
-    });
-  });
   const mealsById = new Map(meals.map((meal) => [String(meal.id), meal]));
   document.querySelectorAll("[data-kakao-share]").forEach((button) => {
     const meal = mealsById.get(button.dataset.kakaoShare);
@@ -310,7 +276,7 @@ const bindCardToggles = (meals) => {
 };
 
 export const renderHomeMeals = async () => {
-  // 비동기 이미지/열량 조회 중 날짜가 바뀌면 이전 렌더 결과가 덮어쓰지 않도록 renderId를 비교합니다.
+  // 저장된 열량을 반영하는 동안 날짜가 바뀌면 이전 렌더 결과가 덮어쓰지 않도록 renderId를 비교합니다.
   const renderId = ++homeRenderId;
   const list = document.querySelector("#meal-list");
   const empty = document.querySelector("#meal-empty");
@@ -353,7 +319,7 @@ export const renderHomeMeals = async () => {
     guidance.textContent = "오늘 제공되는 식단입니다.";
   }
 
-  await Promise.all([hydrateMealNutrition(visibleMeals), hydrateMealImages(visibleMeals)]);
+  await hydrateMealNutrition(visibleMeals);
   if (renderId !== homeRenderId) return;
 
   empty.hidden = visibleMeals.length > 0;

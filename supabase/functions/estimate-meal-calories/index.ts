@@ -139,7 +139,11 @@ Deno.serve(async (request) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const foodSafetyKey = Deno.env.get("FOODSAFETYKOREA_API_KEY");
     const dataGoKey = Deno.env.get("DATA_GO_KR_SERVICE_KEY");
-    if (!supabaseUrl || !serviceRoleKey || (!foodSafetyKey && !dataGoKey)) throw new Error("서버 환경변수가 설정되지 않았습니다.");
+    if (!supabaseUrl || !serviceRoleKey) throw new Error("Supabase 서버 환경변수가 설정되지 않았습니다.");
+    const authorization = request.headers.get("authorization");
+    if (authorization !== `Bearer ${serviceRoleKey}`) {
+      return Response.json({ error: "서버 수집기만 영양정보를 계산할 수 있습니다." }, { status: 403, headers: corsHeaders });
+    }
 
     const body = await request.json();
     const mealIds = [...new Set((body?.mealIds ?? []).map(Number).filter(Number.isSafeInteger))].slice(0, 50);

@@ -8,8 +8,8 @@
     <title>밥풀매니아 관리자</title>
     <link rel="icon" type="image/png" href="../asset/밥풀매니아_로고.png?v=20261026" />
     <link rel="stylesheet" href="../css/global.css?v=20261023-3" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261115-18" />
-    <script type="module" src="../js/admin.js?v=20261115-18"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261115-19" />
+    <script type="module" src="../js/admin.js?v=20261115-19"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -100,30 +100,6 @@
               <button class="primary-button" type="submit">이 식판 이미지 저장</button>
               <p class="form-message" id="tray-image-message" role="status"></p>
             </form>
-          </section>
-          <section class="admin-card food-image-manager" id="food-image-manager">
-            <div class="admin-card__heading">
-              <div><p class="section-kicker">대표 이미지</p><h2>메뉴 사진 관리</h2></div>
-            </div>
-            <p class="usage-admin-help">메뉴를 좌우로 넘기며 사진을 고르고, 확대 배율과 중심 위치를 조정합니다. 저장한 설정은 같은 메뉴가 다시 등장할 때 계속 사용됩니다.</p>
-            <div class="food-image-filter" role="group" aria-label="메뉴 사진 검수 상태">
-              <button class="is-active" type="button" data-food-image-list="pending">미설정 메뉴 <span id="food-image-pending-count">0</span></button>
-              <button type="button" data-food-image-list="saved">저장된 사진 <span id="food-image-saved-count">0</span></button>
-            </div>
-            <div class="saved-food-image-grid" id="saved-food-image-grid" hidden></div>
-            <form class="food-image-search" id="food-image-search-form">
-              <input id="food-image-menu" name="food_name" type="hidden" />
-              <div class="food-menu-navigator" aria-label="사진을 변경할 메뉴">
-                <button id="food-image-prev" type="button" aria-label="이전 메뉴">‹</button>
-                <div><span id="food-image-progress">메뉴 0 / 0</span><strong id="food-image-menu-name">메뉴를 불러오는 중…</strong></div>
-                <button id="food-image-next" type="button" aria-label="다음 메뉴">›</button>
-              </div>
-              <button class="primary-button" type="submit">사진 후보 불러오기</button>
-            </form>
-            <p class="form-message" id="food-image-message" role="status"></p>
-            <div class="food-image-workspace" id="food-image-workspace">
-              <div class="food-image-empty"><strong>메뉴를 선택해주세요.</strong><span>현재 대표 사진과 검색된 대체 후보가 여기에 표시됩니다.</span></div>
-            </div>
           </section>
         </section>
 

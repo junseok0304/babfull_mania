@@ -1,6 +1,6 @@
 import { formatDateKey, getSeoulDate } from "./sample-data.js";
 import { getCachedMeals } from "./data-service.js";
-import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js";
+import { getMealNutrition, hydrateMealNutrition } from "./nutrition-service.js?v=20261115-1";
 
 /**
  * 주간 식단, 월간 달력과 메뉴 검색 화면을 렌더링합니다.

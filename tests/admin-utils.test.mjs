@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildDashboardSummary, getAutomaticMealType, getManualMealState, isDuplicateMealUsageError, normalizeKakaoShareStats, shouldShowClosureReason } from "../js/admin-utils.js";
+import { buildDashboardSummary, getAutomaticMealType, getManualMealState, isDuplicateMealUsageError, normalizeKakaoShareStats, shouldShowClosureReason, summarizeMealImportChange } from "../js/admin-utils.js";
 
 const settings = {
   breakfastStart: "08:00",
@@ -70,4 +70,15 @@ test("사용자별 카카오 공유 집계값을 관리자 표시 형식으로 �
   }]), [{
     userId: "user-1", name: "윤준석", affiliation: "소프트웨어융합학부", count: 3, lastSharedAt: "2026-10-31T12:00:00Z",
   }]);
+});
+
+test("식단 가져오기 변경 전후 메뉴를 관리자 상세 표시용으로 요약한다", () => {
+  const summary = summarizeMealImportChange({
+    operation: "updated", date: "2026-11-16", mealType: "lunch",
+    beforeItems: ["백미밥", "어묵국"], afterItems: ["백미밥", "미역국", "배추김치"],
+    beforeOperating: true, afterOperating: true, beforeNote: "", afterNote: "",
+  });
+  assert.equal(summary.mealType, "중식");
+  assert.deepEqual(summary.addedItems, ["미역국", "배추김치"]);
+  assert.deepEqual(summary.removedItems, ["어묵국"]);
 });

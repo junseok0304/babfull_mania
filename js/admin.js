@@ -1,6 +1,6 @@
 import { formatDateKey, getSeoulDate, sampleMeals } from "./sample-data.js";
 import { getSupabaseClient } from "./supabase-client.js";
-import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState, isDuplicateMealUsageError, normalizeKakaoShareStats, shouldShowClosureReason } from "./admin-utils.js?v=20261104-1";
+import { buildDashboardSummary, defaultOperationalSettings, getAutomaticMealType, getManualMealState, isDuplicateMealUsageError, normalizeKakaoShareStats, shouldShowClosureReason, summarizeMealImportChange } from "./admin-utils.js?v=20261115-2";
 import { initAdminCommunity } from "./admin-community.js?v=20261115-2";
 
 /**
@@ -20,19 +20,8 @@ let operationalSettings = { ...defaultOperationalSettings };
 let scannerAudioContext = null;
 let scanBusy = false;
 let scannerTestMode = false;
-let foodImageCandidates = [];
-let foodImageMenuNames = [];
-let allFoodImageMenuNames = [];
-let savedFoodImageNames = new Set();
-let savedFoodImages = [];
-let foodImageListMode = "pending";
-let foodImageMenuIndex = 0;
-let foodImageWorkspaceData = null;
-let foodImageEditTarget = null;
-let foodImageBrowsingStarted = false;
 let mealListPage = 1;
 const mealListPageSize = 5;
-const foodImageSearchPages = new Map();
 const demoUsages = [];
 const demoQrToken = "00000000-0000-4000-8000-000000000001";
 let dashboardStats = buildDashboardSummary();
@@ -234,50 +223,7 @@ const route = (nextRoute) => {
 
 const mealLabel = (type) => type === "breakfast" ? "조식" : "중식";
 
-// ── 대시보드·식단·대표 이미지 관리 ──────────────────────────────────────
-const updateFoodImageMenuNavigator = () => {
-  const count = foodImageMenuNames.length;
-  foodImageMenuIndex = count ? (foodImageMenuIndex + count) % count : 0;
-  const foodName = foodImageMenuNames[foodImageMenuIndex] || "";
-  document.querySelector("#food-image-menu").value = foodName;
-  document.querySelector("#food-image-menu-name").textContent = foodName || "등록된 메뉴가 없습니다.";
-  document.querySelector("#food-image-progress").textContent = count ? `메뉴 ${foodImageMenuIndex + 1} / ${count}` : "메뉴 0 / 0";
-  document.querySelector("#food-image-prev").disabled = count < 2;
-  document.querySelector("#food-image-next").disabled = count < 2;
-};
-
-const refreshFoodImageMenuList = (preferredName = "") => {
-  const previousName = preferredName || document.querySelector("#food-image-menu")?.value || "";
-  foodImageMenuNames = allFoodImageMenuNames.filter((name) => (
-    foodImageListMode === "saved" ? savedFoodImageNames.has(name) : !savedFoodImageNames.has(name)
-  ));
-  const preferredIndex = foodImageMenuNames.indexOf(previousName);
-  foodImageMenuIndex = preferredIndex >= 0 ? preferredIndex : Math.min(foodImageMenuIndex, Math.max(0, foodImageMenuNames.length - 1));
-  document.querySelector("#food-image-pending-count").textContent = allFoodImageMenuNames.filter((name) => !savedFoodImageNames.has(name)).length;
-  document.querySelector("#food-image-saved-count").textContent = allFoodImageMenuNames.filter((name) => savedFoodImageNames.has(name)).length;
-  document.querySelectorAll("[data-food-image-list]").forEach((button) => button.classList.toggle("is-active", button.dataset.foodImageList === foodImageListMode));
-  const isSavedList = foodImageListMode === "saved";
-  document.querySelector("#food-image-search-form").hidden = isSavedList;
-  document.querySelector("#food-image-workspace").hidden = isSavedList;
-  document.querySelector("#saved-food-image-grid").hidden = !isSavedList;
-  updateFoodImageMenuNavigator();
-};
-
-const renderSavedFoodImageGrid = () => {
-  const target = document.querySelector("#saved-food-image-grid");
-  if (!savedFoodImages.length) {
-    target.innerHTML = '<div class="food-image-empty"><strong>아직 확정 저장한 사진이 없습니다.</strong><span>미설정 메뉴에서 대표 사진을 저장하면 이곳에 모입니다.</span></div>';
-    return;
-  }
-  target.innerHTML = savedFoodImages
-    .filter((image) => allFoodImageMenuNames.includes(image.foodName))
-    .sort((a, b) => a.foodName.localeCompare(b.foodName, "ko"))
-    .map((image) => `<article class="saved-food-image-card">
-      <img src="${escapeHtml(image.imageUrl)}" alt="${escapeHtml(image.foodName)} 확정 대표 사진" loading="lazy" referrerpolicy="no-referrer" />
-      <div><strong>${escapeHtml(image.foodName)}</strong><span>${escapeHtml(image.sourceName || "대표 사진")}</span></div>
-      <button class="secondary-button" type="button" data-unselect-food-image="${image.id}">저장 해제 후 다시 검수</button>
-    </article>`).join("");
-};
+// ── 대시보드·식단·식판 이미지 관리 ──────────────────────────────────────
 
 const renderStats = () => {
   document.querySelector("#admin-stats").innerHTML = [
@@ -346,12 +292,6 @@ const refreshDashboard = async () => {
   if (scannerRevenue) scannerRevenue.textContent = `${todayScannerRevenue.toLocaleString("ko-KR")}원`;
 };
 
-const syncFoodImageManagerVisibility = () => {
-  const manager = document.querySelector("#food-image-manager");
-  // 운영 화면은 AI 식판 이미지만 사용하므로 메뉴별 외부 사진 관리 도구는 노출하지 않습니다.
-  if (manager) manager.hidden = true;
-};
-
 const sortedMeals = () => [...meals].sort((a, b) => b.date.localeCompare(a.date) || a.type.localeCompare(b.type));
 
 const adminMealStatus = (meal) => {
@@ -412,76 +352,7 @@ const renderMeals = () => {
   const recent = sortedMeals().slice(0, 6);
   document.querySelector("#dashboard-meals").innerHTML = recent.map((meal) => `<tr><td>${meal.date}</td><td>${mealLabel(meal.type)}</td><td>${meal.items.slice(0, 3).map(escapeHtml).join(" · ")}</td><td>${meal.published ? "공개" : "비공개"}</td></tr>`).join("");
   renderMealList();
-  const selectedMenu = document.querySelector("#food-image-menu").value;
-  const menuNames = [...new Set(sortedMeals().flatMap((meal) => meal.items))]
-    .filter((name) => name && !/운영시간|메뉴가 없습니다|휴무/u.test(name))
-    .sort((a, b) => a.localeCompare(b, "ko"));
-  allFoodImageMenuNames = menuNames;
-  refreshFoodImageMenuList(selectedMenu);
   renderTrayImageManager();
-};
-
-const getPreviewCrop = (image) => {
-  const zoom = Number(image.cropZoom) || 1.08;
-  const focalX = Number(image.focalX ?? 50);
-  const focalY = Number(image.focalY ?? 50);
-  const maxShift = zoom > 1 ? ((zoom - 1) * 50) / zoom : 0;
-  return {
-    zoom,
-    shiftX: ((50 - focalX) / 100) * maxShift,
-    shiftY: ((50 - focalY) / 100) * maxShift,
-  };
-};
-
-const imageMarkup = (image, className = "") => {
-  const crop = getPreviewCrop(image);
-  return `<img class="${className}" src="${escapeHtml(image.imageUrl || image.fallbackUrl)}"
-    data-fallback-src="${escapeHtml(image.fallbackUrl || "")}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
-    style="--preview-zoom:${crop.zoom};--preview-shift-x:${crop.shiftX}%;--preview-shift-y:${crop.shiftY}%" />`;
-};
-
-const bindManagedImageFallbacks = () => {
-  document.querySelectorAll("#food-image-workspace img").forEach((image) => {
-    image.addEventListener("error", () => {
-      const fallback = image.dataset.fallbackSrc;
-      if (fallback && image.src !== fallback) image.src = fallback;
-      else {
-        image.closest("figure, .food-image-candidate")?.classList.add("is-broken");
-        image.remove();
-      }
-    });
-  });
-};
-
-const renderFoodImageWorkspace = (data) => {
-  foodImageWorkspaceData = data;
-  foodImageCandidates = data.candidates ?? [];
-  if (!foodImageEditTarget || foodImageEditTarget.foodId !== data.food.id) {
-    foodImageEditTarget = data.current ? { ...data.current, foodId: data.food.id } : null;
-  }
-  const editor = foodImageEditTarget
-    ? `<div class="food-image-editor">
-        <div class="food-image-editor__preview">${imageMarkup(foodImageEditTarget)}</div>
-        <div class="food-image-editor__controls">
-          <label><span>확대 <output id="food-image-zoom-value">${Number(foodImageEditTarget.cropZoom || 1.08).toFixed(2)}배</output></span><input data-crop-control="cropZoom" type="range" min="1" max="2.5" step="0.05" value="${Number(foodImageEditTarget.cropZoom) || 1.08}" /></label>
-          <label><span>가로 확대 중심 <output id="food-image-x-value">${Number(foodImageEditTarget.focalX ?? 50)}%</output></span><input data-crop-control="focalX" type="range" min="-50" max="150" step="1" value="${Number(foodImageEditTarget.focalX ?? 50)}" /></label>
-          <label><span>세로 확대 중심 <output id="food-image-y-value">${Number(foodImageEditTarget.focalY ?? 50)}%</output></span><input data-crop-control="focalY" type="range" min="-50" max="150" step="1" value="${Number(foodImageEditTarget.focalY ?? 50)}" /></label>
-          <button class="primary-button" type="button" data-save-food-image>이 사진과 구도 저장</button>
-        </div>
-      </div>`
-    : '<div class="food-image-current is-empty"><strong>후보 사진을 선택하면 큰 화면에서 구도를 편집할 수 있습니다.</strong></div>';
-  const candidates = foodImageCandidates.length
-    ? `<div class="food-image-candidates">${foodImageCandidates.map((candidate, index) => `<article class="food-image-candidate">
-        <div class="food-image-candidate__preview">${imageMarkup(candidate)}</div>
-        <div class="food-image-candidate__meta"><span><b>${escapeHtml(candidate.provider || "Kakao")}</b>${escapeHtml(candidate.sourceName || "이미지 검색")}</span><small>${candidate.width && candidate.height ? `${candidate.width} × ${candidate.height}` : "크기 정보 없음"}</small></div>
-        <button class="secondary-button" type="button" data-image-candidate="${index}">선택하고 구도 편집</button>
-      </article>`).join("")}</div>`
-    : '<div class="food-image-empty"><strong>다른 사진 후보를 찾지 못했습니다.</strong><span>잠시 후 다시 검색해주세요.</span></div>';
-  const providerNote = data.providers?.google
-    ? "이미지 후보 출처: Kakao 이미지 검색 · Google 이미지 검색"
-    : "이미지 후보 출처: Kakao 이미지 검색";
-  document.querySelector("#food-image-workspace").innerHTML = `<div class="food-image-current-panel"><h3>${escapeHtml(data.food.name)} 구도 편집</h3>${editor}</div><div class="food-image-results"><div class="food-image-results__heading"><h3>대체 사진 후보</h3><span>${escapeHtml(providerNote)}</span></div>${candidates}</div>`;
-  bindManagedImageFallbacks();
 };
 
 const getFunctionErrorMessage = async (error, data, fallbackMessage) => {
@@ -500,17 +371,6 @@ const getFunctionErrorMessage = async (error, data, fallbackMessage) => {
 };
 
 const firstRelated = (value) => Array.isArray(value) ? value[0] : value;
-
-const loadFoodImageCandidates = async (foodName, searchPage = 1) => {
-  if (adminMode !== "supabase") throw new Error("운영 데이터 연결 후 사용할 수 있습니다.");
-  const { data, error } = await client.functions.invoke("manage-food-image", {
-    body: { action: "candidates", foodName, searchPage },
-  });
-  if (error) throw new Error(await getFunctionErrorMessage(error, data, "사진 후보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요."));
-  foodImageSearchPages.set(foodName, Number(data.searchPage) || searchPage);
-  renderFoodImageWorkspace(data);
-  document.querySelector("#food-image-search-form button[type=submit]").textContent = "다른 사진 다시 불러오기";
-};
 
 const mapDatabaseMeal = (record) => ({
   id: record.id,
@@ -534,22 +394,6 @@ const loadDatabaseMeals = async () => {
     .order("meal_date", { ascending: false });
   if (error) throw error;
   meals = (data ?? []).map(mapDatabaseMeal);
-};
-
-const loadSavedFoodImageNames = async () => {
-  if (!client) return;
-  const { data, error } = await client.from("food_images")
-    .select("id, storage_path, source_url, source_name, reviewed_by, foods(original_name)")
-    .ilike("license_note", "%admin-selected%")
-    .not("reviewed_by", "is", null);
-  if (error) throw error;
-  savedFoodImages = (data ?? []).map((row) => ({
-    id: row.id,
-    foodName: row.foods?.original_name,
-    imageUrl: row.source_url || row.storage_path,
-    sourceName: row.source_name,
-  })).filter((image) => image.foodName && image.imageUrl);
-  savedFoodImageNames = new Set(savedFoodImages.map((image) => image.foodName));
 };
 
 const loadOperationalSettings = async () => {
@@ -581,6 +425,26 @@ const rejectAdminAccess = () => {
   document.body.innerHTML = '<main class="admin-error"><span>400</span><h1>잘못된 요청입니다</h1><p>활성 관리자 계정으로 로그인해야 접근할 수 있습니다.</p><a href="../index.html#home">사용자 화면으로 돌아가기</a></main>';
 };
 
+const renderImportDetails = (changes = [], nutrition = {}) => {
+  const items = changes.map(summarizeMealImportChange);
+  if (!items.length && !Number(nutrition?.persistedItems || 0)) return "";
+  const changeMarkup = items.map((item) => {
+    const details = [];
+    if (item.operation === "inserted") {
+      details.push(`<span>메뉴 ${item.afterItems.length}개 신규 저장</span><p>${item.afterItems.map(escapeHtml).join(" · ") || "운영 식단 없음"}</p>`);
+    } else {
+      if (item.addedItems.length) details.push(`<span>추가: ${item.addedItems.map(escapeHtml).join(" · ")}</span>`);
+      if (item.removedItems.length) details.push(`<span>제외: ${item.removedItems.map(escapeHtml).join(" · ")}</span>`);
+      if (item.operatingChanged) details.push(`<span>운영 상태: ${item.beforeOperating ? "운영" : "미운영"} → ${item.afterOperating ? "운영" : "미운영"}</span>`);
+      if (item.noteChanged) details.push(`<span>안내: ${escapeHtml(item.beforeNote || "없음")} → ${escapeHtml(item.afterNote || "없음")}</span>`);
+    }
+    return `<li class="import-change-item"><strong>${escapeHtml(item.date)} · ${item.mealType}</strong><em>${item.operation === "inserted" ? "신규" : "변경"}</em><div>${details.join("") || "식단 정보 갱신"}</div></li>`;
+  }).join("");
+  const nutritionMarkup = Number(nutrition?.persistedItems || 0)
+    ? `<p class="import-nutrition-summary">예상 열량 저장: ${Number(nutrition.mealCount || 0)}개 식단 · ${Number(nutrition.persistedItems || 0)}개 메뉴</p>` : "";
+  return `<details class="import-change-details" open><summary>가져온 내용 상세</summary>${nutritionMarkup}${changeMarkup ? `<ul>${changeMarkup}</ul>` : ""}</details>`;
+};
+
 const renderImportStatus = async () => {
   const target = document.querySelector("#menu-import-status");
   const button = document.querySelector("#menu-sync");
@@ -589,7 +453,7 @@ const renderImportStatus = async () => {
     target.innerHTML = "<p><strong>운영 데이터 연결 후 사용할 수 있습니다.</strong></p><p>원본 식단 응답으로 수집 형식을 검증했습니다.</p>";
     return;
   }
-  const { data, error } = await client.from("meal_import_logs").select("status, started_at, completed_at, inserted_count, updated_count, error_message")
+  const { data, error } = await client.from("meal_import_logs").select("status, started_at, completed_at, inserted_count, updated_count, error_message, detail_data")
     .order("started_at", { ascending: false }).limit(1).maybeSingle();
   target.classList.toggle("is-error", Boolean(error || data?.status === "failed"));
   if (error) {
@@ -602,7 +466,7 @@ const renderImportStatus = async () => {
   }
   const statusLabel = data.status === "success" ? "성공" : data.status === "running" ? "진행 중" : "실패";
   const time = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" }).format(new Date(data.completed_at || data.started_at));
-  target.innerHTML = `<p><strong>최근 수집 ${statusLabel}</strong>${data.error_message ? ` · ${escapeHtml(data.error_message)}` : ""}</p><div class="import-status__meta"><span>${escapeHtml(time)}</span><span>신규 ${data.inserted_count}건</span><span>변경 ${data.updated_count}건</span></div>`;
+  target.innerHTML = `<p><strong>최근 수집 ${statusLabel}</strong>${data.error_message ? ` · ${escapeHtml(data.error_message)}` : ""}</p><div class="import-status__meta"><span>${escapeHtml(time)}</span><span>신규 ${data.inserted_count}건</span><span>변경 ${data.updated_count}건</span><span>동일 ${Number(data.detail_data?.unchangedCount || 0)}건</span><span>수동 보호 ${Number(data.detail_data?.protectedCount || 0)}건</span></div>${renderImportDetails(data.detail_data?.changes, data.detail_data?.nutrition)}`;
 };
 
 const initializeAdmin = async () => {
@@ -630,9 +494,7 @@ const initializeAdmin = async () => {
   currentUserId = userId;
   await loadOperationalSettings();
   await loadDatabaseMeals();
-  await loadSavedFoodImageNames();
   adminMode = "supabase";
-  syncFoodImageManagerVisibility();
   return true;
 };
 
@@ -1170,7 +1032,6 @@ const renderSettings = () => {
   form.elements.breakfast_price.value = operationalSettings.breakfastPrice;
   form.elements.lunch_price.value = operationalSettings.lunchPrice;
   form.querySelector("button[type=submit]").disabled = adminMode !== "supabase";
-  syncFoodImageManagerVisibility();
 };
 
 const normalizeUsage = (record) => ({
@@ -1343,7 +1204,6 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
     });
     if (priceError) throw priceError;
     await loadOperationalSettings();
-    syncFoodImageManagerVisibility();
     setScanDefaults();
     message.textContent = "운영 설정을 저장했습니다.";
   } catch (error) {
@@ -1367,7 +1227,7 @@ document.querySelector("#menu-sync").addEventListener("click", async (event) => 
     await loadDatabaseMeals();
     renderStats();
     renderMeals();
-    target.innerHTML = `<p><strong>${escapeHtml(data.period.from)} ~ ${escapeHtml(data.period.to)} 최신화 완료</strong></p><div class="import-status__meta"><span>신규 ${data.insertedCount}건</span><span>변경 ${data.updatedCount}건</span><span>동일 ${data.unchangedCount}건</span><span>수동 보호 ${data.protectedCount}건</span></div>`;
+    target.innerHTML = `<p><strong>${escapeHtml(data.period.from)} ~ ${escapeHtml(data.period.to)} 최신화 완료</strong></p><div class="import-status__meta"><span>신규 ${data.insertedCount}건</span><span>변경 ${data.updatedCount}건</span><span>동일 ${data.unchangedCount}건</span><span>수동 보호 ${data.protectedCount}건</span></div>${renderImportDetails(data.changes, data.nutrition)}`;
   } catch (error) {
     const message = String(error.message || "");
     if (/이미 식단 최신화가 진행 중/.test(message)) {
@@ -1539,160 +1399,6 @@ const syncMealAvailability = () => {
 };
 document.querySelector("#meal-form").elements.availability.addEventListener("change", syncMealAvailability);
 syncMealAvailability();
-
-document.querySelector("#food-image-search-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const button = form.querySelector("button[type=submit]");
-  const message = document.querySelector("#food-image-message");
-  const foodName = form.elements.food_name.value;
-  if (!foodName) return;
-  foodImageBrowsingStarted = true;
-  const nextSearchPage = (foodImageSearchPages.get(foodName) || 0) % 10 + 1;
-  button.disabled = true;
-  message.textContent = "대체 사진을 찾고 있습니다…";
-  try {
-    await loadFoodImageCandidates(foodName, nextSearchPage);
-    message.textContent = `${foodName}의 ${nextSearchPage}번째 사진 후보 묶음을 불러왔습니다.`;
-  } catch (error) {
-    message.textContent = error.message || "사진 후보를 불러오지 못했습니다.";
-  } finally {
-    button.disabled = false;
-  }
-});
-
-document.querySelectorAll("[data-food-image-list]").forEach((filterButton) => filterButton.addEventListener("click", async () => {
-  foodImageListMode = filterButton.dataset.foodImageList;
-  foodImageMenuIndex = 0;
-  foodImageEditTarget = null;
-  refreshFoodImageMenuList();
-  if (foodImageListMode === "saved") {
-    renderSavedFoodImageGrid();
-    document.querySelector("#food-image-message").textContent = "확정 저장한 대표 사진을 메뉴별로 모아 보여드립니다.";
-    return;
-  }
-  const foodName = document.querySelector("#food-image-menu").value;
-  if (!foodName) {
-    document.querySelector("#food-image-workspace").innerHTML = `<div class="food-image-empty"><strong>${foodImageListMode === "saved" ? "아직 확정 저장한 사진이 없습니다." : "모든 메뉴 사진을 설정했습니다."}</strong></div>`;
-    return;
-  }
-  if (!foodImageBrowsingStarted) return;
-  const message = document.querySelector("#food-image-message");
-  message.textContent = `${foodName} 사진을 불러오고 있습니다…`;
-  try {
-    await loadFoodImageCandidates(foodName, foodImageSearchPages.get(foodName) || 1);
-    message.textContent = `${foodName} 사진 후보를 불러왔습니다.`;
-  } catch (error) {
-    message.textContent = error.message || "사진 후보를 불러오지 못했습니다.";
-  }
-}));
-
-document.querySelector("#saved-food-image-grid").addEventListener("click", async (event) => {
-  const button = event.target.closest("[data-unselect-food-image]");
-  if (!button) return;
-  const image = savedFoodImages.find((item) => String(item.id) === button.dataset.unselectFoodImage);
-  if (!image) return;
-  button.disabled = true;
-  const message = document.querySelector("#food-image-message");
-  message.textContent = `${image.foodName} 사진의 저장 상태를 해제하고 있습니다…`;
-  try {
-    const { error } = await client.from("food_images").update({ reviewed_by: null, reviewed_at: null }).eq("id", image.id);
-    if (error) throw error;
-    await loadSavedFoodImageNames();
-    foodImageListMode = "pending";
-    foodImageMenuIndex = 0;
-    refreshFoodImageMenuList(image.foodName);
-    foodImageEditTarget = null;
-    foodImageBrowsingStarted = true;
-    await loadFoodImageCandidates(image.foodName, foodImageSearchPages.get(image.foodName) || 1);
-    message.textContent = `${image.foodName}을 미설정 메뉴로 옮겼습니다. 새 사진을 선택해 다시 저장해주세요.`;
-  } catch (error) {
-    message.textContent = error.message || "저장 상태를 해제하지 못했습니다.";
-    button.disabled = false;
-  }
-});
-
-const browseFoodImageMenu = async (direction) => {
-  if (!foodImageMenuNames.length) return;
-  foodImageMenuIndex = (foodImageMenuIndex + direction + foodImageMenuNames.length) % foodImageMenuNames.length;
-  updateFoodImageMenuNavigator();
-  foodImageEditTarget = null;
-  if (!foodImageBrowsingStarted) return;
-  const foodName = document.querySelector("#food-image-menu").value;
-  const message = document.querySelector("#food-image-message");
-  const navigationButtons = [document.querySelector("#food-image-prev"), document.querySelector("#food-image-next")];
-  navigationButtons.forEach((button) => { button.disabled = true; });
-  message.textContent = `${foodName} 사진을 불러오고 있습니다…`;
-  try {
-    const searchPage = foodImageSearchPages.get(foodName) || 1;
-    await loadFoodImageCandidates(foodName, searchPage);
-    message.textContent = `${foodName} 사진 후보를 불러왔습니다.`;
-  } catch (error) {
-    message.textContent = error.message || "사진 후보를 불러오지 못했습니다.";
-  } finally {
-    navigationButtons.forEach((button) => { button.disabled = foodImageMenuNames.length < 2; });
-  }
-};
-
-document.querySelector("#food-image-prev").addEventListener("click", () => browseFoodImageMenu(-1));
-document.querySelector("#food-image-next").addEventListener("click", () => browseFoodImageMenu(1));
-
-document.querySelector("#food-image-workspace").addEventListener("input", (event) => {
-  const input = event.target.closest("[data-crop-control]");
-  if (!input || !foodImageEditTarget) return;
-  foodImageEditTarget[input.dataset.cropControl] = Number(input.value);
-  const preview = document.querySelector(".food-image-editor__preview img");
-  if (preview) {
-    const crop = getPreviewCrop(foodImageEditTarget);
-    preview.style.setProperty("--preview-zoom", crop.zoom);
-    preview.style.setProperty("--preview-shift-x", `${crop.shiftX}%`);
-    preview.style.setProperty("--preview-shift-y", `${crop.shiftY}%`);
-  }
-  const outputIds = { cropZoom: "#food-image-zoom-value", focalX: "#food-image-x-value", focalY: "#food-image-y-value" };
-  const suffix = input.dataset.cropControl === "cropZoom" ? "배" : "%";
-  const output = document.querySelector(outputIds[input.dataset.cropControl]);
-  if (output) output.textContent = `${input.dataset.cropControl === "cropZoom" ? Number(input.value).toFixed(2) : input.value}${suffix}`;
-});
-
-document.querySelector("#food-image-workspace").addEventListener("click", async (event) => {
-  const candidateButton = event.target.closest("[data-image-candidate]");
-  if (candidateButton) {
-    const candidate = foodImageCandidates[Number(candidateButton.dataset.imageCandidate)];
-    if (!candidate || !foodImageWorkspaceData) return;
-    foodImageEditTarget = { ...candidate, foodId: foodImageWorkspaceData.food.id, cropZoom: 1.08, focalX: 50, focalY: 50 };
-    renderFoodImageWorkspace(foodImageWorkspaceData);
-    document.querySelector(".food-image-editor")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    return;
-  }
-  const button = event.target.closest("[data-save-food-image]");
-  if (!button || !foodImageEditTarget) return;
-  const foodName = document.querySelector("#food-image-menu").value;
-  const message = document.querySelector("#food-image-message");
-  if (!foodName) return;
-  button.disabled = true;
-  message.textContent = "대표 사진과 구도를 저장하고 있습니다…";
-  try {
-    const { data, error } = await client.functions.invoke("manage-food-image", {
-      body: {
-        action: "select",
-        foodName,
-        selectionToken: foodImageEditTarget.selectionToken,
-        cropZoom: foodImageEditTarget.cropZoom,
-        focalX: foodImageEditTarget.focalX,
-        focalY: foodImageEditTarget.focalY,
-      },
-    });
-    if (error) throw new Error(await getFunctionErrorMessage(error, data, "대표 사진을 저장하지 못했습니다. 사진을 다시 검색해주세요."));
-    await loadSavedFoodImageNames();
-    foodImageEditTarget = null;
-    await loadFoodImageCandidates(foodName, foodImageSearchPages.get(foodName) || 1);
-    refreshFoodImageMenuList(foodName);
-    message.textContent = `${foodName} 대표 사진과 구도를 저장했습니다. 사용자 식판에서 계속 재사용됩니다.`;
-  } catch (error) {
-    message.textContent = error.message || "대표 사진을 저장하지 못했습니다.";
-    button.disabled = false;
-  }
-});
 
 document.querySelector("#meal-form").elements.meal_date.value = formatDateKey(getSeoulDate());
 document.querySelectorAll("#user-search-form select").forEach(enhanceAdminSelect);
