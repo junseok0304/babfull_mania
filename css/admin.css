@@ -3215,15 +3215,18 @@
 .scanner-clock {
   display: block;
   width: 100%;
-  margin-top: 10px;
-  color: #8a7e79;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: .02em;
+  margin-top: 14px;
+  padding: 8px 4px;
+  color: #615956;
+  font-size: clamp(42px, 4vw, 50px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: .015em;
   text-align: center;
 }
 
 @media (max-width: 600px) {
   .scanner-camera-column .scanner-clock { width: 100%; max-width: none; }
+  .scanner-clock { font-size: clamp(38px, 11vw, 48px); }
   .scanner-meal-image { height: 180px; aspect-ratio: auto; }
 }
