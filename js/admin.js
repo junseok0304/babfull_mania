@@ -719,7 +719,7 @@ const updateScannerClock = () => {
     hourCycle: "h23",
   }).formatToParts(now).map(({ type, value }) => [type, value]));
   target.dateTime = now.toISOString();
-  target.innerHTML = `<span class="scanner-clock__date">${parts.month}/${parts.day}</span><span class="scanner-clock__time">${parts.hour}:${parts.minute}</span>`;
+  target.innerHTML = `<span class="scanner-clock__date">${parts.month}/${parts.day}</span><span class="scanner-clock__time"><span>${parts.hour}</span><span class="scanner-clock__separator" aria-hidden="true">:</span><span>${parts.minute}</span></span>`;
 };
 
 const findProfileByToken = async (token) => {
