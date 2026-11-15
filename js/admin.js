@@ -705,6 +705,23 @@ const renderScannerStatus = (message, isError = false) => {
   document.querySelector("#scan-result").innerHTML = `<div class="scan-kiosk-status${isError ? " is-error" : ""}"><span class="scan-kiosk-status__dot"></span><strong>${escapeHtml(message)}</strong></div>`;
 };
 
+// 키오스크를 보는 사용자가 인증 시각을 바로 확인할 수 있도록 서울 시각을 분 단위로 표시합니다.
+const updateScannerClock = () => {
+  const target = document.querySelector("#scanner-clock");
+  if (!target) return;
+  const now = new Date();
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now).map(({ type, value }) => [type, value]));
+  target.dateTime = now.toISOString();
+  target.textContent = `${parts.month}/${parts.day} ${parts.hour}:${parts.minute}`;
+};
+
 const findProfileByToken = async (token) => {
   if (adminMode === "demo") {
     if (token !== demoQrToken) throw new Error("시연용 사용자를 찾을 수 없습니다.");
@@ -1695,6 +1712,8 @@ if (accessAllowed !== false) {
   });
   applyScannerPrivacy();
   renderScannerRecentEntries();
+  updateScannerClock();
+  window.setInterval(updateScannerClock, 15_000);
   setScanDefaults();
   route(location.hash.slice(1));
   await refreshDashboard();

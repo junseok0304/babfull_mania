@@ -8,8 +8,8 @@
     <title>밥풀매니아 관리자</title>
     <link rel="icon" type="image/png" href="../asset/밥풀매니아_로고.png?v=20261026" />
     <link rel="stylesheet" href="../css/global.css?v=20261023-3" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261115-9" />
-    <script type="module" src="../js/admin.js?v=20261115-9"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261115-10" />
+    <script type="module" src="../js/admin.js?v=20261115-10"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -171,6 +171,7 @@
                     <button class="secondary-button" id="scanner-stop" type="button" disabled>카메라 끄기</button>
                   </div>
                   <div id="scan-result" aria-live="polite"><div class="scan-kiosk-status"><span class="scan-kiosk-status__dot"></span><strong>스캔을 기다리고 있어요</strong></div></div>
+                  <time class="scanner-clock" id="scanner-clock" aria-label="현재 서울 시각"></time>
                 </section>
                 <section class="scan-terminal" id="scan-terminal" aria-live="polite" data-state="ready">
                   <header><b id="scan-terminal-state">대기 중</b></header>

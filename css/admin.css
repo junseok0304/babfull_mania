@@ -2626,7 +2626,8 @@
 .scanner-kiosk .qr-reader { width: min(100%, 380px); margin-inline: auto; }
 .scanner-kiosk .scanner-placeholder { width: 100%; }
 .scanner-camera-column .scanner-controls,
-.scanner-camera-column #scan-result { max-width: 380px; margin-inline: auto; }
+.scanner-camera-column #scan-result,
+.scanner-camera-column .scanner-clock { max-width: 380px; margin-inline: auto; }
 
 .scanner-kiosk .qr-reader {
   border: 0;
@@ -3186,8 +3187,8 @@
 .scan-terminal__profile > div { background: #faf7f5; }
 .scanner-meal-card > header h3 { margin-top: 0; }
 .scanner-meal-image {
-  height: auto;
-  aspect-ratio: 4 / 3;
+  height: clamp(170px, 18vw, 230px);
+  aspect-ratio: auto;
   background: #f7f3f1;
 }
 .scanner-meal-image img {
@@ -3211,7 +3212,18 @@
 .scanner-recent-pagination button,
 .scanner-operations-dialog .scan-options__heading button,
 .scanner-operations-dialog #scan-auto-hint { background: #f3efed; color: #615956; }
+.scanner-clock {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  color: #8a7e79;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-align: center;
+}
 
 @media (max-width: 600px) {
-  .scanner-meal-image { height: auto; aspect-ratio: 4 / 3; }
+  .scanner-camera-column .scanner-clock { width: 100%; max-width: none; }
+  .scanner-meal-image { height: 180px; aspect-ratio: auto; }
 }
