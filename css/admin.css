@@ -3157,3 +3157,61 @@
   .scanner-blur-strength { grid-template-columns: auto minmax(100px, 1fr) 48px; }
   .scanner-confirm-dialog { width: calc(100vw - 24px); }
 }
+
+/* QR 스캐너는 관리자 화면의 크림·브라운 팔레트를 따르되 핵심 상태만 선명하게 표시합니다. */
+.is-scanner-mode .admin-main { background: #f8f7f5; }
+.scanner-camera-column,
+.scan-terminal,
+.scanner-meal-card {
+  border: 1px solid #e7dfda;
+  background: #fff;
+}
+.scanner-notice-banner {
+  border: 1px solid #eadfd9;
+  background: #fffaf7;
+  color: #514946;
+}
+.scanner-server-status { color: #6f6a68; }
+.scanner-kiosk__detail { background: #fff0e9; color: var(--primary-dark); }
+.scanner-kiosk__exit { background: #eee9e6; color: #615956; }
+.scanner-kiosk .qr-reader { background: #302927; }
+.scanner-kiosk .qr-reader::after {
+  border-color: rgb(255 255 255 / .96);
+  box-shadow: 0 0 0 2px rgb(69 59 56 / .2);
+}
+.scanner-controls #scanner-stop { background: #f3efed; color: #615956; }
+.scanner-kiosk .scan-kiosk-status { background: #f7f3f1; color: #615956; }
+.scanner-kiosk .scan-kiosk-status__dot { background: var(--primary); }
+.scan-terminal > header > b { background: #fff0e9; color: var(--primary-dark); }
+.scan-terminal__profile > div { background: #faf7f5; }
+.scanner-meal-card > header h3 { margin-top: 0; }
+.scanner-meal-image {
+  height: auto;
+  aspect-ratio: 4 / 3;
+  background: #f7f3f1;
+}
+.scanner-meal-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.scanner-meal-empty { background: #faf7f5; }
+.scanner-info-card {
+  border: 1px solid #eee7e3;
+  background: #fbf9f7;
+}
+.scanner-info-card header h3 {
+  margin-top: 0;
+  color: #453b38;
+  font-size: 18px;
+}
+.scanner-info-card--steps li > b { background: #f4e9e4; color: #9a5139; }
+.scanner-operations-dialog { background: #f8f7f5; }
+.scanner-recent-item { background: #faf7f5; }
+.scanner-recent-pagination button,
+.scanner-operations-dialog .scan-options__heading button,
+.scanner-operations-dialog #scan-auto-hint { background: #f3efed; color: #615956; }
+
+@media (max-width: 600px) {
+  .scanner-meal-image { height: auto; aspect-ratio: 4 / 3; }
+}

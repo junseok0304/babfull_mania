@@ -8,8 +8,8 @@
     <title>밥풀매니아 관리자</title>
     <link rel="icon" type="image/png" href="../asset/밥풀매니아_로고.png?v=20261026" />
     <link rel="stylesheet" href="../css/global.css?v=20261023-3" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261115-7" />
-    <script type="module" src="../js/admin.js?v=20261115-7"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261115-8" />
+    <script type="module" src="../js/admin.js?v=20261115-8"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -164,7 +164,7 @@
               <header class="scanner-kiosk__header"><div class="scanner-kiosk__brand"><img src="../asset/밥풀매니아_로고_긴버전.png" alt="밥풀매니아" /><h2>밥풀 정기권 사용</h2><b class="scanner-test-indicator" id="scanner-test-indicator" hidden>테스트 모드</b></div><a class="scanner-notice-banner" id="scanner-notice-banner" href="../index.html#community" hidden><span>공지</span><strong id="scanner-notice-title"></strong></a><div class="scanner-server-status"><span></span>서버 연결됨</div><button class="scanner-kiosk__detail" id="scanner-details-open" type="button">운영 상세</button><button class="scanner-kiosk__exit" id="scanner-exit-open" type="button">운영 화면으로</button></header>
               <div class="scanner-workspace">
                 <section class="scanner-camera-column">
-                  <div class="scanner-camera-heading"><span>QR 스캔</span><strong>QR을 네모 안에 맞춰 주세요</strong></div>
+                  <div class="scanner-camera-heading"><strong>QR을 네모 안에 맞춰 주세요</strong></div>
                   <div class="qr-reader" id="qr-reader"><div class="scanner-placeholder"><span class="scanner-placeholder__icon">▦</span><strong>스캔 대기 중</strong><p>스캔 시작하기를 눌러주세요.</p></div></div>
                   <div class="scanner-controls">
                     <button class="primary-button" id="scanner-start" type="button">스캔 시작하기</button>
@@ -187,21 +187,21 @@
                   </div>
                 </section>
                 <section class="scanner-meal-card" aria-labelledby="scanner-meal-title">
-                  <header><span id="scanner-meal-kicker">오늘 식단</span><h3 id="scanner-meal-title">식단을 확인하고 있어요</h3></header>
+                  <header><span id="scanner-meal-kicker" hidden>오늘 식단</span><h3 id="scanner-meal-title">식단을 확인하고 있어요</h3></header>
                   <div id="scanner-today-meal" class="scanner-today-meal" aria-live="polite"></div>
                 </section>
               </div>
               <section class="scanner-info-strip" aria-label="정기권 이용 및 운영 안내">
                 <article class="scanner-info-card scanner-info-card--steps">
-                  <header><span>이용 절차</span><h3>빠르게 인증하고 입장하세요</h3></header>
+                  <header><h3>빠르게 인증하고 입장하세요</h3></header>
                   <ol><li><b>1</b><span><strong>정기권 QR 준비</strong>마이페이지의 QR을 열어주세요.</span></li><li><b>2</b><span><strong>카메라에 맞추기</strong>QR 전체가 네모 안에 보이게 해주세요.</span></li><li><b>3</b><span><strong>결과 확인</strong>인증 완료 안내 후 입장해주세요.</span></li></ol>
                 </article>
                 <article class="scanner-info-card scanner-info-card--standard">
-                  <header><span>현재 적용 기준</span><h3 id="scanner-standard-title">오늘 식사 기준</h3></header>
+                  <header><h3 id="scanner-standard-title">오늘 식사 기준</h3></header>
                   <dl><div><dt>이용일</dt><dd id="scanner-standard-date">-</dd></div><div><dt>식사·금액</dt><dd id="scanner-standard-meal">-</dd></div><div><dt>제공시간</dt><dd id="scanner-standard-time">-</dd></div></dl>
                 </article>
                 <article class="scanner-info-card scanner-info-card--safety">
-                  <header><span>안전 운영</span><h3>정확하고 안전하게 확인해요</h3></header>
+                  <header><h3>정확하고 안전하게 확인해요</h3></header>
                   <ul><li><span></span>동일 식권 중복 사용 자동 차단</li><li><span></span>QR에 이름·전화번호 미포함</li><li><span></span><b id="scanner-privacy-status">카메라 화면 개인정보 보호 켜짐</b></li></ul>
                 </article>
               </section>
