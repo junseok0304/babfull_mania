@@ -2951,7 +2951,7 @@
 .scanner-today-meal ul {
   display: grid;
   max-height: none;
-  margin: 0;
+  margin: 10px 0 0;
   padding: 0;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: max-content;
