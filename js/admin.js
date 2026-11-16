@@ -416,7 +416,6 @@ const loadOperationalSettings = async () => {
     lunchPrice: Number(priceValue.lunch ?? defaultOperationalSettings.lunchPrice),
     trayDisplayMode: "ai",
     adsenseEnabled: advertisingValue.enabled === true,
-    adsenseSlotId: String(advertisingValue.slot_id || ""),
   };
 };
 
@@ -1036,8 +1035,6 @@ const renderSettings = () => {
   form.elements.breakfast_price.value = operationalSettings.breakfastPrice;
   form.elements.lunch_price.value = operationalSettings.lunchPrice;
   form.elements.adsense_enabled.checked = operationalSettings.adsenseEnabled;
-  form.elements.adsense_slot_id.value = operationalSettings.adsenseSlotId;
-  form.elements.adsense_slot_id.required = operationalSettings.adsenseEnabled;
   form.querySelector("button[type=submit]").disabled = adminMode !== "supabase";
 };
 
@@ -1188,11 +1185,6 @@ document.querySelector("#user-search-form").addEventListener("submit", (event) =
   renderUsers();
 });
 document.querySelector("#user-search-form").elements.status.addEventListener("change", renderUsers);
-document.querySelector('#settings-form input[name="adsense_enabled"]').addEventListener("change", (event) => {
-  const slotInput = event.currentTarget.form.elements.adsense_slot_id;
-  slotInput.required = event.currentTarget.checked;
-  if (event.currentTarget.checked && !slotInput.value) slotInput.focus();
-});
 document.querySelector("#settings-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (adminMode !== "supabase") return;
@@ -1204,10 +1196,6 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
   message.textContent = "저장 중…";
   try {
     const adsenseEnabled = values.has("adsense_enabled");
-    const adsenseSlotId = String(values.get("adsense_slot_id") || "").trim();
-    if (adsenseEnabled && !/^\d{6,20}$/.test(adsenseSlotId)) {
-      throw new Error("광고를 켜려면 AdSense의 숫자형 광고 단위 ID를 입력해주세요.");
-    }
     const payload = {
       breakfast_start: values.get("breakfast_start"), breakfast_end: values.get("breakfast_end"),
       lunch_start: values.get("lunch_start"), lunch_end: values.get("lunch_end"),
@@ -1222,7 +1210,6 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
     if (priceError) throw priceError;
     const { error: adsenseError } = await client.rpc("admin_update_adsense_banner_settings", {
       adsense_enabled: adsenseEnabled,
-      adsense_slot_id: adsenseSlotId || null,
     });
     if (adsenseError) throw adsenseError;
     await loadOperationalSettings();

@@ -88,7 +88,6 @@ export const initializeData = async () => {
     });
     if (key === "adsense_banner") Object.assign(appSettings, {
       adsenseEnabled: value.enabled === true,
-      adsenseSlotId: String(value.slot_id || ""),
     });
   });
   // 식판 제공 방식은 AI 이미지로 고정하며, 이미지가 없으면 meal-display가 텍스트 식판을 렌더링합니다.
@@ -97,7 +96,7 @@ export const initializeData = async () => {
   return {
     mode: dataMode,
     meals: cachedMeals,
-    advertising: { enabled: appSettings.adsenseEnabled, slotId: appSettings.adsenseSlotId },
+    advertising: { enabled: appSettings.adsenseEnabled },
   };
 };
 

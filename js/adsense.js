@@ -1,24 +1,8 @@
-/** 홈 공지 배너 위치의 AdSense 광고를 운영 설정에 따라 지연 로드합니다. */
+/** Google AdSense 자동 광고 코드를 운영 설정에 따라 문서 head에 지연 로드합니다. */
 export const ADSENSE_CLIENT_ID = "ca-pub-9030402652749847";
 
 export const normalizeAdsenseSettings = (value = {}) => {
-  const slotId = String(value.slotId ?? value.slot_id ?? "").trim();
-  return {
-    enabled: value.enabled === true,
-    slotId: /^\d{6,20}$/.test(slotId) ? slotId : "",
-  };
-};
-
-const isLocalhost = () => ["localhost", "127.0.0.1"].includes(window.location.hostname);
-
-const renderLocalPreview = (slot) => {
-  slot.dataset.bannerMode = "ad-preview";
-  slot.innerHTML = `<aside class="local-ad-preview" aria-label="광고 미리보기">
-    <span class="local-ad-preview__label">광고 미리보기</span>
-    <div class="local-ad-preview__mark" aria-hidden="true">AD</div>
-    <div class="local-ad-preview__copy"><strong>홈 배너 광고가 표시되는 영역입니다</strong><span>실제 광고 요청 없이 반응형 크기만 확인합니다.</span></div>
-    <span class="local-ad-preview__size">반응형</span>
-  </aside>`;
+  return { enabled: value.enabled === true };
 };
 
 const loadAdsenseScript = () => {
@@ -36,30 +20,9 @@ const loadAdsenseScript = () => {
   });
 };
 
-export const initAdsenseBanner = (rawSettings = {}) => {
+export const initAdsenseAutoAds = (rawSettings = {}) => {
   const settings = normalizeAdsenseSettings(rawSettings);
-  const slot = document.querySelector(".top-banner-slot");
-  if (!slot || !settings.enabled || !settings.slotId) return false;
-
-  if (isLocalhost() && new URLSearchParams(window.location.search).get("ad-preview") === "1") {
-    renderLocalPreview(slot);
-    return true;
-  }
-
-  slot.dataset.bannerMode = "advertisement";
-  slot.innerHTML = `<ins class="adsbygoogle babfull-banner-ad"
-    aria-label="광고"
-    style="display:block"
-    data-ad-client="${ADSENSE_CLIENT_ID}"
-    data-ad-slot="${settings.slotId}"
-    data-ad-format="auto"
-    data-full-width-responsive="true"></ins>`;
-
-  loadAdsenseScript()
-    .then(() => {
-      try { (window.adsbygoogle = window.adsbygoogle || []).push({}); }
-      catch (error) { console.warn("홈 배너 광고를 초기화하지 못했습니다.", error); }
-    })
-    .catch((error) => console.warn(error.message));
+  if (!settings.enabled) return false;
+  loadAdsenseScript().catch((error) => console.warn(error.message));
   return true;
 };

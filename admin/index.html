@@ -8,8 +8,8 @@
     <title>밥풀매니아 관리자</title>
     <link rel="icon" type="image/png" href="../asset/밥풀매니아_로고.png?v=20261026" />
     <link rel="stylesheet" href="../css/global.css?v=20261023-3" />
-    <link rel="stylesheet" href="../css/admin.css?v=20261116-1" />
-    <script type="module" src="../js/admin.js?v=20261116-1"></script>
+    <link rel="stylesheet" href="../css/admin.css?v=20261116-2" />
+    <script type="module" src="../js/admin.js?v=20261116-2"></script>
   </head>
   <body class="admin-body">
     <div class="admin-shell">
@@ -244,9 +244,8 @@
               <label>QR 자동 분류 여유 시간(QR스캐너 자동 인식 허용시간 여유시간 설정)<input name="scan_buffer_minutes" type="number" min="0" max="120" step="5" required /><small>조식·중식 제공 시작 전과 종료 후에도 해당 식사로 자동 기록할 분 수입니다.</small></label>
               <fieldset><legend>식권 가격</legend><label>조식 가격<input name="breakfast_price" type="number" min="0" max="100000" step="100" required /></label><label>중식 가격<input name="lunch_price" type="number" min="0" max="100000" step="100" required /></label></fieldset>
               <fieldset class="settings-ad-control">
-                <legend>홈 배너 광고</legend>
-                <label class="settings-switch"><span><strong>Google AdSense 광고 제공</strong><small>켜면 공지 배너 위치를 반응형 광고로 교체합니다. 끄면 Google 광고 스크립트도 불러오지 않습니다.</small></span><input name="adsense_enabled" type="checkbox" role="switch" /><i aria-hidden="true"></i></label>
-                <label class="settings-ad-slot"><span>광고 단위 ID</span><input name="adsense_slot_id" type="text" inputmode="numeric" pattern="[0-9]{6,20}" maxlength="20" placeholder="예: 1234567890" /><small>AdSense의 반응형 디스플레이 광고 단위에 표시되는 숫자형 data-ad-slot 값입니다.</small></label>
+                <legend>자동 광고</legend>
+                <label class="settings-switch"><span><strong>Google AdSense 자동 광고 제공</strong><small>켜면 Google이 페이지에서 적합한 광고 위치를 자동으로 선택합니다. 끄면 광고 스크립트를 불러오지 않습니다.</small></span><input name="adsense_enabled" type="checkbox" role="switch" /><i aria-hidden="true"></i></label>
               </fieldset>
               <div class="settings-guidance">
                 <div><span aria-hidden="true">₩</span><p><strong>가격 적용 기준</strong>가격 변경 전 이용 기록은 기존 금액을 유지하고, 저장 이후 생성되는 이용 기록부터 새 가격이 적용됩니다.</p></div>

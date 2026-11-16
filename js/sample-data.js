@@ -58,7 +58,6 @@ export const appSettings = {
   lunchPrice: 5300,
   trayDisplayMode: "ai",
   adsenseEnabled: false,
-  adsenseSlotId: "",
   isPreview: true,
 };
 

@@ -1790,6 +1790,7 @@
 
 .settings-form .settings-switch {
   display: grid;
+  grid-column: 1 / -1;
   min-height: 72px;
   padding: 13px 14px;
   grid-template-columns: minmax(0, 1fr) 46px;
@@ -1809,8 +1810,6 @@
 .settings-switch input:checked + i::after { transform: translateX(20px); }
 .settings-switch input:focus-visible + i { outline: 3px solid rgb(195 90 49 / 0.22); outline-offset: 2px; }
 
-.settings-form .settings-ad-slot { grid-column: 1 / -1; }
-.settings-ad-slot > span { color: var(--text); font-size: 14px; font-weight: 750; }
 
 /* Admin typography and control rhythm */
 .admin-nav a,
