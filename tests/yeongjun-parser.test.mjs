@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isCalendarMenuMarker, parseYeongjunMenu, resolveExpectedImportMonday } from "../supabase/functions/_shared/yeongjun-parser.js";
+import { isCalendarMenuMarker, isMenuMetadata, parseYeongjunMenu, resolveExpectedImportMonday } from "../supabase/functions/_shared/yeongjun-parser.js";
 
 const cell = (value) => `<td><div class="menu-name">${value}</div></td>`;
 const row = (className, values) => `<tr class="${className}">${values.map(cell).join("")}</tr>`;
@@ -24,6 +24,21 @@ test("평일 조식·중식과 휴무 상태를 파싱한다", () => {
     assert.equal(isCalendarMenuMarker(marker), true);
   });
   assert.equal(isCalendarMenuMarker("동지팥죽"), false);
+  [
+    "[천원의아침밥] 운영시간 8:00~9:00",
+    "[천원의 아침밥] 운영시간 8:00~9:00",
+    "천원의 아침밥 운영 시간 08:00 - 09:00",
+  ].forEach((metadata) => assert.equal(isMenuMetadata(metadata), true));
+  assert.equal(isMenuMetadata("천원의 아침밥 백미밥"), false);
+});
+
+test("운영시간 안내만 있는 조식은 미제공으로 처리한다", () => {
+  const html = `${padding}<table><thead><tr>${["11-16(Mon)", "11-17(Tue)", "11-18(Wed)", "11-19(Thu)", "11-20(Fri)"].map((value) => `<th>${value}</th>`).join("")}</tr></thead><tbody>
+    ${row("breakfast-row", ["[천원의 아침밥] 운영시간 8:00~9:00", "백미밥", "백미밥", "백미밥", ""])}
+    ${row("lunch-row", ["콩나물국", "미역국", "된장국", "어묵국", "육개장"])}
+  </tbody></table>`;
+  const result = parseYeongjunMenu(html, new Date("2026-11-16T00:00:00Z"));
+  assert.deepEqual(result.meals[0], { date: "2026-11-16", type: "breakfast", items: [], operating: false, note: "미제공" });
 });
 
 test("연말과 연초 사이의 연도를 올바르게 결정한다", () => {

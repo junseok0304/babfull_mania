@@ -49,6 +49,11 @@ const calendarMarkers = new Set(calendarMarkerPairs.flatMap(([korean, hanja]) =>
 
 export const isCalendarMenuMarker = (value) => calendarMarkers.has(normalizeCalendarMarker(value));
 
+export const isMenuMetadata = (value) => {
+  const normalized = String(value ?? "").normalize("NFKC").replace(/\s+/gu, "");
+  return /^\[?천원의아침밥\]?.*운영시간/u.test(normalized);
+};
+
 const extractMenuText = (cellHtml) => {
   const menu = cellHtml.match(/<div\b[^>]*class\s*=\s*["'][^"']*\bmenu-name\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
   const text = cleanText(menu?.[1] ?? cellHtml)
@@ -56,7 +61,7 @@ const extractMenuText = (cellHtml) => {
     .replace(/\s+/g, " ")
     .trim();
   if (!text || text === "*" || text === "/" || /^\d+$/.test(text)) return "";
-  if (/\[천원의아침밥\].*운영시간/u.test(text)) return "";
+  if (isMenuMetadata(text)) return "";
   if (isCalendarMenuMarker(text)) return "";
   return text;
 };
