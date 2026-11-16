@@ -398,12 +398,14 @@ const loadDatabaseMeals = async () => {
 
 const loadOperationalSettings = async () => {
   if (!client) return;
-  const [{ data: hours }, { data: prices }] = await Promise.all([
+  const [{ data: hours }, { data: prices }, { data: advertising }] = await Promise.all([
     client.from("app_settings").select("setting_value").eq("setting_key", "meal_hours").single(),
     client.from("app_settings").select("setting_value").eq("setting_key", "meal_prices").single(),
+    client.from("app_settings").select("setting_value").eq("setting_key", "adsense_banner").maybeSingle(),
   ]);
   const value = hours?.setting_value ?? {};
   const priceValue = prices?.setting_value ?? {};
+  const advertisingValue = advertising?.setting_value ?? {};
   operationalSettings = {
     breakfastStart: value.breakfast_start || defaultOperationalSettings.breakfastStart,
     breakfastEnd: value.breakfast_end || defaultOperationalSettings.breakfastEnd,
@@ -413,6 +415,8 @@ const loadOperationalSettings = async () => {
     breakfastPrice: Number(priceValue.breakfast ?? defaultOperationalSettings.breakfastPrice),
     lunchPrice: Number(priceValue.lunch ?? defaultOperationalSettings.lunchPrice),
     trayDisplayMode: "ai",
+    adsenseEnabled: advertisingValue.enabled === true,
+    adsenseSlotId: String(advertisingValue.slot_id || ""),
   };
 };
 
@@ -1031,6 +1035,9 @@ const renderSettings = () => {
   form.elements.scan_buffer_minutes.value = operationalSettings.scanBufferMinutes;
   form.elements.breakfast_price.value = operationalSettings.breakfastPrice;
   form.elements.lunch_price.value = operationalSettings.lunchPrice;
+  form.elements.adsense_enabled.checked = operationalSettings.adsenseEnabled;
+  form.elements.adsense_slot_id.value = operationalSettings.adsenseSlotId;
+  form.elements.adsense_slot_id.required = operationalSettings.adsenseEnabled;
   form.querySelector("button[type=submit]").disabled = adminMode !== "supabase";
 };
 
@@ -1181,6 +1188,11 @@ document.querySelector("#user-search-form").addEventListener("submit", (event) =
   renderUsers();
 });
 document.querySelector("#user-search-form").elements.status.addEventListener("change", renderUsers);
+document.querySelector('#settings-form input[name="adsense_enabled"]').addEventListener("change", (event) => {
+  const slotInput = event.currentTarget.form.elements.adsense_slot_id;
+  slotInput.required = event.currentTarget.checked;
+  if (event.currentTarget.checked && !slotInput.value) slotInput.focus();
+});
 document.querySelector("#settings-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (adminMode !== "supabase") return;
@@ -1191,6 +1203,11 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
   button.disabled = true;
   message.textContent = "저장 중…";
   try {
+    const adsenseEnabled = values.has("adsense_enabled");
+    const adsenseSlotId = String(values.get("adsense_slot_id") || "").trim();
+    if (adsenseEnabled && !/^\d{6,20}$/.test(adsenseSlotId)) {
+      throw new Error("광고를 켜려면 AdSense의 숫자형 광고 단위 ID를 입력해주세요.");
+    }
     const payload = {
       breakfast_start: values.get("breakfast_start"), breakfast_end: values.get("breakfast_end"),
       lunch_start: values.get("lunch_start"), lunch_end: values.get("lunch_end"),
@@ -1203,6 +1220,11 @@ document.querySelector("#settings-form").addEventListener("submit", async (event
       lunch_price: Number(values.get("lunch_price")),
     });
     if (priceError) throw priceError;
+    const { error: adsenseError } = await client.rpc("admin_update_adsense_banner_settings", {
+      adsense_enabled: adsenseEnabled,
+      adsense_slot_id: adsenseSlotId || null,
+    });
+    if (adsenseError) throw adsenseError;
     await loadOperationalSettings();
     setScanDefaults();
     message.textContent = "운영 설정을 저장했습니다.";

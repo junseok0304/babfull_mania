@@ -13,16 +13,6 @@
     <link rel="apple-touch-icon" href="asset/밥풀매니아_로고.png?v=20261026" />
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-DTRPCFHW7Q"></script>
     <script>
-      if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
-        const adsensePreview = document.createElement("script");
-        adsensePreview.async = true;
-        adsensePreview.crossOrigin = "anonymous";
-        adsensePreview.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9030402652749847";
-        adsensePreview.dataset.previewOnly = "true";
-        document.head.append(adsensePreview);
-      }
-    </script>
-    <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
@@ -34,8 +24,8 @@
     <link rel="stylesheet" href="css/meal-tray.css?v=20261108-1" />
     <link rel="stylesheet" href="css/public-views.css?v=20261114-1" />
     <link rel="stylesheet" href="css/mypage.css?v=20261115-2" />
-    <link rel="stylesheet" href="css/community.css?v=20261103-4" />
-    <script type="module" src="js/app.js?v=20261115-1"></script>
+    <link rel="stylesheet" href="css/community.css?v=20261116-1" />
+    <script type="module" src="js/app.js?v=20261116-1"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문 바로가기</a>
@@ -285,6 +275,7 @@
                 <tr><td>프로필·식권</td><td>소속, 사용자 유형, 계정 상태, 내부 QR 식별 토큰</td><td>식권 발급·인식, 사용자 관리</td><td>회원 탈퇴 또는 삭제 요청 시까지</td></tr>
                 <tr><td>이용 기록</td><td>이용 날짜, 조식·중식 구분, 금액, 처리 상태·시간, 정정 사유</td><td>식권 이용 처리·내역 제공·운영 관리</td><td>삭제 요청 시까지. 단, 분쟁·법령상 보존이 필요한 경우 해당 기간</td></tr>
                 <tr><td>서비스 분석</td><td>쿠키·클라이언트 ID, 접속 일시, 기기·브라우저, 화면·검색·클릭 기록, IP 기반 대략적 위치</td><td>이용 통계, 기능 개선, 오류 파악</td><td>GA4 속성 설정 기간(최대 14개월)</td></tr>
+                <tr><td>광고 제공</td><td>쿠키·온라인 식별자, IP, 기기·브라우저 정보, 광고 조회·상호작용 정보</td><td>Google AdSense 광고 제공·성과 측정·부정 이용 방지</td><td>Google 광고 정책 및 이용자 설정에 따른 기간</td></tr>
               </tbody></table></div>
               <p class="legal-note">서비스는 QR 이미지에 이름·카카오 계정 정보를 넣지 않고 내부 난수 식별값만 사용합니다.</p>
             </section>
@@ -294,11 +285,12 @@
               <div class="legal-table-wrap"><table><thead><tr><th>받는 자</th><th>이전 국가</th><th>이전 항목·목적</th><th>시점·방법</th><th>보유기간</th></tr></thead><tbody>
                 <tr><td>Supabase, Inc.<br /><a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">개인정보 문의</a></td><td>대한민국(서울 주 저장 리전), 미국 등 운영·지원 국가</td><td>계정·프로필·QR 토큰·이용 기록 / 인증, DB·스토리지, 보안</td><td>로그인·저장 시 암호화된 네트워크 전송</td><td>회원 탈퇴·위탁 종료 시까지. 백업은 제공자 정책에 따라 삭제</td></tr>
                 <tr><td>Google LLC (Google Analytics 4)<br /><a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">개인정보 문의</a></td><td>미국 및 Google 데이터센터 운영 국가</td><td>쿠키·클라이언트 ID, 기기·브라우저, 이용 행태, IP 기반 지역 / 접속·이용 통계</td><td>사이트 방문·이벤트 발생 시 네트워크 전송</td><td>GA4 속성 설정 기간(최대 14개월)</td></tr>
+                <tr><td>Google LLC (Google AdSense)<br /><a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">광고 개인정보 안내</a></td><td>미국 및 Google 데이터센터 운영 국가</td><td>쿠키·온라인 식별자, IP, 기기·브라우저, 광고 이용 정보 / 광고 제공·측정·부정 이용 방지</td><td>관리자가 광고 제공을 켠 상태에서 페이지 접속 시 네트워크 전송</td><td>Google 광고 정책 및 이용자 설정에 따른 기간</td></tr>
                 <tr><td>Vercel Inc.<br /><a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">개인정보 문의</a></td><td>미국 및 서비스 제공 국가</td><td>IP, 접속 일시, 기기·브라우저, 요청 로그 / 호스팅·전송·보안</td><td>사이트 접속 시 네트워크 전송</td><td>제공자 정책 또는 위탁 종료 시까지</td></tr>
               </tbody></table></div>
               <p class="legal-note">국외 이전을 원하지 않으면 브라우저에서 분석 쿠키를 차단하거나 로그인·서비스 이용을 중단하고 삭제를 요청할 수 있습니다. Supabase 처리를 거부하면 로그인·QR 기능을 제공할 수 없으며, GA4 차단 시 식단 열람은 계속 가능합니다.</p>
             </section>
-            <section><h2>6. 쿠키 및 GA4</h2><p>GA4는 서비스 개선을 위해 쿠키와 온라인 식별자를 사용할 수 있습니다. 브라우저 설정, 추적 차단 확장 기능 또는 <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">Google Analytics 차단 도구</a>로 거부할 수 있습니다.</p></section>
+            <section><h2>6. 쿠키·GA4 및 광고</h2><p>GA4는 서비스 개선을 위해, Google AdSense는 광고 제공과 성과 측정을 위해 쿠키와 온라인 식별자를 사용할 수 있습니다. 관리자가 광고 제공을 끄면 AdSense 스크립트는 로드되지 않습니다. 이용자는 브라우저의 쿠키·추적 차단 설정, <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">Google Analytics 차단 도구</a> 또는 <a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer">Google 광고 설정</a>을 이용할 수 있습니다.</p></section>
             <section><h2>7. 파기</h2><p>보유기간이 끝나거나 목적이 달성된 개인정보는 지체 없이 파기합니다. 전자적 파일은 복구하기 어려운 방법으로 삭제하고, 법령상 보존 항목은 별도 분리해 보관합니다.</p></section>
             <section><h2>8. 이용자의 권리</h2><p>이용자는 자신의 개인정보 열람·정정·삭제·처리정지·동의 철회를 요청할 수 있습니다. 본인 확인 후 합리적인 기간 내 처리하며, 요청은 위 이메일로 접수합니다.</p></section>
             <section><h2>9. 안전성 확보</h2><p>서비스는 전송 구간 암호화, 접근 권한 제어, 관리자 권한 구분, 임의 QR 토큰, 로그 점검 등의 조치를 적용합니다.</p></section>

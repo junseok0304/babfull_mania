@@ -4,7 +4,7 @@ import { initializeData } from "./data-service.js";
 import { renderMyPage } from "./mypage.js?v=20261103-1";
 import { initAnalytics, trackPageView } from "./analytics.js?v=20261026-1";
 import { initCommunity } from "./community.js?v=20261114-1";
-import { initLocalAdPreview } from "./ad-preview.js?v=20261103-1";
+import { initAdsenseBanner } from "./adsense.js?v=20261116-1";
 
 /**
  * 사용자 SPA의 시작점입니다. 해시 라우팅을 정규화하고 식단 데이터를 한 번 초기화한 뒤,
@@ -80,7 +80,7 @@ renderHomeMeals();
 scheduleMealRefresh();
 initPublicViews();
 await initCommunity();
-initLocalAdPreview();
+initAdsenseBanner(dataState.advertising);
 const hasSession = await renderMyPage();
 const postAuthRoute = sessionStorage.getItem("babfull:post-auth-route");
 if (hasSession && validRoutes.has(postAuthRoute)) {

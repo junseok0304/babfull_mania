@@ -11,6 +11,8 @@ export const defaultOperationalSettings = Object.freeze({
   breakfastPrice: 1000,
   lunchPrice: 5300,
   trayDisplayMode: "ai",
+  adsenseEnabled: false,
+  adsenseSlotId: "",
 });
 
 const toMinutes = (value) => {

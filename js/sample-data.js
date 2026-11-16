@@ -57,6 +57,8 @@ export const appSettings = {
   breakfastPrice: 1000,
   lunchPrice: 5300,
   trayDisplayMode: "ai",
+  adsenseEnabled: false,
+  adsenseSlotId: "",
   isPreview: true,
 };
 
