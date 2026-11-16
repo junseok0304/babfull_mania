@@ -1,4 +1,4 @@
-import { getAuthState, loadMyPageData, signInWithKakao, signOut } from "./auth.js";
+import { getAuthState, loadMyPageData, signInWithKakao, signOut } from "./auth.js?v=20261116-1";
 import { deleteOwnCommunitySuggestion, loadOwnCommunitySuggestions } from "./community-service.js";
 
 /**

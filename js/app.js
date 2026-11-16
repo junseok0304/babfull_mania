@@ -1,10 +1,10 @@
 import { renderHomeMeals, scheduleMealRefresh } from "./meal-display.js?v=20261115-1";
 import { initPublicViews } from "./public-views.js?v=20261115-1";
 import { initializeData } from "./data-service.js";
-import { renderMyPage } from "./mypage.js?v=20261103-1";
+import { renderMyPage } from "./mypage.js?v=20261116-1";
 import { initAnalytics, trackPageView } from "./analytics.js?v=20261026-1";
 import { initCommunity } from "./community.js?v=20261114-1";
-import { initAdsenseAutoAds } from "./adsense.js?v=20261116-2";
+import { initAdsenseAutoAds } from "./adsense.js?v=20261116-3";
 
 /**
  * 사용자 SPA의 시작점입니다. 해시 라우팅을 정규화하고 식단 데이터를 한 번 초기화한 뒤,

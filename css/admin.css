@@ -2192,8 +2192,22 @@
 .dashboard-suggestion-row small,
 .dashboard-suggestion-row time { color: var(--secondary); font-size: 12px; }
 
-@media (min-width: 1050px) {
+@media (min-width: 1280px) {
   .admin-community-grid { grid-template-columns: minmax(360px, .8fr) minmax(460px, 1.2fr); align-items: stretch; }
+}
+
+.admin-community-grid,
+.admin-community-grid > .admin-card,
+.notice-form,
+.notice-form > *,
+.notice-form label {
+  min-width: 0;
+}
+
+.notice-form input,
+.notice-form textarea,
+.notice-image-preview {
+  max-width: 100%;
 }
 
 @media (max-width: 639px) {

@@ -6,6 +6,11 @@ import { getSupabaseClient } from "./supabase-client.js";
  */
 const KAKAO_PROVIDER_TOKEN_KEY = "babfull:kakao-provider-token";
 
+export const normalizeExternalImageUrl = (value) => {
+  const url = String(value ?? "").trim();
+  return /^http:\/\//i.test(url) ? `https://${url.slice(7)}` : url;
+};
+
 const rememberProviderToken = (session) => {
   if (session?.provider_token) {
     sessionStorage.setItem(KAKAO_PROVIDER_TOKEN_KEY, session.provider_token);
@@ -72,5 +77,11 @@ export const loadMyPageData = async (userId) => {
   ]);
   if (profileResult.error) throw profileResult.error;
   if (usageResult.error) throw usageResult.error;
-  return { profile: profileResult.data, usages: usageResult.data ?? [] };
+  return {
+    profile: {
+      ...profileResult.data,
+      profile_image_url: normalizeExternalImageUrl(profileResult.data.profile_image_url),
+    },
+    usages: usageResult.data ?? [],
+  };
 };

@@ -6,14 +6,14 @@ export const normalizeAdsenseSettings = (value = {}) => {
 };
 
 const loadAdsenseScript = () => {
-  const existing = document.querySelector(`script[data-babfull-adsense="${ADSENSE_CLIENT_ID}"]`);
+  const source = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`;
+  const existing = [...document.scripts].find((script) => script.src === source);
   if (existing) return Promise.resolve(existing);
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.async = true;
     script.crossOrigin = "anonymous";
-    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`;
-    script.dataset.babfullAdsense = ADSENSE_CLIENT_ID;
+    script.src = source;
     script.addEventListener("load", () => resolve(script), { once: true });
     script.addEventListener("error", () => reject(new Error("광고 스크립트를 불러오지 못했습니다.")), { once: true });
     document.head.append(script);
