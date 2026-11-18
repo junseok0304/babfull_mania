@@ -99,10 +99,9 @@ test("조식이 없어도 중식 메뉴가 있으면 제공 상태를 유지한�
 });
 
 test("AI 모드라도 완성 식판 이미지가 없으면 메뉴명 식판으로 대체한다", () => {
-  assert.equal(resolveTrayPresentation("ai", null), "menu-text");
-  assert.equal(resolveTrayPresentation("ai", {}), "menu-text");
-  assert.equal(resolveTrayPresentation("ai", { imageUrl: "https://example.com/tray.webp" }), "generated");
-  assert.equal(resolveTrayPresentation("search", { imageUrl: "https://example.com/tray.webp" }), "menu-images");
+  assert.equal(resolveTrayPresentation(null), "menu-text");
+  assert.equal(resolveTrayPresentation({}), "menu-text");
+  assert.equal(resolveTrayPresentation({ imageUrl: "https://example.com/tray.webp" }), "generated");
 });
 
 test("중식 제공시간이 끝나도 당일 중식 서랍은 열린 상태를 유지한다", () => {

@@ -414,7 +414,6 @@ const loadOperationalSettings = async () => {
     scanBufferMinutes: Number(value.scan_buffer_minutes ?? defaultOperationalSettings.scanBufferMinutes),
     breakfastPrice: Number(priceValue.breakfast ?? defaultOperationalSettings.breakfastPrice),
     lunchPrice: Number(priceValue.lunch ?? defaultOperationalSettings.lunchPrice),
-    trayDisplayMode: "ai",
     adsenseEnabled: advertisingValue.enabled === true,
   };
 };

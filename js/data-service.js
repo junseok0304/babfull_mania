@@ -90,8 +90,6 @@ export const initializeData = async () => {
       adsenseEnabled: value.enabled === true,
     });
   });
-  // 식판 제공 방식은 AI 이미지로 고정하며, 이미지가 없으면 meal-display가 텍스트 식판을 렌더링합니다.
-  appSettings.trayDisplayMode = "ai";
   dataMode = "supabase";
   return {
     mode: dataMode,

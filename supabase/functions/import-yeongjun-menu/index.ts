@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.119.0";
 import { parseYeongjunMenu, resolveExpectedImportMonday } from "../_shared/yeongjun-parser.js";
 
 /**

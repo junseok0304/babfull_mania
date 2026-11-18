@@ -23,37 +23,6 @@
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.22);
 }
 
-.tray-slot.has-image {
-  padding: 0;
-  background: #d4d4d8;
-}
-
-.tray-slot__source {
-  position: absolute;
-  inset: 0;
-  display: block;
-  overflow: hidden;
-}
-
-.tray-slot__source:focus-visible {
-  outline: 3px solid #facc15;
-  outline-offset: -3px;
-}
-
-.tray-slot img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  transform: scale(var(--food-zoom, 1.08)) translate3d(var(--food-shift-x, 0%), var(--food-shift-y, 0%), 0);
-  transform-origin: center;
-}
-
-.tray-slot--small img {
-  object-position: center;
-}
-
 .tray-slot span {
   display: -webkit-box;
   overflow: hidden;
@@ -65,27 +34,6 @@
   line-height: 1.2;
   overflow-wrap: break-word;
   word-break: keep-all;
-}
-
-.tray-slot.has-image span {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 2;
-  padding: 12px 4px 4px;
-  background: linear-gradient(transparent, rgb(0 0 0 / 0.76));
-  color: #fff;
-  text-shadow: 0 1px 3px rgb(0 0 0 / 0.7);
-}
-
-.tray-slot.has-image::after {
-  position: absolute;
-  inset: 0;
-  border: 1px solid rgb(255 255 255 / 0.28);
-  border-radius: inherit;
-  content: "";
-  pointer-events: none;
 }
 
 .meal-tray--text-only .tray-slot {
@@ -141,13 +89,6 @@
 .meal-tray--text-only .tray-slot--side-2-top span,
 .meal-tray--text-only .tray-slot--side-2-bottom span {
   font-size: clamp(8px, 1.35vw, 12px);
-}
-
-.tray-slot--side-1-top.has-image span,
-.tray-slot--side-1-bottom.has-image span,
-.tray-slot--side-2-top.has-image span,
-.tray-slot--side-2-bottom.has-image span {
-  padding-top: 7px;
 }
 
 .tray-caption {

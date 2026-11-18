@@ -159,9 +159,8 @@ export const resolveHomeAvailability = (dateMeals, selectedDate) => {
   };
 };
 
-export const resolveTrayPresentation = (displayMode, trayImage) => {
+export const resolveTrayPresentation = (trayImage) => {
   // 완성 식판이 없는 AI 모드에서도 빈 도형 대신 메뉴명 식판을 보여주는 대체 정책입니다.
-  if (displayMode !== "ai") return "menu-images";
   return trayImage?.imageUrl ? "generated" : "menu-text";
 };
 
@@ -217,7 +216,7 @@ const mealCardTemplate = (meal, state, forceOpen = null) => {
   const calorie = nutrition.totalCalories
     ? `<span class="calorie-badge" title="식약처 식품영양성분 DB와 메뉴 유형별 표준 배식량을 기준으로 계산한 예상치">약 ${Math.round(nutrition.totalCalories).toLocaleString("ko-KR")} kcal</span>`
     : "";
-  const trayPresentation = resolveTrayPresentation(appSettings.trayDisplayMode, meal.trayImage);
+  const trayPresentation = resolveTrayPresentation(meal.trayImage);
   const trayContent = trayPresentation === "generated"
     ? generatedTrayTemplate(meal)
     : trayTemplate(meal, { textOnly: trayPresentation === "menu-text" });

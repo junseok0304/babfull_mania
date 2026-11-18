@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.119.0";
 
 /**
  * 식약처·공공데이터 영양정보를 메뉴명과 매칭해 기준 제공량의 예상 열량으로 저장합니다.

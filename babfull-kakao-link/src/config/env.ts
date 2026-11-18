@@ -22,13 +22,6 @@ export interface KakaoConfig {
   templateId: number;
 }
 
-export interface KakaoRoomConfig {
-  javascriptKey: string;
-  shareDomain: string;
-  accountEmail: string;
-  accountPassword: string;
-}
-
 export interface KakaoShareConfig {
   javascriptKey: string;
   shareDomain: string;
@@ -46,15 +39,6 @@ export function getKakaoConfig(): KakaoConfig {
     redirectUri:
       optional("KAKAO_REDIRECT_URI") ?? "http://127.0.0.1:4399/oauth/callback",
     templateId,
-  };
-}
-
-export function getKakaoRoomConfig(): KakaoRoomConfig {
-  const share = getKakaoShareConfig();
-  return {
-    ...share,
-    accountEmail: required("KAKAO_ACCOUNT_EMAIL"),
-    accountPassword: required("KAKAO_ACCOUNT_PASSWORD"),
   };
 }
 

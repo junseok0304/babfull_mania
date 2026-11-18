@@ -1,5 +1,5 @@
 import { buildKakaoTemplateArgs } from "./kakao-message.js?v=20261101-1";
-import { getAuthState } from "./auth.js?v=20261101-1";
+import { getAuthState } from "./auth.js?v=20261116-1";
 
 /**
  * 카카오 JavaScript SDK를 지연 로드하고 공식 공유 선택창을 엽니다.

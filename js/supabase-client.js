@@ -26,7 +26,7 @@ export const getSupabaseClient = async () => {
     clientPromise = (async () => {
       const config = await loadLocalConfig();
       if (!config) return null;
-      const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+      const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/+esm");
       return createClient(config.supabaseUrl, config.supabaseAnonKey, {
         auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
       });
