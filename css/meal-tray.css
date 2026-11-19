@@ -4,7 +4,7 @@
   width: 100%;
   aspect-ratio: 3 / 2;
   border-radius: 16px;
-  background: #e5e7eb url("../asset/식판_배경.png") center / 100% 100% no-repeat;
+  background: #e5e7eb url("../asset/meal-tray-background.png") center / 100% 100% no-repeat;
   isolation: isolate;
 }
 

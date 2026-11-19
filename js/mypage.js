@@ -34,7 +34,7 @@ const escapeHtml = (value) => String(value ?? "")
 const isLocalhost = () => ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
 const loginTemplate = (available, showDemo) => `<div class="login-card">
-  <img class="login-card__logo" src="asset/밥풀매니아_로고.png" alt="" />
+  <img class="login-card__logo" src="asset/babfull-logo.png" alt="" />
   <h2>이용 기록과 건의사항을 관리하세요</h2>
   <p>카카오 계정으로 로그인하면 개인 QR 식권, 이번 달 이용 내역과 내가 작성한 건의를 확인할 수 있어요.</p>
   <button class="kakao-button" id="kakao-login" type="button" ${available ? "" : "disabled"}>카카오로 시작하기</button>

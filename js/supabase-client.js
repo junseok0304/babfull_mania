@@ -5,7 +5,11 @@
 let clientPromise;
 
 const loadLocalConfig = async () => {
-  const configUrls = ["/js/config.local.json", "/api/config"];
+  const localHostnames = new Set(["localhost", "127.0.0.1", "::1"]);
+  const hostname = globalThis.location?.hostname ?? "";
+  const configUrls = localHostnames.has(hostname)
+    ? ["/js/config.local.json", "/api/config"]
+    : ["/api/config"];
 
   for (const url of configUrls) {
     try {
